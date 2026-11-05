@@ -1,0 +1,16 @@
+{
+  "name": "private-plugins",
+  "description": "Private Claude Code plugins by gutnikov.",
+  "owner": {
+    "name": "Alex Gutnikov",
+    "url": "https://github.com/gutnikov"
+  },
+  "plugins": [
+    {
+      "name": "spec-writing",
+      "source": "./plugins/spec-writing",
+      "description": "Write any text a person will decide on (Russian or English) through a brief, a writer, a fact check, a review and one revision.",
+      "version": "0.1.0"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "spec-writing",
+  "description": "Write any text a person will decide on (Russian or English) through a brief, a writer, a fact check, a review and one revision.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Alex Gutnikov",
+    "url": "https://github.com/gutnikov"
+  },
+  "repository": "https://github.com/gutnikov/private-plugins"
+}
