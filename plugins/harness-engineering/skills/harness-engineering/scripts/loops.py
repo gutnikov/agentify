@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Loops of a project: the files under loops/ and the checks on them.
 
-    python3 loops.py init                        create loops/ with the default policy, an empty log and the registry
+    python3 loops.py init                        create loops/ with the default policy, an empty profile, an empty log
+                                                 and the registry
     python3 loops.py new ID --type TYPE          create loops/ID/ from the template; TYPE is a loop-type id or custom
     python3 loops.py validate ID [--runs N]      run the loop on its cases: must-fire fires, must-pass passes,
                                                  the same result every run, within budget_seconds
@@ -102,6 +103,7 @@ def cmd_init(a, root):
     loops.mkdir(exist_ok=True)
     made = []
     for name, make in (("policy.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "policy.yaml", p)),
+                       ("profile.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "profile.yaml", p)),
                        ("hitl-log.jsonl", lambda p: p.write_text("", encoding="utf-8"))):
         if not (loops / name).exists():
             make(loops / name)
@@ -111,6 +113,8 @@ def cmd_init(a, root):
     print("loops/: %s" % ", ".join(made))
     if "policy.yaml" in made:
         print("loops/policy.yaml is the plugin default: adjust it to the project and decide it with the user.")
+    if "profile.yaml" in made:
+        print("loops/profile.yaml is empty: fill it from what you found and the setup form (profile.md).")
 
 
 def catalog_entry(type_id):

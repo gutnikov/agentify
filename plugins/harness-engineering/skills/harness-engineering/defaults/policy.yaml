@@ -56,7 +56,9 @@ hitl:
 
   # How every call is made.
   rules:
-    - One question per message. Say what was already checked to answer it without the user.
+    - >-
+      One question per message. The one exception is the setup form about the project's profile: up to 4
+      questions in one call. Say what was already checked to answer it without the user.
     - 2–4 options, the recommended one first, plus a free answer.
     - Show, don't describe: a schema of the loop, a table, a screenshot, real command output.
     - Ask in the agent session only, with its question tool when it has one.

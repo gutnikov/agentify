@@ -87,6 +87,9 @@ the most valuable: [mutation testing](testing/mutation-testing.md),
 
 ## Where to start
 
+The order below is for a project that has none of these loops. Do not build every step: choose by the project's
+profile and the failures it has ([../profile.md](../profile.md)).
+
 1. **`verify` in one command**: [build](code/build.md), [types](code/type-check.md),
    [lint](code/lint-with-fix-instructions.md) and [unit tests](testing/red-green-tdd.md), plus the
    [formatting hook](code/autoformat-hook.md) and the [Stop hook](delivery/stop-hook.md). Boris Cherny: "give

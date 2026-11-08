@@ -16,7 +16,7 @@
       "name": "harness-engineering",
       "source": "./plugins/harness-engineering",
       "description": "Set up and maintain a project's agent loops: design, build, validate and revise them like software, with a catalog of 88 loop types and a per-project policy for when an agent may call a person.",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }
