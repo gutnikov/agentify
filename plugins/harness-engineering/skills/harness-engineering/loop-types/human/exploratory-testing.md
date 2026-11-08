@@ -31,6 +31,7 @@ On a preview or staging; hours.
 ## Related
 
 - [bug-failing-test-fix](../testing/bug-failing-test-fix.md): what the agent does with the report.
+- [app-probing](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/playwright-e2e/skills/app-probing) (plugin `playwright-e2e`): how the agent reproduces the report in the running app.
 
 ## Sources
 

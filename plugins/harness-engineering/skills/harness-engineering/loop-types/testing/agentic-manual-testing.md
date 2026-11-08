@@ -19,6 +19,8 @@ Give the agent:
 
 - tools with a detailed `--help`, such as Rodney and agent-browser
 - Showboat, which records the real output of the commands the agent runs
+- for a web app, the [`app-probing`](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/playwright-e2e/skills/app-probing) skill (plugin `playwright-e2e@private-plugins`): it runs the browser check as a throwaway Playwright script built on a test fixture and
+  Page Objects
 
 ## Notes
 

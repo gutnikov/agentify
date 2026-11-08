@@ -16,6 +16,8 @@ a feature does not work end to end even though the unit tests and `curl` pass.
 ## Set up
 
 - An `init.sh` that starts the server and runs a basic e2e.
+- For a web app with Playwright fixtures and Page Objects, the [`app-probing`](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/playwright-e2e/skills/app-probing) skill (plugin `playwright-e2e@private-plugins`) walks the
+  scenario through them before a spec exists.
 
 ## Notes
 

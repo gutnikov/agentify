@@ -28,6 +28,9 @@ The source gives a principle and an example, but no setup steps:
 
 The source does not say what the subagent receives, what starts it or where its verdict goes.
 
+For a web app, the [`app-probing`](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/playwright-e2e/skills/app-probing) skill (plugin `playwright-e2e@private-plugins`) lets the subagent open the app and check the claim there, not
+only in the diff.
+
 ## Sources
 
 - [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices)

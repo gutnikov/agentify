@@ -18,6 +18,10 @@ At OpenAI the agent also records a video before and after the fix. The source do
 
 Give the agent this prompt: "write a failing test that reproduces the issue, then fix it". The source names no other step and does not say where the prompt goes.
 
+For a bug in a web app's UI, the [`app-probing`](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/playwright-e2e/skills/app-probing) skill (plugin `playwright-e2e@private-plugins`) reproduces it in the running app first, on the
+state a fixture creates and through Page Objects; the failing test is then written on the same fixture and Page
+Objects.
+
 ## Notes
 
 The source describes only the case where the new test fails, the fix makes it pass and nothing else goes wrong. It does not say what to do if:

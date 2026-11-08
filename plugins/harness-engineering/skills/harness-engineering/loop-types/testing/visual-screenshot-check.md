@@ -19,6 +19,9 @@ Set it up in two places:
 - Locally: give the agent the prompt from the Claude Code docs: "take a screenshot of the result and compare it to the original".
 - In CI: run pixel regression.
 
+Locally, the [`app-probing`](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/playwright-e2e/skills/app-probing) skill (plugin `playwright-e2e@private-plugins`) takes a full-page screenshot once the screen has settled; the
+comparison with the mockup stays with the agent.
+
 ## Sources
 
 - [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices)

@@ -37,6 +37,8 @@ At the end of a task; 1–5 minutes of the person's time.
 
 - [agent-audit-trail](../security/agent-audit-trail.md): the evidence the agent leaves.
 - [preview-environments](../delivery/preview-environments.md): where the demo runs.
+- [app-probing](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/playwright-e2e/skills/app-probing) (plugin `playwright-e2e`): the URL, credentials and screenshot for the demo, or a
+  browser held open.
 
 ## Sources
 
