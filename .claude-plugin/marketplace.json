@@ -11,6 +11,12 @@
       "source": "./plugins/spec-writing",
       "description": "Write any text a person will decide on (Russian or English) through a brief, a writer, a fact check, a review and one revision.",
       "version": "0.1.0"
+    },
+    {
+      "name": "harness-engineering",
+      "source": "./plugins/harness-engineering",
+      "description": "Set up and maintain a project's agent loops: design, build, validate and revise them like software, with a catalog of 88 loop types and a per-project policy for when an agent may call a person.",
+      "version": "0.1.0"
     }
   ]
 }
