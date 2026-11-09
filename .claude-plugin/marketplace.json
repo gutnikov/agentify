@@ -23,6 +23,12 @@
       "source": "./plugins/playwright-e2e",
       "description": "Work with a web app through Playwright fixtures and Page Objects: probe the running app, build fixtures that seed test state, write Page Objects.",
       "version": "0.1.0"
+    },
+    {
+      "name": "bb-engineering",
+      "source": "./plugins/bb-engineering",
+      "description": "Set up and maintain a repository's bb (getbb.app) project, where every ticket gets a manager session that runs hidden workers: init, a local or remote bb server and moves between them, and periodic tasks that start a manager with an assignment.",
+      "version": "0.1.0"
     }
   ]
 }
