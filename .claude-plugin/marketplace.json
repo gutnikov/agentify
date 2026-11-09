@@ -41,6 +41,12 @@
       "source": "./plugins/ui-prototypes",
       "description": "Sketch screens from a project's own design system and serve them at a local URL: one command for a prototypes dev server, and named prototypes that are saved as one file each.",
       "version": "0.1.0"
+    },
+    {
+      "name": "event-model",
+      "source": "./plugins/event-model",
+      "description": "Describe a system as an Event Model in YAML that a script checks (every field traced, every command with success and failure examples, decision-table gaps), and turn its specs into Playwright e2e tests on the project's fixtures and Page Objects.",
+      "version": "0.1.0"
     }
   ]
 }

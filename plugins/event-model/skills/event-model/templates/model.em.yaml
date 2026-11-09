@@ -1,0 +1,61 @@
+# <System> — Event Model. Format: the event-model skill's format.md. Check: python3 <skill>/scripts/em.py check model/
+
+system: <System>
+actors: [User]
+externals:
+  PaymentProvider:
+    outcomes: {paid: paymentSucceeds, declined: paymentDeclines}
+clock: false
+
+domains: {}
+rules: {}
+
+screens:
+  SignUpPage: {route: /sign-up, pom: signUpPage}
+  AccountPage: {route: /account, pom: accountPage}
+
+states:
+  visitor:
+    given: []
+    note: "no account, logged out"
+  registeredUser:
+    extends: visitor
+    given: [AccountRegistered]
+    note: "an account with taken@example.com, logged out"
+
+slices:
+  - id: S01
+    name: Register account
+    type: command
+    actor: User
+    screen: SignUpPage
+    command:
+      name: RegisterAccount
+      fields: {email: input, name: input}
+    events:
+      AccountRegistered:
+        stream: Account
+        fields: {accountId: system, email: cmd, name: cmd, registeredAt: system}
+    specs:
+      - name: a new email registers an account
+        given: visitor
+        when: {email: new@example.com, name: New User}
+        then:
+          events: [AccountRegistered]
+          see:
+            - {screen: AccountPage, field: Account.email, is: new@example.com}
+      - name: a used email is refused
+        given: registeredUser
+        when: {email: taken@example.com, name: Someone}
+        then: {error: EmailAlreadyRegistered}
+
+  - id: V01
+    name: Account
+    type: view
+    read_model:
+      name: Account
+      fields:
+        accountId: [AccountRegistered.accountId]
+        email: [AccountRegistered.email]
+        name: [AccountRegistered.name]
+    screens: [AccountPage, SignUpPage]

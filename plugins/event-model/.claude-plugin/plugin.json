@@ -1,0 +1,10 @@
+{
+  "name": "event-model",
+  "description": "Describe a system as an Event Model in YAML that a script checks (every field traced, every command with success and failure examples, decision-table gaps), and turn its specs into Playwright e2e tests on the project's fixtures and Page Objects.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Alex Gutnikov",
+    "url": "https://github.com/gutnikov"
+  },
+  "repository": "https://github.com/gutnikov/private-plugins"
+}

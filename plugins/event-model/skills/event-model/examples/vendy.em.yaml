@@ -1,0 +1,1070 @@
+# Vendy.ai — Event Model (as-is, reverse-engineered from the UI and the billing policy, 2026-11-09).
+# Format: ../format.md. Check: python3 ../scripts/em.py check vendy.em.yaml
+#
+# Slices S06, S11, S13, S16, S17 and A04 carry e2e-ready specs (named state -> inputs -> what the person sees);
+# the rest still use the short domain form, which `em.py check` reports under E2E READINESS.
+
+system: Vendy
+actors: [Visitor, Seller]
+externals:
+  # outcome -> the e2e fixture that forces it (a testing-API switch or page.route)
+  Storefront:
+    outcomes: {readable: storefrontReadable, unreadable: storefrontUnreadable}
+  AIModels:
+    outcomes: {succeeds: aiRenderSucceeds, fails: aiRenderFails}
+  PaymentProvider:
+    outcomes: {paid: paymentSucceeds, declined: paymentDeclines}
+clock: true
+
+# Where each screen lives and which Page Object drives it (property name the tests receive).
+screens:
+  Home: {route: /next, pom: homePage}
+  Onboarding: {route: /studio/onboarding, pom: onboardingPage}
+  BrandPage: {route: "/next/brands/<slug>", pom: brandPage}
+  ProductPage: {route: "/next/products/<slug>", pom: productPage}
+  IdeasPage: {route: /next/ideas, pom: ideasPage}
+  AvatarsPage: {route: /next/avatars, pom: avatarsPage}
+  CreateAdPage: {route: /next/static-ad, pom: staticAdPage}
+  MyAdsPage: {route: /next/projects, pom: myAdsPage}
+  CreditsDialog: {route: "dialog behind 'Credits left' in the header", pom: creditsDialog}
+  PricingPage: {route: /en/pricing, pom: pricingPage}
+  BillingPage: {route: "Billing in the account menu", pom: billingPage}
+
+# Named preconditions = e2e fixtures. One state adds one thing to its parent, at most three levels deep.
+states:
+  freshSeller:
+    given: [AccountRegistered, DefaultBrandCreated]
+    note: "a new account with the default 'My brand'"
+  sellerWithProduct:
+    extends: freshSeller
+    given: [ProductCreated]
+    note: "one product with three photos"
+  subscribedSellerWithProduct:
+    extends: sellerWithProduct
+    given: [SubscriptionActivated, SubscriptionCreditsGranted]
+    note: "Seller plan, monthly, 2350 subscription credits, no top-up credits"
+  cancelledSellerWithProduct:
+    extends: subscribedSellerWithProduct
+    given: [SubscriptionCancellationScheduled]
+    note: "cancelled; the paid period is not over yet"
+  sellerInDebt:
+    extends: subscribedSellerWithProduct
+    given: [TopUpCreditsGranted, CreditsCharged, CreditsRevoked]
+    note: "a top-up was spent and then refunded: the balance is negative"
+  sellerWithReadyAd:
+    extends: subscribedSellerWithProduct
+    given: [GenerationRequested, GenerationSucceeded, CreditsCharged]
+    note: "one static ad, ready"
+  sellerWithFailedAd:
+    extends: subscribedSellerWithProduct
+    given: [GenerationRequested, GenerationFailed]
+    note: "one static ad whose render failed"
+
+domains:
+  Plan: [Starter, Seller, Scale]
+  Period: [monthly, annual]
+  AdType: [static, carousel, ugc_video, avatar_slideshow, showcase_video]
+  ModelQuality: [NanoBanana21, NanoBananaPro, GPT25_low, GPT25_medium, GPT25_high_1K, GPT25_high_2K, GPT25_high_4K]
+  Goal: [sell_more, get_bookings, get_inquiries, announce, get_known, any]
+  Ratio: [as_template, "9:16", "4:5", "1:1", "3:4", "2:3", "16:9", "3:2", "4:3"]
+
+rules:
+  plan-credits:
+    kind: table
+    inputs: [Plan, Period]
+    output: credits_per_period
+    rows:
+      - [Starter, monthly, 850]
+      - [Seller, monthly, 2350]
+      - [Scale, monthly, 5950]
+      # annual: pricing shows "credits / mo", policy says reset "each billing period" -> unknown
+  generation-cost:
+    kind: table
+    inputs: [AdType, ModelQuality]
+    output: credits_per_variation
+    note: "total = credits_per_variation x variations; another ratio = new drawing at the price of one"
+    rows:
+      - [static, NanoBananaPro, 22]
+      - [static, GPT25_low, 14]
+      - [static, GPT25_medium, 14]
+      - [static, GPT25_high_2K, 19]
+      - [ugc_video, GPT25_high_2K, 17]   # first frame only; animation stage not observed
+  plan-change-direction:
+    kind: table
+    inputs: [Plan, Plan]
+    output: direction
+    rows:
+      - [Starter, Starter, same]
+      - [Starter, Seller, upgrade]
+      - [Starter, Scale, upgrade]
+      - [Seller, Starter, downgrade]
+      - [Seller, Seller, same]
+      - [Seller, Scale, upgrade]
+      - [Scale, Starter, downgrade]
+      - [Scale, Seller, downgrade]
+      - [Scale, Scale, same]
+  wallet-order:
+    kind: formula
+    text: "UNKNOWN: which wallet is debited first (subscription credits expire, top-up credits do not)"
+    unknown: true
+  topup-pack-credits:
+    kind: formula
+    text: "UNKNOWN: pack sizes and prices are not visible without an active subscription"
+    unknown: true
+  credit-sufficiency:
+    kind: formula
+    text: "CreditBalance.total >= estimatedCost AND CreditBalance.total >= 0"
+  context-snapshot:
+    kind: formula
+    text: "copy of GenerationContext fields selected in contextSelection at request time"
+  context-completeness:
+    kind: formula
+    text: "list of brand/product fields that are empty (shown as 'Could also be used - fill them in')"
+  default-brand-name:
+    kind: formula
+    text: "'My brand'"
+  list-limits:
+    kind: formula
+    text: "industries <= 3 (first = main); doNots <= 4; offers <= 8; proofPoints <= 4; allowedClaims <= 6"
+  end-reason:
+    kind: formula
+    text: "cancelled_at_period_end | payment_failed_after_grace"
+  sum:
+    kind: formula
+    text: "subscriptionCredits + topUpCredits"
+
+slices:
+  # ---------------------------------------------------------------- A. Account & onboarding
+  - id: S01
+    name: Register account
+    type: command
+    actor: Visitor
+    screen: Onboarding
+    command:
+      name: RegisterAccount
+      fields: {email: input, name: input}
+    events:
+      AccountRegistered:
+        stream: Account
+        fields: {accountId: system, email: cmd, name: cmd, registeredAt: system}
+    specs:
+      - {given: [], when: RegisterAccount, then: [AccountRegistered]}
+      - {given: [AccountRegistered], when: RegisterAccount, then: error EmailAlreadyRegistered}
+
+  - id: V01
+    name: Session
+    type: view
+    read_model:
+      name: Session
+      fields:
+        accountId: [AccountRegistered.accountId]
+        email: [AccountRegistered.email]
+        name: [AccountRegistered.name]
+    screens: [AccountMenu, PricingPage, CreditsDialog, AvatarsPage, CreateAdPage]
+
+  - id: A01
+    name: Default brand so products have a home
+    type: automation
+    trigger: AccountRegistered
+    command:
+      name: CreateDefaultBrand
+      fields: {accountId: AccountRegistered.accountId}
+    events:
+      DefaultBrandCreated:
+        stream: Brand
+        fields: {brandId: system, accountId: cmd, name: rule:default-brand-name}
+    specs:
+      - {given: [AccountRegistered], when: CreateDefaultBrand, then: [DefaultBrandCreated]}
+    questions:
+      - "Default brand is created at sign-up or at the first product without a brand?"
+
+  - id: S02
+    name: Submit website or store link
+    type: command
+    actor: Seller
+    screen: BrandPage
+    command:
+      name: SubmitWebsite
+      fields: {brandId: BrandProfile.brandId, url: input}
+    events:
+      BrandWebsiteSubmitted:
+        stream: Brand
+        fields: {brandId: cmd, url: cmd, submittedAt: system}
+    specs:
+      - {given: [DefaultBrandCreated], when: SubmitWebsite, then: [BrandWebsiteSubmitted]}
+      - {given: [DefaultBrandCreated], when: SubmitWebsite, then: error InvalidUrl}
+
+  - id: T01
+    name: Read brand from website / store
+    type: translation
+    external: Storefront
+    trigger: BrandWebsiteSubmitted
+    command:
+      name: ImportBrandFromWebsite
+      fields: {brandId: BrandWebsiteSubmitted.brandId, url: BrandWebsiteSubmitted.url}
+    events:
+      BrandWebsiteRead:
+        stream: Brand
+        fields:
+          brandId: cmd
+          brandName: ext
+          whatBrandDoes: ext
+          toneOfVoice: ext
+          tagline: ext
+          colours: ext
+          logo: ext
+          reviews: ext
+          productsFound: ext
+      BrandWebsiteUnreadable:
+        stream: Brand
+        fields: {brandId: cmd, reason: ext}
+    specs:
+      - {given: [BrandWebsiteSubmitted], when: ImportBrandFromWebsite, then: [BrandWebsiteRead]}
+      - {given: [BrandWebsiteSubmitted], when: ImportBrandFromWebsite, then: [BrandWebsiteUnreadable]}
+    questions:
+      - "productsFound: products are created automatically or only proposed ('1 product found -> Continue')?"
+      - "Which storefronts are actually supported by the reader (Shopify, Etsy, Amazon, Instagram, TikTok Shop, eBay...)?"
+
+  - id: S03
+    name: Edit brand DNA (or answer short questions)
+    type: command
+    actor: Seller
+    screen: BrandPage
+    rules: [list-limits]
+    command:
+      name: EditBrandDna
+      fields:
+        brandId: BrandProfile.brandId
+        name: input
+        whatBrandDoes: input
+        toneOfVoice: input
+        businessType: input
+        industries: input
+        location: input
+        tagline: input
+        colours: input
+        typography: input
+        artDirection: input
+        doNots: input
+        offers: input
+    events:
+      BrandDnaUpdated:
+        stream: Brand
+        fields:
+          brandId: cmd
+          name: cmd
+          whatBrandDoes: cmd
+          toneOfVoice: cmd
+          businessType: cmd
+          industries: cmd
+          location: cmd
+          tagline: cmd
+          colours: cmd
+          typography: cmd
+          artDirection: cmd
+          doNots: cmd
+          offers: cmd
+          updatedAt: system
+    specs:
+      - {given: [DefaultBrandCreated], when: EditBrandDna, then: [BrandDnaUpdated]}
+      - {given: [DefaultBrandCreated], when: EditBrandDna, then: error TooManyIndustries}
+      - {given: [DefaultBrandCreated], when: EditBrandDna, then: error TooManyDoNots}
+      - {given: [DefaultBrandCreated], when: EditBrandDna, then: error TooManyOffers}
+
+  - id: S04
+    name: Upload logo
+    type: command
+    actor: Seller
+    screen: BrandPage
+    command:
+      name: UploadLogo
+      fields: {brandId: BrandProfile.brandId, logo: input}
+    events:
+      BrandLogoUploaded:
+        stream: Brand
+        fields: {brandId: cmd, logo: cmd}
+    specs:
+      - {given: [DefaultBrandCreated], when: UploadLogo, then: [BrandLogoUploaded]}
+      - {given: [DefaultBrandCreated], when: UploadLogo, then: error UnsupportedImage}
+
+  - id: S05
+    name: Add customer review
+    type: command
+    actor: Seller
+    screen: BrandPage
+    command:
+      name: AddReview
+      fields: {brandId: BrandProfile.brandId, text: input, author: input}
+    events:
+      ReviewAdded:
+        stream: Brand
+        fields: {brandId: cmd, reviewId: system, text: cmd, author: cmd}
+    specs:
+      - {given: [DefaultBrandCreated], when: AddReview, then: [ReviewAdded]}
+      - {given: [DefaultBrandCreated], when: AddReview, then: error EmptyReview}
+
+  - id: V02
+    name: Brand profile
+    type: view
+    read_model:
+      name: BrandProfile
+      fields:
+        brandId: [DefaultBrandCreated.brandId]
+        name: [DefaultBrandCreated.name, BrandWebsiteRead.brandName, BrandDnaUpdated.name]
+        website: [BrandWebsiteSubmitted.url]
+        readStatus: [BrandWebsiteSubmitted, BrandWebsiteRead, BrandWebsiteUnreadable]
+        whatBrandDoes: [BrandWebsiteRead.whatBrandDoes, BrandDnaUpdated.whatBrandDoes]
+        toneOfVoice: [BrandWebsiteRead.toneOfVoice, BrandDnaUpdated.toneOfVoice]
+        tagline: [BrandWebsiteRead.tagline, BrandDnaUpdated.tagline]
+        colours: [BrandWebsiteRead.colours, BrandDnaUpdated.colours]
+        logo: [BrandWebsiteRead.logo, BrandLogoUploaded.logo]
+        industries: [BrandDnaUpdated.industries]
+        doNots: [BrandDnaUpdated.doNots]
+        offers: [BrandDnaUpdated.offers]
+        reviews: [BrandWebsiteRead.reviews, ReviewAdded.text]
+        productCount: [ProductCreated.productId]
+        adCount: [GenerationSucceeded.generationId]
+    screens: [BrandPage, Onboarding]
+
+  # ---------------------------------------------------------------- B. Product
+  - id: S06
+    name: Create product from photo
+    type: command
+    actor: Seller
+    screen: Onboarding
+    command:
+      name: CreateProduct
+      fields: {brandId: BrandProfile.brandId, name: input, photos: input}
+    events:
+      ProductCreated:
+        stream: Product
+        fields: {productId: system, brandId: cmd, name: cmd, photos: cmd, createdAt: system}
+    specs:
+      - name: a product is created from one photo
+        given: freshSeller
+        when: {name: Overnight oats, photos: [oats.jpg]}
+        then:
+          events: [ProductCreated]
+          see:
+            - {screen: ProductPage, field: ProductCard.name, is: Overnight oats}
+      - name: a product needs at least one photo
+        given: freshSeller
+        when: {name: Overnight oats, photos: []}
+        then: {error: PhotoRequired}
+
+  - id: S07
+    name: Edit product details
+    type: command
+    actor: Seller
+    screen: ProductPage
+    rules: [list-limits]
+    command:
+      name: EditProductDetails
+      fields:
+        productId: ProductCard.productId
+        description: input
+        price: input
+        currency: input
+        specs: input
+        cta: input
+        keyBenefits: input
+        proofPoints: input
+        allowedClaims: input
+        whereItLives: input
+        packshotSubject: input
+    events:
+      ProductDetailsUpdated:
+        stream: Product
+        fields:
+          productId: cmd
+          description: cmd
+          price: cmd
+          currency: cmd
+          specs: cmd
+          cta: cmd
+          keyBenefits: cmd
+          proofPoints: cmd
+          allowedClaims: cmd
+          whereItLives: cmd
+          packshotSubject: cmd
+    specs:
+      - {given: [ProductCreated], when: EditProductDetails, then: [ProductDetailsUpdated]}
+      - {given: [ProductCreated], when: EditProductDetails, then: error TooManyProofPoints}
+      - {given: [ProductCreated], when: EditProductDetails, then: error TooManyClaims}
+
+  - id: S08
+    name: Ask AI to suggest a product field
+    type: command
+    actor: Seller
+    screen: ProductPage
+    command:
+      name: RequestSuggestion
+      fields: {productId: ProductCard.productId, field: input}
+    events:
+      SuggestionRequested:
+        stream: Product
+        fields: {productId: cmd, field: cmd}
+    specs:
+      - {given: [ProductCreated], when: RequestSuggestion, then: [SuggestionRequested]}
+      - {given: [ProductCreated], when: RequestSuggestion, then: error FieldNotSuggestible}
+    questions:
+      - "Do AI suggestions cost credits?"
+
+  - id: T02
+    name: AI suggests product field
+    type: translation
+    external: AIModels
+    trigger: SuggestionRequested
+    command:
+      name: SuggestField
+      fields: {productId: SuggestionRequested.productId, field: SuggestionRequested.field}
+    events:
+      ProductFieldSuggested:
+        stream: Product
+        fields: {productId: cmd, field: cmd, value: ext}
+    specs:
+      - {given: [SuggestionRequested], when: SuggestField, then: [ProductFieldSuggested]}
+
+  - id: S09
+    name: Describe the buyer
+    type: command
+    actor: Seller
+    screen: ProductPage
+    command:
+      name: SetBuyerPersona
+      fields: {productId: ProductCard.productId, persona: input}
+    events:
+      BuyerPersonaSet:
+        stream: Product
+        fields: {productId: cmd, persona: cmd}
+    specs:
+      - {given: [ProductCreated], when: SetBuyerPersona, then: [BuyerPersonaSet]}
+      - {given: [ProductCreated], when: SetBuyerPersona, then: error EmptyPersona}
+
+  - id: V03
+    name: Product card
+    type: view
+    read_model:
+      name: ProductCard
+      fields:
+        productId: [ProductCreated.productId]
+        brandId: [ProductCreated.brandId]
+        name: [ProductCreated.name]
+        photos: [ProductCreated.photos]
+        description: [ProductDetailsUpdated.description]
+        price: [ProductDetailsUpdated.price]
+        currency: [ProductDetailsUpdated.currency]
+        cta: [ProductDetailsUpdated.cta]
+        keyBenefits: [ProductDetailsUpdated.keyBenefits]
+        proofPoints: [ProductDetailsUpdated.proofPoints]
+        allowedClaims: [ProductDetailsUpdated.allowedClaims]
+        buyerPersona: [BuyerPersonaSet.persona]
+        suggestions: [ProductFieldSuggested.value]
+        advertisedStatus: [AdDownloaded.downloadedAt]
+    screens: [ProductPage, Onboarding, CreateAdPage, IdeasPage]
+    questions:
+      - "'Never advertised' flips on generation, on download, or on real publication (no ad-platform integration seen)?"
+
+  - id: V04
+    name: Context we use
+    type: view
+    read_model:
+      name: GenerationContext
+      fields:
+        brandName: [BrandDnaUpdated.name, BrandWebsiteRead.brandName]
+        toneOfVoice: [BrandDnaUpdated.toneOfVoice, BrandWebsiteRead.toneOfVoice]
+        doNots: [BrandDnaUpdated.doNots]
+        offers: [BrandDnaUpdated.offers]
+        artDirection: [BrandDnaUpdated.artDirection]
+        reviews: [ReviewAdded.text, BrandWebsiteRead.reviews]
+        productDescription: [ProductDetailsUpdated.description]
+        keyBenefits: [ProductDetailsUpdated.keyBenefits]
+        allowedClaims: [ProductDetailsUpdated.allowedClaims]
+        buyerPersona: [BuyerPersonaSet.persona]
+        missingFields: [rule:context-completeness]
+    screens: [CreateAdPage, IdeasPage]
+
+  # ---------------------------------------------------------------- C. Subscription & credits
+  - id: V05
+    name: Plan catalog
+    type: view
+    read_model:
+      name: PlanCatalog
+      fields:
+        plan: [config]
+        priceMonthly: [config]
+        creditsPerPeriod: [rule:plan-credits]
+    screens: [PricingPage, BillingPage]
+
+  - id: S10
+    name: Subscribe
+    type: command
+    actor: Seller
+    screen: PricingPage
+    command:
+      name: Subscribe
+      fields: {accountId: Session.accountId, plan: PlanCatalog.plan, period: input}
+    events:
+      SubscriptionCheckoutStarted:
+        stream: Subscription
+        fields: {checkoutId: system, accountId: cmd, plan: cmd, period: cmd}
+    specs:
+      - {given: [AccountRegistered], when: Subscribe, then: [SubscriptionCheckoutStarted]}
+      - {given: [SubscriptionActivated], when: Subscribe, then: error AlreadySubscribed}
+
+  - id: T03
+    name: Payment provider confirms first payment
+    type: translation
+    external: PaymentProvider
+    trigger: SubscriptionCheckoutStarted
+    command:
+      name: ConfirmSubscriptionPayment
+      fields:
+        checkoutId: SubscriptionCheckoutStarted.checkoutId
+        accountId: SubscriptionCheckoutStarted.accountId
+        plan: SubscriptionCheckoutStarted.plan
+        period: SubscriptionCheckoutStarted.period
+    events:
+      SubscriptionActivated:
+        stream: Subscription
+        fields: {subscriptionId: system, accountId: cmd, plan: cmd, period: cmd, paymentId: ext, periodStart: ext, periodEnd: ext}
+      SubscriptionPaymentFailed:
+        stream: Subscription
+        fields: {checkoutId: cmd, reason: ext}
+    specs:
+      - {given: [SubscriptionCheckoutStarted], when: ConfirmSubscriptionPayment, then: [SubscriptionActivated]}
+      - {given: [SubscriptionCheckoutStarted], when: ConfirmSubscriptionPayment, then: [SubscriptionPaymentFailed]}
+
+  - id: A02
+    name: Grant credits for the first period
+    type: automation
+    trigger: SubscriptionActivated
+    command:
+      name: GrantPeriodCredits
+      fields: {accountId: SubscriptionActivated.accountId, plan: SubscriptionActivated.plan, period: SubscriptionActivated.period}
+    events:
+      SubscriptionCreditsGranted:
+        stream: CreditWallet
+        fields: {accountId: cmd, amount: rule:plan-credits, validUntil: SubscriptionActivated.periodEnd}
+    specs:
+      - {given: [SubscriptionActivated], when: GrantPeriodCredits, then: [SubscriptionCreditsGranted]}
+    questions:
+      - "Annual plan: 12x credits at once for the year, or a monthly grant + reset?"
+
+  - id: T04
+    name: Renewal payment result (webhook)
+    type: translation
+    external: PaymentProvider
+    trigger: clock
+    reads: [ActiveSubscriptions]
+    command:
+      name: RecordRenewalPayment
+      fields: {subscriptionId: ActiveSubscriptions.subscriptionId, outcome: ext}
+    events:
+      SubscriptionRenewed:
+        stream: Subscription
+        fields: {subscriptionId: cmd, paymentId: ext, periodStart: ext, periodEnd: ext}
+      SubscriptionPaymentPastDue:
+        stream: Subscription
+        fields: {subscriptionId: cmd, retryUntil: ext}
+    specs:
+      - {given: [SubscriptionActivated], when: RecordRenewalPayment, then: [SubscriptionRenewed]}
+      - {given: [SubscriptionActivated], when: RecordRenewalPayment, then: [SubscriptionPaymentPastDue]}
+    questions:
+      - "Grace period length and retry schedule ('short grace period')?"
+      - "During past-due: are previous-period credits still spendable or already reset?"
+
+  - id: A03
+    name: Reset and grant credits on renewal
+    type: automation
+    trigger: SubscriptionRenewed
+    reads: [ActiveSubscriptions, CreditBalance]
+    command:
+      name: ResetAndGrantCredits
+      fields:
+        subscriptionId: SubscriptionRenewed.subscriptionId
+        accountId: ActiveSubscriptions.accountId
+        plan: ActiveSubscriptions.plan
+        period: ActiveSubscriptions.period
+    events:
+      SubscriptionCreditsExpired:
+        stream: CreditWallet
+        fields: {accountId: cmd, amount: CreditBalance.subscriptionCredits}
+      SubscriptionCreditsGranted:
+        stream: CreditWallet
+        fields: {accountId: cmd, amount: rule:plan-credits, validUntil: SubscriptionRenewed.periodEnd}
+    specs:
+      - {given: [SubscriptionActivated, SubscriptionCreditsGranted, SubscriptionRenewed], when: ResetAndGrantCredits, then: [SubscriptionCreditsExpired, SubscriptionCreditsGranted]}
+
+  - id: S11
+    name: Cancel subscription
+    type: command
+    actor: Seller
+    screen: BillingPage
+    command:
+      name: CancelSubscription
+      fields: {subscriptionId: ActiveSubscriptions.subscriptionId}
+    events:
+      SubscriptionCancellationScheduled:
+        stream: Subscription
+        fields: {subscriptionId: cmd, effectiveAt: ActiveSubscriptions.periodEnd}
+    specs:
+      - name: cancelling keeps the plan until the paid period ends
+        given: subscribedSellerWithProduct
+        then:
+          events: [SubscriptionCancellationScheduled]
+          see:
+            - {screen: BillingPage, field: ActiveSubscriptions.status, is: cancel_scheduled}
+      - {given: [SubscriptionActivated, SubscriptionEnded], when: CancelSubscription, then: error SubscriptionNotActive}
+
+  - id: A04
+    name: End subscription (period end after cancel, or grace exhausted)
+    type: automation
+    trigger: clock
+    reads: [ActiveSubscriptions, CreditBalance]
+    command:
+      name: EndSubscription
+      fields: {subscriptionId: ActiveSubscriptions.subscriptionId, accountId: ActiveSubscriptions.accountId}
+    events:
+      SubscriptionEnded:
+        stream: Subscription
+        fields: {subscriptionId: cmd, endedAt: system, reason: rule:end-reason}
+      SubscriptionCreditsExpired:
+        stream: CreditWallet
+        fields: {accountId: cmd, amount: CreditBalance.subscriptionCredits}
+    specs:
+      - name: a cancelled subscription ends at the period end and its credits expire
+        given: cancelledSellerWithProduct
+        after: periodEnd
+        then:
+          events: [SubscriptionEnded, SubscriptionCreditsExpired]
+          see:
+            - {screen: BillingPage, field: ActiveSubscriptions.status, is: ended}
+            - {screen: CreditsDialog, field: CreditBalance.subscriptionCredits, is: 0}
+      - {given: [SubscriptionActivated, SubscriptionPaymentPastDue], when: EndSubscription, then: [SubscriptionEnded, SubscriptionCreditsExpired]}
+
+  - id: S12
+    name: Change plan
+    type: command
+    actor: Seller
+    screen: BillingPage
+    rules: [plan-change-direction]
+    command:
+      name: ChangePlan
+      fields: {subscriptionId: ActiveSubscriptions.subscriptionId, plan: PlanCatalog.plan}
+    events:
+      PlanUpgraded:
+        stream: Subscription
+        fields: {subscriptionId: cmd, plan: cmd, effectiveAt: system}
+      PlanDowngradeScheduled:
+        stream: Subscription
+        fields: {subscriptionId: cmd, plan: cmd, effectiveAt: ActiveSubscriptions.periodEnd}
+    specs:
+      - {given: [SubscriptionActivated], when: ChangePlan, then: [PlanUpgraded]}
+      - {given: [SubscriptionActivated], when: ChangePlan, then: [PlanDowngradeScheduled]}
+      - {given: [SubscriptionActivated], when: ChangePlan, then: error SamePlan}
+    questions:
+      - "Upgrade 'takes effect right away': which credits are granted - difference, full new allocation, pro-rata?"
+      - "Upgrade charges the price difference now or at renewal?"
+
+  - id: S13
+    name: Buy top-up credits
+    type: command
+    actor: Seller
+    screen: CreditsDialog
+    rules: [topup-pack-credits]
+    command:
+      name: BuyTopUp
+      fields: {accountId: Session.accountId, pack: input}
+    events:
+      TopUpCheckoutStarted:
+        stream: CreditWallet
+        fields: {checkoutId: system, accountId: cmd, pack: cmd}
+    specs:
+      - name: a subscribed seller buys a top-up pack
+        given: subscribedSellerWithProduct
+        when: {pack: small}
+        external: {PaymentProvider: paid}
+        then:
+          events: [TopUpCheckoutStarted]
+          see:
+            - {screen: CreditsDialog, field: CreditBalance.topUpCredits, is: "<credits in the small pack>"}
+        question: "Pack sizes and prices are not visible without an active subscription"
+      - name: a top-up needs an active subscription
+        given: sellerWithProduct
+        when: {pack: small}
+        then: {error: SubscriptionRequired}
+
+  - id: T05
+    name: Payment provider confirms top-up
+    type: translation
+    external: PaymentProvider
+    trigger: TopUpCheckoutStarted
+    command:
+      name: ConfirmTopUpPayment
+      fields: {checkoutId: TopUpCheckoutStarted.checkoutId, accountId: TopUpCheckoutStarted.accountId, pack: TopUpCheckoutStarted.pack}
+    events:
+      TopUpCreditsGranted:
+        stream: CreditWallet
+        fields: {accountId: cmd, amount: rule:topup-pack-credits, paymentId: ext}
+    specs:
+      - {given: [TopUpCheckoutStarted], when: ConfirmTopUpPayment, then: [TopUpCreditsGranted]}
+
+  - id: T06
+    name: Refund or chargeback
+    type: translation
+    external: PaymentProvider
+    trigger: external
+    reads: [Payments]
+    command:
+      name: RecordRefund
+      fields: {paymentId: ext, accountId: Payments.accountId, amount: Payments.credits}
+    events:
+      CreditsRevoked:
+        stream: CreditWallet
+        fields: {accountId: cmd, amount: cmd, paymentId: cmd}
+    specs:
+      - {given: [TopUpCreditsGranted], when: RecordRefund, then: [CreditsRevoked]}
+    questions:
+      - "Refund of a subscription payment: which credits are revoked if part of the period is already used?"
+
+  - id: V06
+    name: Credit balance
+    type: view
+    read_model:
+      name: CreditBalance
+      fields:
+        subscriptionCredits: [SubscriptionCreditsGranted.amount, SubscriptionCreditsExpired.amount, CreditsCharged.fromSubscription, CreditsRevoked.amount]
+        topUpCredits: [TopUpCreditsGranted.amount, CreditsCharged.fromTopUp, CreditsRevoked.amount]
+        total: [rule:sum]
+        canBuyTopUp: [SubscriptionActivated, SubscriptionEnded]
+    screens: [CreditsDialog, CreateAdPage]
+    questions:
+      - "Can top-up credits be spent while there is no active subscription (they 'never expire')?"
+
+  - id: V07
+    name: Active subscriptions
+    type: view
+    read_model:
+      name: ActiveSubscriptions
+      fields:
+        subscriptionId: [SubscriptionActivated.subscriptionId]
+        accountId: [SubscriptionActivated.accountId]
+        plan: [SubscriptionActivated.plan, PlanUpgraded.plan, PlanDowngradeScheduled.plan]
+        period: [SubscriptionActivated.period]
+        periodEnd: [SubscriptionActivated.periodEnd, SubscriptionRenewed.periodEnd]
+        status: [SubscriptionActivated, SubscriptionPaymentPastDue, SubscriptionCancellationScheduled, SubscriptionEnded]
+    screens: [BillingPage]
+
+  - id: V14
+    name: Checkout result
+    type: view
+    read_model:
+      name: CheckoutStatus
+      fields:
+        checkoutId: [SubscriptionCheckoutStarted.checkoutId, TopUpCheckoutStarted.checkoutId]
+        status: [SubscriptionCheckoutStarted, SubscriptionActivated, SubscriptionPaymentFailed, TopUpCheckoutStarted, TopUpCreditsGranted]
+        error: [SubscriptionPaymentFailed.reason]
+    screens: [PricingPage, CreditsDialog]
+    questions:
+      - "Top-up payment failure: no event observed in the policy - what does the user see?"
+
+  - id: V08
+    name: Payments ledger
+    type: view
+    read_model:
+      name: Payments
+      fields:
+        paymentId: [SubscriptionActivated.paymentId, SubscriptionRenewed.paymentId, TopUpCreditsGranted.paymentId]
+        accountId: [SubscriptionActivated.accountId, TopUpCreditsGranted.accountId]
+        credits: [SubscriptionCreditsGranted.amount, TopUpCreditsGranted.amount]
+    screens: []
+
+  # ---------------------------------------------------------------- D. Ideas
+  - id: S14
+    name: Request ideas for a product
+    type: command
+    actor: Seller
+    screen: IdeasPage
+    command:
+      name: RequestIdeas
+      fields: {productId: ProductCard.productId, goal: input, format: input, holiday: input, context: input, note: input}
+    events:
+      IdeasRequested:
+        stream: Ideation
+        fields: {requestId: system, productId: cmd, goal: cmd, format: cmd, holiday: cmd, context: cmd, note: cmd}
+    specs:
+      - {given: [ProductCreated], when: RequestIdeas, then: [IdeasRequested]}
+      - {given: [ProductCreated], when: RequestIdeas, then: error GoalRequired}
+    questions:
+      - "Do ideas cost credits? (UI shows 'Counting...')"
+
+  - id: T07
+    name: AI generates ideas
+    type: translation
+    external: AIModels
+    trigger: IdeasRequested
+    reads: [GenerationContext]
+    command:
+      name: GenerateIdeas
+      fields: {requestId: IdeasRequested.requestId, productId: IdeasRequested.productId, goal: IdeasRequested.goal, context: GenerationContext.missingFields}
+    events:
+      IdeasGenerated:
+        stream: Ideation
+        fields: {requestId: cmd, productId: cmd, ideas: ext}
+      IdeasFailed:
+        stream: Ideation
+        fields: {requestId: cmd, reason: ext}
+    specs:
+      - {given: [IdeasRequested], when: GenerateIdeas, then: [IdeasGenerated]}
+      - {given: [IdeasRequested], when: GenerateIdeas, then: [IdeasFailed]}
+
+  - id: V09
+    name: Ideas list
+    type: view
+    read_model:
+      name: IdeasList
+      fields:
+        productId: [IdeasGenerated.productId]
+        goal: [IdeasRequested.goal]
+        ideas: [IdeasGenerated.ideas]
+        status: [IdeasRequested, IdeasGenerated, IdeasFailed]
+        error: [IdeasFailed.reason]
+    screens: [IdeasPage, CreateAdPage]
+
+  # ---------------------------------------------------------------- E. Templates & avatars
+  - id: V10
+    name: Template catalog
+    type: view
+    read_model:
+      name: TemplateCatalog
+      fields:
+        templateId: [config]
+        adType: [config]
+        layoutOrStyle: [config]
+        durationSec: [config]
+        occasion: [config]
+        region: [config]
+    screens: [TemplatesPage, CreateAdPage, Home]
+
+  - id: S15
+    name: Create own avatar
+    type: command
+    actor: Seller
+    screen: AvatarsPage
+    command:
+      name: CreateAvatar
+      fields: {accountId: Session.accountId, photos: input, description: input}
+    events:
+      AvatarRequested:
+        stream: Avatar
+        fields: {avatarId: system, accountId: cmd, photos: cmd, description: cmd}
+    specs:
+      - {given: [AccountRegistered], when: CreateAvatar, then: [AvatarRequested]}
+      - {given: [AccountRegistered], when: CreateAvatar, then: error PhotosOrDescriptionRequired}
+    questions:
+      - "Does avatar creation cost credits? Consent rules for using a real person's photos?"
+
+  - id: T08
+    name: AI builds the avatar
+    type: translation
+    external: AIModels
+    trigger: AvatarRequested
+    command:
+      name: BuildAvatar
+      fields: {avatarId: AvatarRequested.avatarId, photos: AvatarRequested.photos, description: AvatarRequested.description}
+    events:
+      AvatarCreated:
+        stream: Avatar
+        fields: {avatarId: cmd, look: ext}
+      AvatarFailed:
+        stream: Avatar
+        fields: {avatarId: cmd, reason: ext}
+    specs:
+      - {given: [AvatarRequested], when: BuildAvatar, then: [AvatarCreated]}
+      - {given: [AvatarRequested], when: BuildAvatar, then: [AvatarFailed]}
+
+  - id: V11
+    name: Avatar gallery (stock + own)
+    type: view
+    read_model:
+      name: AvatarGallery
+      fields:
+        avatarId: [config, AvatarCreated.avatarId]
+        name: [config, AvatarRequested.description]
+        age: [config]
+        gender: [config]
+        ethnicity: [config]
+        look: [AvatarCreated.look]
+        status: [AvatarRequested, AvatarCreated, AvatarFailed]
+    screens: [AvatarsPage, CreateAdPage]
+
+  # ---------------------------------------------------------------- F. Generation & export
+  - id: S16
+    name: Request generation (static / carousel / video)
+    type: command
+    actor: Seller
+    screen: CreateAdPage
+    rules: [generation-cost, credit-sufficiency, context-snapshot]
+    command:
+      name: RequestGeneration
+      fields:
+        accountId: Session.accountId
+        adType: input
+        productId: ProductCard.productId
+        assets: ProductCard.photos
+        templateId: TemplateCatalog.templateId
+        avatarId: AvatarGallery.avatarId
+        ideaId: IdeasList.ideas
+        prompt: input
+        occasion: TemplateCatalog.occasion
+        ownOffer: input
+        contextSelection: input
+        modelQuality: input
+        ratio: input
+        variations: input
+        availableCredits: CreditBalance.total
+    events:
+      GenerationRequested:
+        stream: Generation
+        fields:
+          generationId: system
+          accountId: cmd
+          adType: cmd
+          productId: cmd
+          assets: cmd
+          templateId: cmd
+          avatarId: cmd
+          ideaId: cmd
+          prompt: cmd
+          occasion: cmd
+          ownOffer: cmd
+          contextSnapshot: rule:context-snapshot
+          modelQuality: cmd
+          ratio: cmd
+          variations: cmd
+          estimatedCost: rule:generation-cost
+          requestedAt: system
+    specs:
+      - name: a ready static ad is charged at the estimate
+        given: subscribedSellerWithProduct
+        when: {adType: static, modelQuality: GPT25_high_2K, ratio: "9:16", variations: 1}
+        external: {AIModels: succeeds}
+        then:
+          events: [GenerationRequested]
+          see:
+            - {screen: MyAdsPage, field: MyAds.status, is: succeeded}
+            - {screen: CreditsDialog, field: CreditBalance.total, is: 2331}
+      - name: a failed render costs nothing
+        given: subscribedSellerWithProduct
+        when: {adType: static, modelQuality: GPT25_high_2K, ratio: "9:16", variations: 1}
+        external: {AIModels: fails}
+        then:
+          events: [GenerationRequested]
+          see:
+            - {screen: MyAdsPage, field: MyAds.status, is: failed}
+            - {screen: CreditsDialog, field: CreditBalance.total, is: 2350}
+      - name: without credits the request is refused
+        given: sellerWithProduct
+        when: {adType: static, modelQuality: GPT25_high_2K, ratio: "9:16", variations: 1}
+        then: {error: InsufficientCredits}
+      - name: a negative balance blocks new ads
+        given: sellerInDebt
+        when: {adType: static, modelQuality: GPT25_low, ratio: "1:1", variations: 1}
+        then: {error: NegativeBalance}
+      - name: a second request beyond the balance is refused while the first is rendering
+        given: subscribedSellerWithProduct
+        when: {adType: static, modelQuality: GPT25_high_2K, ratio: "9:16", variations: 4}
+        then: {error: InsufficientCredits}
+        question: "No credit reservation: two parallel requests both pass the balance check (an API-level test, not UI)"
+    questions:
+      - "No credit reservation: what stops N parallel generations with a balance for one?"
+      - "Pricing table implies 10 credits per image ad (850/85); UI shows 14-22. Which is the contract?"
+      - "'Change it' on a finished ad: new generation with a parent reference, or an edit of the same one?"
+
+  - id: T09
+    name: AI model renders the ad
+    type: translation
+    external: AIModels
+    trigger: GenerationRequested
+    command:
+      name: RunGeneration
+      fields: {generationId: GenerationRequested.generationId, accountId: GenerationRequested.accountId, modelQuality: GenerationRequested.modelQuality, variations: GenerationRequested.variations}
+    events:
+      GenerationSucceeded:
+        stream: Generation
+        fields: {generationId: cmd, accountId: cmd, assets: ext, actualCost: rule:generation-cost, completedAt: system}
+      GenerationFailed:
+        stream: Generation
+        fields: {generationId: cmd, reason: ext}
+    specs:
+      - {given: [GenerationRequested], when: RunGeneration, then: [GenerationSucceeded]}
+      - {given: [GenerationRequested], when: RunGeneration, then: [GenerationFailed]}
+    questions:
+      - "Video: first frame -> animation is one generation or two (with user approval in between)?"
+      - "Partial success (2 of 4 variations): charged for 2 or for 4?"
+
+  - id: A05
+    name: Charge credits after success
+    type: automation
+    trigger: GenerationSucceeded
+    rules: [wallet-order]
+    command:
+      name: ChargeCredits
+      fields: {generationId: GenerationSucceeded.generationId, accountId: GenerationSucceeded.accountId, amount: GenerationSucceeded.actualCost}
+    events:
+      CreditsCharged:
+        stream: CreditWallet
+        fields: {accountId: cmd, generationId: cmd, amount: cmd, fromSubscription: rule:wallet-order, fromTopUp: rule:wallet-order}
+    specs:
+      - {given: [GenerationSucceeded], when: ChargeCredits, then: [CreditsCharged]}
+
+  - id: V12
+    name: My Ads
+    type: view
+    read_model:
+      name: MyAds
+      fields:
+        generationId: [GenerationRequested.generationId]
+        adType: [GenerationRequested.adType]
+        productId: [GenerationRequested.productId]
+        status: [GenerationRequested, GenerationSucceeded, GenerationFailed]
+        assets: [GenerationSucceeded.assets]
+        error: [GenerationFailed.reason]
+        cost: [CreditsCharged.amount]
+        createdAt: [GenerationRequested.requestedAt]
+    screens: [MyAdsPage, BrandPage, ProductPage]
+
+  - id: S17
+    name: Download ad
+    type: command
+    actor: Seller
+    screen: MyAdsPage
+    command:
+      name: DownloadAd
+      fields: {generationId: MyAds.generationId, assetId: MyAds.assets}
+    events:
+      AdDownloaded:
+        stream: Generation
+        fields: {generationId: cmd, assetId: cmd, downloadedAt: system}
+    specs:
+      - name: downloading a ready ad completes the onboarding checklist
+        given: sellerWithReadyAd
+        then:
+          events: [AdDownloaded]
+          see:
+            - {screen: Home, field: OnboardingProgress.downloaded, is: true}
+      - name: a failed ad has nothing to download
+        given: sellerWithFailedAd
+        then: {error: NothingToDownload}
+
+  - id: V13
+    name: Onboarding checklist (Home)
+    type: view
+    read_model:
+      name: OnboardingProgress
+      fields:
+        productAdded: [ProductCreated]
+        firstAdCreated: [GenerationSucceeded]
+        downloaded: [AdDownloaded]
+    screens: [Home]
