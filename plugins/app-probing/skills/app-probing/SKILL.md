@@ -169,6 +169,10 @@ Playwright Inspector.
   the fixture or the method. If the element has no test id, adding one to the app is better than a fragile
   locator; that is an app change, and you say so.
 
+`fixture-modify` and `pom-modify` come with the `playwright` plugin. If the session does not have them, do not write
+the fixture or the POM method without them: say that Tier 2 needs that plugin, offer
+`/plugin install playwright@private-plugins`, and stop until it is installed. Tier 1 needs nothing more.
+
 **A stub fixture is a full stop.** If the state you need maps to a fixture that throws with a recorded gap, report
 its message verbatim with `file:line` and stop. Do not run anything and do not build a way around it: the message
 is a decision someone made with more context than the probe has. Checking whether the gap still exists is work for
