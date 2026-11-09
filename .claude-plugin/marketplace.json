@@ -35,6 +35,12 @@
       "source": "./plugins/bb",
       "description": "Set up and maintain a repository's bb (getbb.app) project, where every ticket gets a manager session that runs hidden workers: init, a local or remote bb server and moves between them, and periodic tasks that start a manager with an assignment.",
       "version": "0.1.0"
+    },
+    {
+      "name": "ui-prototyping",
+      "source": "./plugins/ui-prototyping",
+      "description": "Sketch screens from a project's own design system and serve them at a local URL: one command for a prototypes dev server, and named prototypes that are saved as one file each.",
+      "version": "0.1.0"
     }
   ]
 }
