@@ -8,8 +8,10 @@ server:
   machine: <name>      # the machine that runs the bb server, as `bb machine list` names it
   where: local         # local: this computer; remote: another machine
   route: direct        # direct, ssh-tunnel or tailscale: how the bb CLI here reaches the server
-  ssh_host: null       # ssh-tunnel only: the host to tunnel to
+  ssh_host: null       # ssh-tunnel only: the host to tunnel to, such as a ~/.ssh/config alias that carries its key
+  tunnel: null         # ssh-tunnel only: what keeps the tunnel up, such as the launch agent local.bb-server-tunnel
   url: http://127.0.0.1:38886   # BB_SERVER_URL for the bb CLI here
+  cli_data_dir: null   # BB_DATA_DIR for the bb CLI here: an empty folder once the server moved away from this computer
 
 project: <proj_…>      # the bb project of this repository
 tracker: <PREFIX>      # its bb Tasks project

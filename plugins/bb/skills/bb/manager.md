@@ -40,6 +40,8 @@ Each worker gets its own fresh worktree. When a worker must continue in another 
 
 `bb tasks threads <KEY>` lists the workers. Detach a worker that is finished or replaced
 (`bb tasks detach <KEY> --thread <id>`) and archive it when you no longer need it (`bb thread archive <id>`).
+Keep a worker that opened a pull request attached until the pull request is merged or closed: bb shows a ticket's
+pull requests only through its attached threads, so detaching that worker hides the pull request from the ticket.
 
 ### Worker prompt
 

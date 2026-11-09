@@ -34,7 +34,7 @@
       "name": "bb",
       "source": "./plugins/bb",
       "description": "Set up and maintain a repository's bb (getbb.app) project, where every ticket gets a manager session that runs hidden workers: init, a local or remote bb server and moves between them, and periodic tasks that start a manager with an assignment.",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "ui-prototypes",
