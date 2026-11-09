@@ -8,7 +8,7 @@ Private Claude Code plugins.
 | `harness` | [`harness`](plugins/harness/skills/harness/SKILL.md) | Sets up and maintains a project's agent loops: designs, builds, validates and revises them, with a catalog of 88 loop types and a per-project policy for when an agent may call a person |
 | `playwright` | [`fixture-modify`](plugins/playwright/skills/fixture-modify/SKILL.md), [`pom-modify`](plugins/playwright/skills/pom-modify/SKILL.md) | Writes the Playwright code tests stand on: fixtures that seed test state, and Page Objects |
 | `app-probing` | [`app-probing`](plugins/app-probing/skills/app-probing/SKILL.md) | Probes the running web app with a throwaway Playwright script and reports what it really does |
-| `ui-prototyping` | [`ui-prototyping`](plugins/ui-prototyping/skills/ui-prototyping/SKILL.md) | Finds a project's design system, sets up one command that serves prototypes built from its components at a local URL, and makes, opens, lists and deletes named prototypes |
+| `ui-prototypes` | [`ui-prototypes`](plugins/ui-prototypes/skills/ui-prototypes/SKILL.md) | Finds a project's design system, sets up one command that serves prototypes built from its components at a local URL, and makes, opens, lists and deletes named prototypes |
 | `bb` | [`bb`](plugins/bb/skills/bb/SKILL.md) | Sets up and maintains a repository's [bb](https://getbb.app) project, where every ticket in bb Tasks gets a manager session that runs hidden workers: inits a minimal project, runs the bb server locally or remotely and moves it between them, creates, lists and deletes periodic tasks that start a manager with an assignment |
 
 Install:
@@ -19,7 +19,7 @@ Install:
 /plugin install harness@private-plugins
 /plugin install playwright@private-plugins
 /plugin install app-probing@private-plugins
-/plugin install ui-prototyping@private-plugins
+/plugin install ui-prototypes@private-plugins
 /plugin install bb@private-plugins
 ```
 
@@ -29,7 +29,7 @@ Install:
 
 `app-probing` builds a missing fixture or Page Object with the skills of `playwright`: install both.
 
-`ui-prototyping` adds to a project a `prototypes/` folder (a runner, a README with the design-system catalog, one file
+`ui-prototypes` adds to a project a `prototypes/` folder (a runner, a README with the design-system catalog, one file
 per prototype) and a `proto` script. It works with React and Vite.
 
 `bb` keeps its setup in bb itself (projects, the Manager preset, automations) and marks a repository it maintains

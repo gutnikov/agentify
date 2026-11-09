@@ -1,9 +1,9 @@
 ---
-name: ui-prototyping
+name: ui-prototypes
 description: Sketches screens from a project's own design system and serves them at a local URL. Finds the project's design-system components, sets up one command that starts a dev server for prototypes, and makes, changes, opens, lists and deletes named prototypes, each saved as one file so that it can be opened again. Use when the user wants to mock up or prototype a screen, a flow or a layout with the project's components, see an idea in the browser before building it, set up prototyping for a project, or open, list or delete a prototype. Not for building the real feature.
 ---
 
-# UI prototyping
+# UI prototypes
 
 A **prototype** is one file that composes the project's design-system components into a screen. A dev server shows
 it at `http://localhost:<port>/<name>`. It is a reference for a feature, not the feature: it makes no API calls and

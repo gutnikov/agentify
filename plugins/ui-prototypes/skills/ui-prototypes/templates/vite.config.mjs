@@ -1,6 +1,6 @@
 // UI prototypes: one file per prototype in this folder, served by Vite.
 // Run: __COMMAND__  →  http://localhost:__PORT__/
-// Set up and maintained by the ui-prototyping plugin for Claude Code; README.md
+// Set up and maintained by the ui-prototypes plugin for Claude Code; README.md
 // next to this file lists the design system's components and how to use them.
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';

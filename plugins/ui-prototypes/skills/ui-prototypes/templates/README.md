@@ -1,6 +1,6 @@
 # Prototypes
 
-Screens sketched from __DESIGN_SYSTEM__, one file each. This folder is maintained by the ui-prototyping plugin for
+Screens sketched from __DESIGN_SYSTEM__, one file each. This folder is maintained by the ui-prototypes plugin for
 Claude Code: ask it to make, change, open, list or delete a prototype.
 
 ```

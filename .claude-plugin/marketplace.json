@@ -37,8 +37,8 @@
       "version": "0.1.0"
     },
     {
-      "name": "ui-prototyping",
-      "source": "./plugins/ui-prototyping",
+      "name": "ui-prototypes",
+      "source": "./plugins/ui-prototypes",
       "description": "Sketch screens from a project's own design system and serve them at a local URL: one command for a prototypes dev server, and named prototypes that are saved as one file each.",
       "version": "0.1.0"
     }
