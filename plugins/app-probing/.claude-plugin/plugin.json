@@ -1,0 +1,10 @@
+{
+  "name": "app-probing",
+  "description": "Find out what the running web app actually does with a throwaway Playwright probe that starts from a test fixture and acts through Page Objects, and reports the landing URL, credentials, test ids, console errors, failed requests and a screenshot.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Alex Gutnikov",
+    "url": "https://github.com/gutnikov"
+  },
+  "repository": "https://github.com/gutnikov/private-plugins"
+}

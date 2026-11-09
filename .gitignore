@@ -1,7 +1,7 @@
-# spec-writing: runs of the skill and of the language labs, and the writer's sandbox
+# spec: runs of the skill and of the language labs, and the writer's sandbox
 .spec-runs/
-plugins/spec-writing/skills/spec-writing/*/lab/runs/
-plugins/spec-writing/skills/spec-writing/*/lab/sandbox/
+plugins/spec/skills/spec/*/lab/runs/
+plugins/spec/skills/spec/*/lab/sandbox/
 
 __pycache__/
 .DS_Store

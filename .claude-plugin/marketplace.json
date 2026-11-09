@@ -7,26 +7,32 @@
   },
   "plugins": [
     {
-      "name": "spec-writing",
-      "source": "./plugins/spec-writing",
+      "name": "spec",
+      "source": "./plugins/spec",
       "description": "Write any text a person will decide on (Russian or English) through a brief, a writer, a fact check, a review and one revision.",
       "version": "0.1.0"
     },
     {
-      "name": "harness-engineering",
-      "source": "./plugins/harness-engineering",
+      "name": "harness",
+      "source": "./plugins/harness",
       "description": "Set up and maintain a project's agent loops: design, build, validate and revise them like software, with a catalog of 88 loop types and a per-project policy for when an agent may call a person.",
       "version": "0.2.1"
     },
     {
-      "name": "playwright-e2e",
-      "source": "./plugins/playwright-e2e",
-      "description": "Work with a web app through Playwright fixtures and Page Objects: probe the running app, build fixtures that seed test state, write Page Objects.",
+      "name": "playwright",
+      "source": "./plugins/playwright",
+      "description": "Write Playwright fixtures that seed the state a test starts from, and Page Objects that are the only way tests touch the UI.",
       "version": "0.1.0"
     },
     {
-      "name": "bb-engineering",
-      "source": "./plugins/bb-engineering",
+      "name": "app-probing",
+      "source": "./plugins/app-probing",
+      "description": "Find out what the running web app actually does with a throwaway Playwright probe: the landing URL, credentials, test ids, console errors, failed requests and a screenshot.",
+      "version": "0.1.0"
+    },
+    {
+      "name": "bb",
+      "source": "./plugins/bb",
       "description": "Set up and maintain a repository's bb (getbb.app) project, where every ticket gets a manager session that runs hidden workers: init, a local or remote bb server and moves between them, and periodic tasks that start a manager with an assignment.",
       "version": "0.1.0"
     }

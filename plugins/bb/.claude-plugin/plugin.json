@@ -1,0 +1,10 @@
+{
+  "name": "bb",
+  "description": "Set up and maintain a repository's bb (getbb.app) project, where every ticket gets a manager session that runs hidden workers: init a minimal project marked as maintained by this agent, run the bb server locally or remotely and move it between them, and create, list and delete periodic tasks that start a manager with an assignment.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Alex Gutnikov",
+    "url": "https://github.com/gutnikov"
+  },
+  "repository": "https://github.com/gutnikov/private-plugins"
+}
