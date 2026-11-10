@@ -189,8 +189,9 @@ def named_at(entries, loops):
     """{place: [names]} from profile entries written as "<name>: <places> — <details>"."""
     at = collections.defaultdict(list)
     for e in entries or []:
-        for token in places_in(str(e), loops):
-            at[token].append(str(e).split(":")[0].strip())
+        name, _, rest = str(e).partition(":")
+        for token in places_in(rest.split(" — ")[0], loops):  # the details may name a place too: not this entry's
+            at[token].append(name.strip())
     return at
 
 

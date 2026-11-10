@@ -54,8 +54,10 @@ If `loops/policy.yaml` exists, this is a second run: go to "Running init again".
 
 Find out everything `$H/profile.md` §1 lists: the stack, the kind, the stages, the tools (each checked with one real
 call), where the work of each super-loop comes from, where a change ends, and what has gone wrong. Then find every
-loop of the table above. Read what a CI job or a hook runs, not only its name. In a monorepo, map the part the focus
-names; if there is no focus and the repository leaves it open, ask which part (H1).
+loop of the table above. Read what a CI job or a hook runs, not only its name. For each loop in `loops/`, compare
+its `status` with its `wiring`: a loop wired in on the main branch but still `validated`, or `active` with wiring
+that no longer runs, has a status that lags; note it for the report. In a monorepo, map the part the focus names; if
+there is no focus and the repository leaves it open, ask which part (H1).
 
 ## 2. Write the map
 
@@ -102,6 +104,10 @@ Init does not ask what to catch first (the form's Q4): it records the history, a
 Log every question with its answer, Map and the profile questions under H1:
 `loops.py hitl H1 --loop init --checked "…" --question "…" --answer "…"`.
 
+A tool the user picks that step 1 did not find does not go into `tools` as it is: ask once what it is and how the
+agent reaches it (H1), with the sources you did find as options, and call it once if you can. A tool nobody can name
+stays out of `tools`, because the loops that need it would count as ones the project can run.
+
 Write the answers into the profile and draw the map again. Show the new map; ask once more only if the answers
 left something open.
 
@@ -125,7 +131,8 @@ the project's loops", and push only as far as `autonomy.push` allows.
 ## 6. Report
 
 A few lines: the map as confirmed, what the user corrected, the gaps and what each one means for "done" today (where
-nothing confirms a change, a person decides, or nobody does), and the guides and unwired configs you found. Then up
+nothing confirms a change, a person decides, or nobody does), the loops that cannot block and the loops whose status
+lags, and the guides and unwired configs you found. Changing a status is a task too. Then up
 to 3 tasks worth starting, each from a gap with evidence in the history, as commands the user can copy:
 
 ```
