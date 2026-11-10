@@ -4,6 +4,7 @@ title: "Doc linters for the knowledge base"
 group: code
 qualities: [understandability, supportability]
 stages: [ci, scheduled]
+places: [delivery/work, remediation/work, maintenance/entry, maintenance/work]
 ---
 
 # Doc linters for the knowledge base

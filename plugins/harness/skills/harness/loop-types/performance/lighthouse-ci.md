@@ -5,6 +5,8 @@ group: performance
 qualities: [performance, accessibility]
 stages: [preview]
 speed: [minutes]
+places: [delivery/release]
+needs: [browser]
 ---
 
 # Lighthouse CI

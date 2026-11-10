@@ -6,6 +6,7 @@ when: [during]
 initiator: human
 sync: async
 speed: [sub-second]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Observe and interrupt

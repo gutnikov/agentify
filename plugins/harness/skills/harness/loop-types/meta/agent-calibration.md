@@ -5,6 +5,7 @@ group: meta
 qualities: [correctness of non-deterministic components, trustworthiness]
 stages: [local, scheduled]
 speed: [minutes]
+places: [harness:delivery/gate, harness:delivery/confirmation, harness:remediation/oracle, harness:maintenance/gate]
 ---
 
 # Calibration of a loop's agent

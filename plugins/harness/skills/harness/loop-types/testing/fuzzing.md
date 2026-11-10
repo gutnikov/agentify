@@ -4,6 +4,7 @@ title: "Fuzzing"
 group: testing
 qualities: [robustness, security (resistance)]
 stages: [ci, scheduled]
+places: [remediation/entry, remediation/oracle]
 ---
 
 # Fuzzing

@@ -4,6 +4,7 @@ title: "User feedback"
 group: production
 qualities: [functional suitability, satisfaction]
 speed: [days]
+places: [delivery/entry, delivery/oracle, remediation/entry, discovery/entry]
 ---
 
 # User feedback

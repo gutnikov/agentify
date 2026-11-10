@@ -4,6 +4,7 @@ title: "Progress file and feature list"
 group: meta
 qualities: [process recoverability, auditability]
 stages: [task]
+places: [delivery/oracle, delivery/gate]
 ---
 
 # Progress file and feature list

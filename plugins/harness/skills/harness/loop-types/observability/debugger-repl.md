@@ -4,6 +4,7 @@ title: "Debugger and REPL"
 group: observability
 qualities: [debuggability]
 speed: [seconds]
+places: [delivery/work, remediation/oracle, remediation/work, discovery/work]
 ---
 
 # Debugger and REPL

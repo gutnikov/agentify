@@ -5,6 +5,7 @@ group: testing
 qualities: [functional suitability, testability, analysability]
 stages: [edit, commit, ci]
 speed: [seconds]
+places: [delivery/oracle]
 ---
 
 # Spec check

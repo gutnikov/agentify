@@ -4,6 +4,8 @@ title: "Platform matrix"
 group: compatibility
 qualities: [adaptability, installability, co-existence]
 stages: [ci]
+places: [delivery/work, remediation/work, maintenance/work]
+needs: [ci]
 ---
 
 # Platform matrix

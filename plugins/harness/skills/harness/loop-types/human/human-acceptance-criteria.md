@@ -8,6 +8,7 @@ initiator: human
 assesses: [result]
 stages: [task]
 speed: [seconds]
+places: [delivery/oracle]
 ---
 
 # Acceptance criteria and references from a person

@@ -5,6 +5,7 @@ group: compatibility
 qualities: [compatibility, availability, recoverability]
 stages: [ci]
 speed: [seconds, minutes]
+places: [delivery/work, remediation/work, maintenance/gate]
 ---
 
 # Lint and run database migrations

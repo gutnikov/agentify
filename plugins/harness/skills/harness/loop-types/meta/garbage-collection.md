@@ -5,6 +5,7 @@ group: meta
 agent: [worker, reviewer]
 qualities: [maintainability, evolvability]
 stages: [scheduled]
+places: [maintenance/entry, maintenance/work]
 ---
 
 # Garbage collection

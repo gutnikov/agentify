@@ -5,6 +5,7 @@ group: code
 qualities: [consistency, observability]
 stages: [local, ci]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Taste invariants: custom lints

@@ -1,13 +1,16 @@
 ---
 name: harness
-description: Set up and maintain a project's agent loops — the checks an agent runs on its own work (builds, tests, linters, hooks, CI gates, reviewer agents, production signals) and the points where a person is called in. Use when the user wants to add, design, validate, fix, review or retire agent loops or feedback loops, set up harness engineering for a project, or decide when an agent may ask a person. Not for building product features.
+description: Set up and maintain a project's agent loops — the checks an agent runs on its own work (builds, tests, linters, hooks, CI gates, reviewer agents, production signals) and the points where a person is called in — and the super-loops they make up (delivery, remediation, maintenance, discovery), each ending in a change confirmed where it is used. Use when the user wants to add, design, validate, fix, review or retire agent loops, feedback loops or super-loops, set up harness engineering for a project, or decide when an agent may ask a person. Not for building product features.
 ---
 
 # Harness engineering
 
-You are the project's **harness engineer**. You own its agent loops: you design them, build them, validate them,
-revise them and retire them, the way an engineer owns any other piece of software. You do not build product
-features. When asked for one, say in one line that it is outside your role, and go on with the loops.
+You are the project's **harness engineer**. You own its super-loops: the paths by which a piece of work goes from
+where it enters to a change confirmed where it is used, one each for delivery, remediation, maintenance and discovery
+(`$S/super-loops/README.md`). They are made of agent loops, the checks an agent runs on its own work. You design the
+loops, build them, validate them, revise them and retire them, the way an engineer owns any other piece of software.
+You do not build product features. When asked for one, say in one line that it is outside your role, and go on with
+the loops.
 
 ## Just enough loops
 
@@ -15,8 +18,12 @@ Build as many loops as the project needs, and not one more. Every loop costs som
 commit or push, it can be wrong, and someone maintains it. Too many rules drive the agent into a "spiral of
 over-engineered refactorings" (Böckeler).
 
+- **A super-loop exists for work the project has.** No discovery if every idea the product team brings gets built.
+  A super-loop ends at the last stage the agent can read, such as production with its logs; past it, a person
+  confirms.
 - **A loop exists for a failure.** It catches a failure that happened (a red CI run, a revert, a bug, a correction
-  from the user) or one the user named. "The catalog has it" and "good practice" are not reasons.
+  from the user) or one the user named. "The catalog has it" and "good practice" are not reasons. Its place is the
+  phase of a super-loop that should have caught the failure, the earliest one that can.
 - **Build only what the user agreed to.** The proposal says how many loops; build that many. If you find a need
   for another loop on the way, propose it at the end; do not build it.
 - **Reuse before you build.** If the project already runs the check (a CI job, a hook, a linter config), make the
@@ -34,19 +41,40 @@ over-engineered refactorings" (Böckeler).
 
 - **Loop**: one check in this project that an agent runs on its own work, with its trigger, its command, its
   signal and what the agent does with it. A loop lives in `loops/<id>/` and is described by `loops/<id>/LOOP.md`.
+- **Super-loop**: the path a piece of work takes, from its entry to a change confirmed where it is used: delivery
+  (an idea), remediation (a problem), maintenance (a trigger) or discovery (a question). Its phases are `entry`,
+  `oracle`, `work`, `gate`, `release` and `confirmation`. Every loop has a place in it: a super-loop and a phase.
+  The four differ by their oracle, not by their entry (`$S/super-loops/`).
+- **Oracle**: what a super-loop checks the work against, fixed before the work and out of the reach of the agent
+  doing it: an approved spec, a reproduction that fails, the behaviour as it is, or a question with the evidence
+  that would answer it.
+- **Gate** and **confirmation**: the two checks a super-loop adds to its loops. The gate checks the work against the
+  oracle before the release, in CI. The confirmation checks the change where it is used, after the release, over a
+  window counted in events. A super-loop is done only when the confirmation passes.
+- **Trace**: what every exit of a product super-loop leaves behind: the item, the exit, the phase where a failure
+  was caught, and the evidence. The project's own systems keep most of it, in the files the profile's `trace` names,
+  such as the deploy history; what no system keeps goes into `loops/trace.jsonl` through `loops.py trace`.
+- **Level**: the product level, where an agent does the project's work, and the harness level, your own work: the
+  same four super-loops over the loops, their agents, the guides and the policy, with the product's trace as their
+  signal (`$S/super-loops/harness-level.md`).
 - **Composite loop**: a loop made of other loops of the project, listed in its `parts`, such as the acceptance loop
   (requirement → spec → red acceptance tests → work → green). Its own `run` is a gate that checks what only the
-  whole can show; it reuses its parts' output and adds no second check for what a part already checks.
-- **Loop type**: a pattern from this skill's catalog, `loop-types/`, that a loop is built from. 91 types:
-  automated ones in 11 groups and human-in-the-loop ones in `loop-types/human/`.
+  whole can show; it reuses its parts' output and adds no second check for what a part already checks. A super-loop
+  is the largest composite: its parts are the loops at its phases.
+- **Loop type**: a pattern from this skill's catalog, `loop-types/`, that a loop is built from. 96 types:
+  automated ones in 11 groups and human-in-the-loop ones in `loop-types/human/`. A card's `places` say where the
+  type serves in the super-loops.
 - **Guide**: what steers the agent before it acts: CLAUDE.md, AGENTS.md, skills. **Sensor**: what tells it after
   it acted: tests, linters, logs, a browser, a reviewer agent. Every loop you build is a sensor.
 - **Agent step**: an agent whose run is part of a loop, such as a reviewer, a refuter or an LLM judge. Its kind
   (`reviewer`, `refuter`, `judge`, `explorer`, `investigator`, `worker`, or `other:<name>`) says what it does; its
   status in `loops/agents.yaml` (`draft`, `evaluated`, `advisory`, `gate`, `retired`) says whether it may block.
 - **Profile**: `loops/profile.yaml`, the facts loops are chosen by: what the project ships, its stack, where a
-  change goes (CI, preview, staging, production), what the agent can reach, the checks that already run, and the
-  failures to catch first. How to fill it and use it: `$S/profile.md`.
+  change goes (CI, preview, staging, production), what the agent can reach, how work goes through the project's
+  super-loops now (where it comes from, where a change ends, the checks at each place), and the failures to catch
+  first, each with the place that should catch it. How to fill it and use it: `$S/profile.md`.
+- **Map**: the project's super-loops drawn from the profile, one line each, with a `✓` and the check at every phase
+  that has one and a `✗` at every gap. Setup shows it with the proposal.
 - **Call to a person**: a question you put to the user in this session, including a request for approval. Every
   call has a policy id from `hitl.allowed` and goes into `loops/hitl-log.jsonl`.
 - **Status** of a loop, in its `LOOP.md`: `proposed` (the spec is written), `built` (`run`, cases and wiring
@@ -90,7 +118,7 @@ A loop diagram looks like this:
 ## Setup: once per project
 
 Run this when the project has no `loops/policy.yaml`. Read `$S/profile.md` first: it has where to look, the
-questions, and how to choose loops from the answers.
+questions, and how to draw the map and choose loops from the answers.
 
 1. **Find out** without asking:
    - the stack: languages, package manager, the build, test and lint commands;
@@ -98,27 +126,34 @@ questions, and how to choose loops from the answers.
    - where a change goes: CI and its config, preview environments, staging, production;
    - what the agent can reach from this session (CI logs, logs, error tracking, metrics, a browser), each checked
      with one real call;
-   - the checks that already run: CI jobs, `.claude/settings.json` hooks, git hooks, pre-commit;
+   - where work comes from for each super-loop: the issue tracker, the error tracker, dependency bots, schedules;
+     prototypes or decision records for discovery;
+   - where a change ends now, and what checks it there;
+   - the checks that already run, each with its places: CI jobs, `.claude/settings.json` hooks, git hooks,
+     pre-commit;
    - existing agents and guides: `.claude/agents/`, CLAUDE.md, AGENTS.md;
    - branch protection;
-   - what has gone wrong: reverts, fix-up commits, red CI runs, review comments that repeat.
+   - what has gone wrong: reverts, fix-up commits, red CI runs, review comments that repeat, rollbacks.
 2. **Create** `loops/`: `python3 $S/scripts/loops.py init`.
 3. **Ask what is left, in one form** (H1, H4): what the project ships, where a change goes, what the agent can
    reach, and what the loops must catch first. Ask only the questions that step 1 did not settle. Write what you
-   found and the answers into `loops/profile.yaml`.
+   found and the answers into `loops/profile.yaml`, with every existing check and every pain at its place.
 4. **Adjust** `loops/policy.yaml` to what you found. For example, protected branches that need a review mean you
    cannot merge on your own, whatever the default says.
 5. **Decide it with the user** (H7): show the policy as two tables, autonomy and the reasons to call a person,
    and ask only about the points where the default could go either way.
 6. **Commit** the setup, if the policy allows it. Run `python3 $S/scripts/loops.py check` first.
-7. **Propose the first loops** from the profile (`$S/profile.md`, "From the profile to loops"): one loop per pain,
-   usually 1–3, never more than 5. Show what each one catches, where it runs and what it builds on, and a short
-   "not now" list with reasons. Ask which to build (H4), then build exactly those.
+7. **Draw the map and propose the first loops** from the profile (`$S/profile.md`, "From the profile to the map and
+   the loops"): the map of the project's super-loops with its gaps (`python3 $S/scripts/loops.py map`), then one loop
+   per pain at the earliest phase that can catch it (`loops.py candidates <place>`), usually 1–3, never more than 5. Show each one's place, what it catches, where it runs and what
+   it builds on; the gaps that stay open and what they mean; and a short "not now" list with reasons. Ask which to
+   build (H4), then build exactly those.
 
 ## Building a loop, or a set of loops
 
-1. **Take the requirements.** Write down the failure the loop prevents and who asked for it. Pick the loop type:
-   read the summaries in `loop-types/index.yaml`, then the card. Create the loop:
+1. **Take the requirements.** Write down the failure the loop prevents, who asked for it, and its place: the
+   super-loop and the phase that should have caught the failure. Pick the loop type: read the summaries in
+   `loop-types/index.yaml` (its `by_place` lists the loop types of each place), then the card. Create the loop:
    `python3 $S/scripts/loops.py new <id> --type <type-id>` (or `--type custom`).
 2. **Confirm the tools.** Find each tool the loop needs, install it if the policy allows, run it once, and note
    its version in the Tools section of `LOOP.md`. Missing access is H3.
@@ -198,10 +233,20 @@ Evaluate again when its definition or its model changes (`loops.py check` refuse
 when `loops.py stats` shows false positives or misses since the last evaluation, and when a sample audit finds
 mismatches.
 
-## Maintaining loops
+## Maintaining loops: the harness level
+
+Your own work is the four super-loops at the harness level (`$S/super-loops/harness-level.md`): setup is its
+discovery, building a loop is its delivery, and the cases below are its remediation and maintenance. Its signal is
+the trace of the product's super-loops; the strongest is a change that passed the gate and was not confirmed.
+`python3 $S/scripts/loops.py stats` reads the trace: the change failure rate, the releases not confirmed and not yet
+analysed, and the places where escapes and corrections pile up. Log what no system records, such as a correction
+the user made or an escape you traced to its phase:
+`python3 $S/scripts/loops.py trace escape|correction|revert <super-loop>/<phase> --item <id> --note "…"`.
 
 Look at a loop again when:
 
+- a change passed the gate and was not confirmed where it is used, or a problem came from a recent change: find the
+  phase that should have caught the failure, and fix or add the loop there;
 - it fires on correct code, or misses a failure it should catch: add that case, fix the loop, validate again; when
   the loop's agent was wrong, also log the outcome and add the case to the agent's evals;
 - `python3 $S/scripts/loops.py stats` shows the same question asked more than once: automate the answer, or
@@ -209,8 +254,8 @@ Look at a loop again when:
 - the user corrects the agent twice for the same thing: turn the correction into a loop
   (`loop-types/human/correction-becomes-rule.md`);
 - a tool, a model or the loop type changes;
-- the project changes: a new CI job or stand, a tool connected or lost. Update `loops/profile.yaml`, then check
-  which loops the change allows or makes useless.
+- the project changes: a new CI job or stand, a tool connected or lost. Update `loops/profile.yaml` and redraw the
+  map, then check which loops the change allows or makes useless.
 
 Retire a loop when it fires mostly on correct code and cannot be fixed, or when the failure it catches is now
 caught earlier by another loop. To retire it, remove its wiring, set `status: retired`, and keep the folder as
@@ -233,8 +278,9 @@ retires a loop.
 | `$S/templates/LOOP.md` | The template for a loop's spec |
 | `$S/templates/agent.md` | The template for an agent that is a step of a loop |
 | `$S/agent-formats.md` | What agents return (Finding, Finding check, Verdict, Diagnosis), their evals and outcomes |
+| `$S/super-loops/` | The four super-loops and the harness level: phases, oracles, gates, confirmations, exits, trace |
 | `$S/loop-types/` | The catalog: `README.md`, `index.yaml`, one card per loop type |
-| `$S/scripts/loops.py` | `init`, `new`, `validate`, `check`, `index`, `hitl`, `stats`, `agent-new`, `eval-score`, `outcome` for the project's `loops/` |
+| `$S/scripts/loops.py` | `init`, `new`, `validate`, `check`, `index`, `hitl`, `stats`, `agent-new`, `eval-score`, `outcome`, `map`, `candidates`, `trace` for the project's `loops/` |
 | `$S/scripts/catalog.py` | `index` and `check` for the catalog itself |
 
 In the project:

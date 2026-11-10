@@ -4,6 +4,7 @@ title: "i18n and pseudo-localization"
 group: compatibility
 qualities: [localizability]
 stages: [ci]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # i18n and pseudo-localization

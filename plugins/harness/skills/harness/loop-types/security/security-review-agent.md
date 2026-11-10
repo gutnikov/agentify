@@ -6,6 +6,7 @@ agent: [reviewer]
 qualities: [security, privacy]
 stages: [scheduled]
 speed: [minutes]
+places: [remediation/entry]
 ---
 
 # Security and data-handling review by an agent

@@ -5,6 +5,7 @@ group: meta
 agent: [refuter]
 qualities: [correctness, auditability]
 speed: [minutes]
+places: [delivery/gate, remediation/gate, maintenance/gate, discovery/gate]
 ---
 
 # Verification subagent

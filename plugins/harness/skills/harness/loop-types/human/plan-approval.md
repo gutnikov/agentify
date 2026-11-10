@@ -8,6 +8,7 @@ sync: blocking
 assesses: [plan]
 stages: [task]
 speed: [minutes]
+places: [delivery/oracle, discovery/oracle]
 ---
 
 # Plan approval

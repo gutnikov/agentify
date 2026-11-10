@@ -7,13 +7,21 @@ testability and observability. This approach is now called harness engineering.
 
 This catalog has one file per loop type: a pattern the harness engineer turns into a concrete loop in a project.
 
-- 75 automated loop types in 11 groups. 71 come from the research "Циклы обратной связи для автономного
-  coding-агента: каталог по атрибутам качества" (in Russian; it says 70 cycles but lists 71). Four were added
+- 80 automated loop types in 11 groups. 71 come from the research "Циклы обратной связи для автономного
+  coding-агента: каталог по атрибутам качества" (in Russian; it says 70 cycles but lists 71). Nine were added
   here: [review of document texts](meta/document-review.md), built on the `text-quality` skill;
   [the spec check](testing/spec-check.md), built on the `spec` plugin;
   [the acceptance loop](meta/acceptance-loop.md), a composite loop from requirements to green acceptance tests;
-  and [the calibration of a loop's agent](meta/agent-calibration.md).
+  [the calibration of a loop's agent](meta/agent-calibration.md); and five that the super-loops need:
+  [triage](meta/triage.md), [the reproduction gate](meta/reproduction-gate.md),
+  [behaviour invariance](meta/behaviour-invariance.md), [release confirmation](production/release-confirmation.md)
+  and [the discovery decision](meta/discovery-decision.md).
 - 16 [human-in-the-loop loop types](human/README.md), where a person gives the signal.
+
+Every loop type has a place in a project's [super-loops](../super-loops/README.md) (delivery, remediation, maintenance
+and discovery): a super-loop and one of its phases, such as `delivery/gate`. The `places` field of a card lists them,
+`index.yaml` lists the loop types of every place under `by_place`, and the Phases table of each super-loop names the
+same types. The `stages` field says something else: where the loop runs, such as `ci` or `production`.
 
 ## File format
 
@@ -25,8 +33,16 @@ group: testing               # the folder
 qualities: [testability, correctness]
 stages: [local]              # where the loop runs; omitted when the research does not say
 speed: [seconds]             # how long one round takes; omitted when the research does not say
+places: [delivery/work, remediation/work]   # where it serves in the super-loops: <super-loop>/<phase>
+needs: [browser]             # what the agent must reach from its session; omitted when it needs nothing beyond the repo
 ---
 ```
+
+`places` is required. A place at the harness level, where the loops of the harness itself are built and fixed, has
+the prefix `harness:`, as in `harness:remediation/entry`. A place's phase must be one its super-loop has: discovery
+has no `release`. The values of `needs` are the keys of `tools` in a project's profile (`ci`, `logs`, `errors`,
+`metrics`, `traces`, `browser`, `deploy`), so `loops.py candidates <place>` can tell which loop types a project can
+run.
 
 The body has the sections **Loop** (what the agent does and what signal it gets), **Set up** (what has to exist
 for the loop to work), **Notes** (evidence and warnings, when there are any) and **Sources**.
@@ -111,14 +127,14 @@ profile and the failures it has ([../profile.md](../profile.md)).
 
 1. **`verify` in one command**: [build](code/build.md), [types](code/type-check.md),
    [lint](code/lint-with-fix-instructions.md) and [unit tests](testing/red-green-tdd.md), plus the
-   [formatting hook](code/autoformat-hook.md) and the [Stop hook](delivery/stop-hook.md). Boris Cherny: "give
+   [formatting hook](code/autoformat-hook.md) and the [Stop hook](deployability/stop-hook.md). Boris Cherny: "give
    Claude a way to verify its work. If Claude has that feedback loop, it will 2-3x the quality of the final
    result".
 2. **Behaviour**: [red/green TDD](testing/red-green-tdd.md) with protected tests,
    [mutations on the diff](testing/mutation-testing.md), [property-based tests](testing/property-based-tests.md).
    When requirements come as tickets or texts: the [acceptance loop](meta/acceptance-loop.md), which makes them
    the oracle.
-3. **The agent sees the app**: [an app per worktree](delivery/isolated-environment.md),
+3. **The agent sees the app**: [an app per worktree](deployability/isolated-environment.md),
    [Playwright](testing/e2e-browser.md) with [screenshots](testing/visual-screenshot-check.md),
    [axe](interaction/accessibility-checks.md), `init.sh`.
 4. **Observability in dev**: [structured logs](observability/structured-logs.md),
@@ -129,14 +145,15 @@ profile and the failures it has ([../profile.md](../profile.md)).
    [licenses](security/license-check.md), [oasdiff or buf](compatibility/api-breaking-changes.md),
    [Squawk or Atlas](compatibility/db-migration-lint.md), [size-limit](performance/bundle-size-budget.md) or
    [Lighthouse](performance/lighthouse-ci.md), [Pact](testing/contract-tests.md). A
-   [limited number of CI rounds](delivery/ci-clean-infra.md).
+   [limited number of CI rounds](deployability/ci-clean-infra.md).
 6. **Production and the inferential layer**: [Sentry MCP](production/error-tracking.md),
-   [SLOs](production/slo-degradation.md), [canaries](delivery/canary-feature-flags.md),
+   [SLOs](production/slo-degradation.md), [canaries](deployability/canary-feature-flags.md), and the
+   [release confirmation](production/release-confirmation.md) that closes delivery,
    [reviewer agents](meta/agent-code-review.md), [garbage collection](meta/garbage-collection.md),
    [evals](meta/llm-evals.md). A [UX evaluator](interaction/ux-evaluator.md) only where a single model cannot
    do the job reliably.
-7. **Always: the [steering loop](meta/steering-loop.md).** Turn a repeated mistake into code (a lint or a test)
-   rather than into text.
+7. **Always: the [steering loop](meta/steering-loop.md).** Turn every escape and every repeated mistake into code
+   (a lint or a test) rather than into text.
 
 ## Caveats
 
@@ -229,14 +246,14 @@ profile and the failures it has ([../profile.md](../profile.md)).
 - [Health checks and smoke tests after deploy](reliability/health-checks-smoke.md)
 - [Restore from backup and rollback](reliability/backup-restore-rollback.md)
 
-### Deployability and reproducibility — `delivery/`
+### Deployability and reproducibility — `deployability/`
 
-- [Stop hook / `/goal`](delivery/stop-hook.md)
-- [Pre-commit / pre-push](delivery/pre-commit-pre-push.md)
-- [CI on clean infrastructure](delivery/ci-clean-infra.md)
-- [Isolated reproducible environment](delivery/isolated-environment.md)
-- [Preview environments per PR](delivery/preview-environments.md)
-- [Canaries and feature flags](delivery/canary-feature-flags.md)
+- [Stop hook / `/goal`](deployability/stop-hook.md)
+- [Pre-commit / pre-push](deployability/pre-commit-pre-push.md)
+- [CI on clean infrastructure](deployability/ci-clean-infra.md)
+- [Isolated reproducible environment](deployability/isolated-environment.md)
+- [Preview environments per PR](deployability/preview-environments.md)
+- [Canaries and feature flags](deployability/canary-feature-flags.md)
 
 ### Production signals — `production/`
 
@@ -244,6 +261,7 @@ profile and the failures it has ([../profile.md](../profile.md)).
 - [SLO degradation](production/slo-degradation.md)
 - [AI judges on telemetry](production/ai-judges-telemetry.md)
 - [User feedback](production/user-feedback.md)
+- [Release confirmation: the change is there, it happened, nothing broke](production/release-confirmation.md)
 
 ### Interaction and accessibility — `interaction/`
 
@@ -260,8 +278,12 @@ profile and the failures it has ([../profile.md](../profile.md)).
 - [Progress file and feature list](meta/progress-file-feature-list.md)
 - [Acceptance loop: from requirements to green acceptance tests](meta/acceptance-loop.md)
 - [Calibration of a loop's agent](meta/agent-calibration.md)
-- [Steering loop](meta/steering-loop.md)
+- [Steering loop: every escape becomes a check at the phase that should have caught it](meta/steering-loop.md)
 - [Review of document texts](meta/document-review.md)
+- [Triage: every signal goes to one super-loop, with its oracle](meta/triage.md)
+- [Reproduction gate: a fix counts only against a reproduction that failed first](meta/reproduction-gate.md)
+- [Behaviour invariance: maintenance that changes no expected value](meta/behaviour-invariance.md)
+- [Discovery decision: an answer whose every claim has its evidence](meta/discovery-decision.md)
 
 ### Human in the loop — `human/`
 

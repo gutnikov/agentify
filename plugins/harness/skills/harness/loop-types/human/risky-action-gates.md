@@ -7,6 +7,7 @@ initiator: rule
 sync: blocking
 assesses: [action-risk]
 speed: [seconds, minutes]
+places: [delivery/work, delivery/release, remediation/work, remediation/release, maintenance/work, maintenance/release]
 ---
 
 # Gates on risky actions
@@ -42,7 +43,7 @@ During the task; seconds to minutes. The source gives no time for the case where
 
 ## Related
 
-- [isolated-environment](../delivery/isolated-environment.md): the sandbox where reversible actions need no
+- [isolated-environment](../deployability/isolated-environment.md): the sandbox where reversible actions need no
   confirmation.
 
 ## Sources

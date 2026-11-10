@@ -5,6 +5,8 @@ group: performance
 agent: [investigator]
 qualities: [performance, responsiveness]
 stages: [local]
+places: [delivery/work, maintenance/work, maintenance/confirmation]
+needs: [traces]
 ---
 
 # Performance budgets through telemetry

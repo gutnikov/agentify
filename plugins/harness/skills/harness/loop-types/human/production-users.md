@@ -8,6 +8,7 @@ sync: async
 assesses: [intent]
 stages: [production]
 speed: [days, weeks]
+places: [delivery/entry, delivery/confirmation, remediation/entry, discovery/entry]
 ---
 
 # Users in production

@@ -74,6 +74,7 @@ sync: blocking
 assesses: [intent]
 stages: [task]          # same values as the automated loop types
 speed: [minutes]        # one round, including the wait for the person
+places: [delivery/oracle, discovery/oracle]   # where it serves in the super-loops, as in the catalog
 ---
 ```
 

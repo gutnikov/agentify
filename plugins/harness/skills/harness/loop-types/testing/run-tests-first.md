@@ -4,6 +4,7 @@ title: "Run the tests first"
 group: testing
 qualities: [testability, reproducibility]
 stages: [local]
+places: [delivery/work, remediation/work, maintenance/oracle]
 ---
 
 # Run the tests first

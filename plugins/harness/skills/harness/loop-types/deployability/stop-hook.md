@@ -1,10 +1,11 @@
 ---
 id: stop-hook
 title: "Stop hook / `/goal`"
-group: delivery
+group: deployability
 agent: [refuter]
 qualities: [any attribute a script can check]
 stages: [local]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Stop hook / `/goal`

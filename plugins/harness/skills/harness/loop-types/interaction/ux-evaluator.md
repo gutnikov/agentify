@@ -5,6 +5,8 @@ group: interaction
 agent: [explorer, judge]
 qualities: [user engagement, functional completeness]
 stages: [sprint]
+places: [delivery/gate]
+needs: [browser]
 ---
 
 # UX evaluator with thresholds

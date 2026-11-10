@@ -6,6 +6,7 @@ agent: [reviewer, refuter]
 qualities: [functional suitability, correctness, traceability]
 stages: [task, local, ci]
 speed: [minutes, hours]
+places: [delivery/oracle, delivery/gate]
 ---
 
 # Acceptance loop: from requirements to green acceptance tests
@@ -29,10 +30,16 @@ the gate over them.
    [lint](../code/lint-with-fix-instructions.md), [red/green TDD](../testing/red-green-tdd.md) for the units,
    [e2e](../testing/e2e-browser.md) to look at the app.
 4. **Gate.** Every approved requirement is traced to at least one acceptance test, all of them pass, and the spec
-   and the acceptance tests are the ones that were approved. A [Stop hook or `/goal`](../delivery/stop-hook.md)
+   and the acceptance tests are the ones that were approved. A [Stop hook or `/goal`](../deployability/stop-hook.md)
    keeps the agent working until the gate passes.
 5. **A person** checks intent only: the spec before the work, and, if the project wants it, the behaviour after it
    ([result-demo](../human/result-demo.md)).
+
+The acceptance loop ends at "ready to release". It is the fast part of the
+[delivery](../../super-loops/delivery.md) super-loop, which ends later, at the release's confirmation in production
+([release-confirmation](../production/release-confirmation.md)). The spec hands that confirmation the production
+signal of every requirement in the release (`specs.py signals` of the `spec` plugin), so the trace runs on from the
+acceptance test to production.
 
 A test that is red after the work goes back to where the mistake is:
 

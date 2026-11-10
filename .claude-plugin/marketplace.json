@@ -15,8 +15,8 @@
     {
       "name": "harness",
       "source": "./plugins/harness",
-      "description": "Set up and maintain a project's agent loops: design, build, validate and revise them like software, with a catalog of 91 loop types and a per-project policy for when an agent may call a person.",
-      "version": "0.4.0"
+      "description": "Set up and maintain a project's agent loops and the super-loops they make up (delivery, remediation, maintenance, discovery): design, build, validate and revise them like software, with a catalog of 96 loop types and a per-project policy for when an agent may call a person.",
+      "version": "0.5.0"
     },
     {
       "name": "playwright",

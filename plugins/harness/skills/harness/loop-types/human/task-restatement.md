@@ -8,6 +8,7 @@ sync: blocking
 assesses: [intent]
 stages: [task]
 speed: [seconds]
+places: [delivery/oracle, discovery/oracle]
 ---
 
 # Task restatement

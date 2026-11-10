@@ -7,6 +7,7 @@ initiator: agent
 sync: async
 stages: [task]
 speed: [minutes]
+places: [delivery/work, remediation/work, maintenance/work, discovery/work]
 ---
 
 # Asynchronous questions with assumptions

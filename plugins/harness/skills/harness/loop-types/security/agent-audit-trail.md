@@ -4,6 +4,7 @@ title: "Audit trail of agent actions"
 group: security
 qualities: [auditability, accountability]
 stages: [task]
+places: [delivery/gate, remediation/gate, maintenance/gate]
 ---
 
 # Audit trail of agent actions

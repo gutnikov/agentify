@@ -5,6 +5,8 @@ group: testing
 agent: [judge]
 qualities: [interaction capability (user engagement)]
 stages: [local, ci]
+places: [delivery/work, remediation/work, maintenance/work]
+needs: [browser]
 ---
 
 # Visual check with screenshots

@@ -5,6 +5,7 @@ group: code
 qualities: [correctness, analysability]
 stages: [local, ci]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Build / compile

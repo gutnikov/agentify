@@ -5,6 +5,7 @@ group: security
 agent: [worker]
 qualities: [compliance, privacy]
 stages: [ci, scheduled]
+places: [maintenance/entry, maintenance/work]
 ---
 
 # Compliance hardening with mutants

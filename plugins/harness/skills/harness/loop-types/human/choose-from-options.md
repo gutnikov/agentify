@@ -6,6 +6,7 @@ when: [during, after]
 initiator: agent
 assesses: [result, code]
 speed: [minutes]
+places: [delivery/oracle, delivery/work, discovery/confirmation]
 ---
 
 # Choose from options

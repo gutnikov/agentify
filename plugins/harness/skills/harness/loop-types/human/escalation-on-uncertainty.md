@@ -7,6 +7,7 @@ initiator: agent
 sync: blocking
 assesses: [intent]
 speed: [minutes, hours]
+places: [delivery/work, remediation/work, maintenance/work, discovery/work]
 ---
 
 # Escalation on uncertainty

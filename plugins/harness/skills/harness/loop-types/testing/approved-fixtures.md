@@ -6,6 +6,7 @@ agent: [reviewer]
 qualities: [correctness, stability]
 stages: [local]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/oracle, maintenance/work]
 ---
 
 # Snapshot / golden / approved fixtures

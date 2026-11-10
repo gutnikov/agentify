@@ -1,9 +1,11 @@
 ---
 id: canary-feature-flags
 title: "Canaries and feature flags"
-group: delivery
+group: deployability
 qualities: [deployability, availability]
 stages: [production]
+places: [delivery/release, delivery/confirmation, remediation/release, remediation/confirmation, maintenance/release, maintenance/confirmation]
+needs: [metrics, deploy]
 ---
 
 # Canaries and feature flags

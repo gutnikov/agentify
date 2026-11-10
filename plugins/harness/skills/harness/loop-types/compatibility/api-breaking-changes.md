@@ -5,6 +5,7 @@ group: compatibility
 qualities: [compatibility, evolvability]
 stages: [local, ci]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/gate]
 ---
 
 # Breaking changes in the API

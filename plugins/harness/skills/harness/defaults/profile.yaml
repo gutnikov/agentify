@@ -1,7 +1,10 @@
 # The project's profile: what the harness engineer found in the project and what the user answered at setup.
 #
-# Loops are chosen from it (the plugin's profile.md, "From the profile to loops"). Keep it current: when the
-# project changes, update this file from what you see instead of asking again.
+# The map of the super-loops and the loops are chosen from it (the plugin's profile.md, "From the profile to the map
+# and the loops"). Keep it current: when the project changes, update this file from what you see instead of asking
+# again.
+#
+# A place is <super-loop>/<phase>, such as delivery/confirmation (the plugin's super-loops/README.md).
 
 version: 1
 
@@ -24,9 +27,30 @@ stages: []
 # Leave out what the agent cannot reach.
 tools: {}
 
-# The checks the project already runs, and where, e.g. "golangci-lint: CI job lint". Reused, not rebuilt.
+# The super-loops the project has work for, each with where its work comes from now, e.g.
+#   delivery: "Jira tickets of the PAY project"
+#   remediation: "Sentry alerts; nothing else watches production"
+# Keys: delivery, remediation, maintenance, discovery. A super-loop with no work in this project goes under
+# not_here instead, with the reason, e.g. discovery: "every idea the product team brings gets built".
+super_loops: {}
+not_here: {}
+
+# Where a change ends now: the last stage it reaches, and what confirms it there, e.g.
+# "production, by the deploy job; nothing confirms it after the deploy".
+ends_at: null
+
+# Where the project's own systems record the exits of its super-loops: files of JSON lines, each with at, action
+# (deploy, confirm, rollback), version, result and evidence, e.g. "~/.saas-test/prod/deploys.jsonl". loops.py stats
+# reads them; what no system records goes into loops/trace.jsonl through loops.py trace.
+trace: []
+
+# The checks the project already runs, each as "<name>: <places> — <where it runs, what it does>", e.g.
+#   - "golangci-lint: delivery/work remediation/work maintenance/work — CI job lint, on every merge request"
+# The name before the colon labels the check on the map. Reused, not rebuilt.
 existing_checks: []
 
-# The failures the loops must catch first: breaks-build, not-really-working, conventions, escapes, security,
-# performance, compatibility, or the user's own words. Add the evidence when there is any.
+# The failures the loops must catch first: breaks-build, not-really-working, conventions, escapes, aging, security,
+# performance, compatibility, or the user's own words. Each as "<pain>: <the place that should catch it> — <evidence>",
+# e.g.
+#   - "escapes: delivery/confirmation — 2 of the last 10 releases rolled back"
 pains: []

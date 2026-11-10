@@ -5,6 +5,8 @@ group: observability
 agent: [investigator]
 qualities: [observability, availability]
 speed: [seconds]
+places: [delivery/work, delivery/confirmation, remediation/confirmation, maintenance/confirmation]
+needs: [metrics]
 ---
 
 # Metrics (PromQL)

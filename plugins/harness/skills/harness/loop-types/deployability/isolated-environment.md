@@ -1,9 +1,10 @@
 ---
 id: isolated-environment
 title: "Isolated reproducible environment"
-group: delivery
+group: deployability
 qualities: [reproducibility, safety (limits the blast radius)]
 stages: [task]
+places: [delivery/work, remediation/work, maintenance/work, discovery/work]
 ---
 
 # Isolated reproducible environment

@@ -5,6 +5,7 @@ group: performance
 qualities: [resource utilization]
 stages: [ci]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Bundle size budget

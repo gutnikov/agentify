@@ -20,6 +20,13 @@
                                                  flaky cases, threshold; --record writes report.md and the registry
     python3 loops.py outcome ID --loop L --outcome O [--note N]
                                                  log what happened to one of the agent's verdicts in real use
+    python3 loops.py map                         the map of the project's super-loops: what stands at each phase,
+                                                 from the profile and the loops' places, with the gaps and the pains
+    python3 loops.py candidates PLACE            the loop types that can stand at PLACE (delivery/confirmation),
+                                                 each with whether this project can run it
+    python3 loops.py trace KIND PLACE --note N [--item I]
+                                                 log what no system records: an escape, a correction or a revert,
+                                                 at the place that should have caught it
 
 Options for every command: --root DIR (the project; default: the git top level of the current folder).
 
@@ -50,6 +57,9 @@ OUTCOMES = {"confirmed", "false-positive", "missed", "overridden"}
 MIN_RUNS = 3
 TRIGGERS = {"edit", "local", "commit", "ci", "preview", "staging", "production", "scheduled", "task", "sprint",
             "continuous"}
+ALWAYS_STAGES = {"edit", "local", "commit", "task", "sprint", "continuous"}
+TRACE_KINDS = {"escape", "correction", "revert"}
+LIVE = ("validated", "active")
 
 
 # ---------------------------------------------------------------- files
@@ -84,6 +94,106 @@ def frontmatter(text):
     return data
 
 
+def super_loops():
+    """{id: frontmatter} of the plugin's super-loop cards, in the order super-loops/README.md links them."""
+    cards, folder = {}, PLUGIN / "super-loops"
+    for path in sorted(folder.glob("*.md")):
+        fm = frontmatter(path.read_text(encoding="utf-8"))
+        if fm and fm.get("id") and fm.get("phases"):
+            cards[fm["id"]] = fm
+    readme = folder / "README.md"
+    links = re.findall(r"\]\(([a-z-]+)\.md\)", readme.read_text(encoding="utf-8")) if readme.exists() else []
+    order = [n for n in dict.fromkeys(links) if n in cards]
+    return {n: cards[n] for n in order + [n for n in cards if n not in order]}
+
+
+def place_problem(token, loops):
+    """None for <super-loop>/<phase> or harness:<super-loop>/<phase> where that super-loop has that phase."""
+    level, _, place = token.rpartition(":")
+    loop, _, phase = place.partition("/")
+    if level not in ("", "harness"):
+        return "has an unknown level %r; the only one is harness" % level
+    if loop not in loops:
+        return "names no super-loop; they are %s" % ", ".join(loops)
+    if phase not in loops[loop]["phases"]:
+        return "names a phase that %s has not; it has %s" % (loop, ", ".join(loops[loop]["phases"]))
+    return None
+
+
+def places_in(text, loops):
+    """The valid places written anywhere in a string, such as an entry of existing_checks or pains."""
+    return [t for t in re.findall(r"(?:harness:)?[a-z]+/[a-z]+", text or "") if place_problem(t, loops) is None]
+
+
+def read_profile(loops_dir):
+    """loops/profile.yaml in the subset it is written in: top-level scalars and flow lists, maps one level deep, and
+    block lists of strings. Comments and blank lines are skipped."""
+    path = loops_dir / "profile.yaml"
+    data, key = {}, None
+    for raw in path.read_text(encoding="utf-8").splitlines() if path.exists() else []:
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        m = re.match(r"^([A-Za-z_]\w*):\s*(.*)$", raw)
+        if m:
+            key, value = m.group(1), m.group(2).strip()
+            data[key] = {} if value in ("", "{}") else None if value == "null" else parse_scalar(value)
+            continue
+        m = re.match(r"^\s+- (.*)$", raw)
+        if m and key:
+            if not isinstance(data.get(key), list):
+                data[key] = []
+            data[key].append(parse_scalar(m.group(1)))
+            continue
+        m = re.match(r"^\s+([A-Za-z_]\w*):\s*(.*)$", raw)
+        if m and key:
+            if not isinstance(data.get(key), dict):
+                data[key] = {}
+            value = m.group(2).strip()
+            data[key][m.group(1)] = None if value == "null" else parse_scalar(value)
+    return data
+
+
+def catalog():
+    """({type id: fields}, {place: [type ids]}) from the plugin's loop-types/index.yaml."""
+    types, by_place, cur, section = {}, {}, None, None
+    for line in (PLUGIN / "loop-types" / "index.yaml").read_text(encoding="utf-8").splitlines():
+        if re.match(r"^\S", line):
+            section = line.split(":")[0]
+            continue
+        if section == "loop_types":
+            m = re.match(r"^  - id: (.+)$", line)
+            if m:
+                cur = types.setdefault(m.group(1).strip(), {"id": m.group(1).strip()})
+                continue
+            m = re.match(r"^    (\w+): (.*)$", line)
+            if m and cur is not None:
+                cur[m.group(1)] = parse_scalar(m.group(2))
+        elif section == "by_place":
+            m = re.match(r"^  (\S+): (.*)$", line)
+            if m:
+                by_place[m.group(1)] = parse_scalar(m.group(2))
+    return types, by_place
+
+
+def loops_at(loops_dir):
+    """{place: [(loop id, status)]} from the places of every loop of the project."""
+    at = collections.defaultdict(list)
+    for d in loop_dirs(loops_dir):
+        fm = (frontmatter((d / "LOOP.md").read_text(encoding="utf-8")) if (d / "LOOP.md").exists() else None) or {}
+        for token in fm.get("places") or []:
+            at[token].append((fm.get("id"), fm.get("status")))
+    return at
+
+
+def named_at(entries, loops):
+    """{place: [names]} from profile entries written as "<name>: <places> — <details>"."""
+    at = collections.defaultdict(list)
+    for e in entries or []:
+        for token in places_in(str(e), loops):
+            at[token].append(str(e).split(":")[0].strip())
+    return at
+
+
 def policy_ids(loops_dir):
     path = loops_dir / "policy.yaml"
     return re.findall(r"^\s*- id: (H\d+)\s*$", path.read_text(encoding="utf-8"), re.M) if path.exists() else []
@@ -103,7 +213,8 @@ def parse_scalar(value):
         return json.loads(value)
     value = value.split(" #")[0].strip()
     if value.startswith("["):
-        return [v.strip() for v in value[1:value.rindex("]")].split(",") if v.strip()]
+        items = [v.strip() for v in value[1:value.rindex("]")].split(",") if v.strip()]
+        return [json.loads(v) if v.startswith('"') else v for v in items]
     if value in ("true", "false"):
         return value == "true"
     if re.fullmatch(r"-?\d+(\.\d+)?", value):
@@ -181,7 +292,7 @@ def build_index(loops_dir):
             continue
         out.append("  - id: %s" % fm.get("id"))
         out.append("    title: %s" % json.dumps(fm.get("title", ""), ensure_ascii=False))
-        for key in ("type", "status", "trigger", "validation", "agents", "hitl", "parts"):
+        for key in ("type", "status", "trigger", "places", "validation", "agents", "hitl", "parts"):
             v = fm.get(key)
             if v not in (None, "", []):
                 out.append("    %s: %s" % (key, "[%s]" % ", ".join(v) if isinstance(v, list) else v))
@@ -258,6 +369,8 @@ def cmd_new(a, root):
     print("created loops/%s/: LOOP.md, run, cases/must-fire/, cases/must-pass/, CHANGELOG.md" % a.id)
     if entry:
         print("loop type: %s — %s" % (entry["path"], entry.get("summary", "")))
+        if entry.get("places"):
+            print("places this type can take (write the ones it takes here into places): %s" % entry["places"])
 
 
 def run_once(cmd, case, root, timeout):
@@ -330,6 +443,7 @@ def cmd_check(a, root):
     ids = set(policy_ids(loops))
     if not ids:
         errors.append("policy.yaml: no policy ids (- id: H1 …)")
+    loop_cards = super_loops()
     status_of, parts_of, agents_of = {}, {}, {}
     for d in loop_dirs(loops):
         fm = frontmatter((d / "LOOP.md").read_text(encoding="utf-8")) if (d / "LOOP.md").exists() else None
@@ -374,6 +488,14 @@ def cmd_check(a, root):
             errors.append("%s: manual validation but the Validation section is empty" % rel)
         if live and not fm.get("wiring"):
             errors.append("%s: status %s but no wiring" % (rel, fm.get("status")))
+        # a loop's places: where it stands in the super-loops
+        for token in fm.get("places") or []:
+            problem = place_problem(token, loop_cards)
+            if problem:
+                errors.append("%s/LOOP.md: place %r %s" % (rel, token, problem))
+        if live and not fm.get("places"):
+            errors.append("%s: status %s but no places: say where it stands, as <super-loop>/<phase>"
+                          % (rel, fm.get("status")))
         # a composite loop: its parts exist, contain no cycle, and are at least as far along as the whole
         rank = {s: i for i, s in enumerate(STATUSES)}
         for part in parts_of.get(d.name, []):
@@ -657,6 +779,147 @@ def cmd_stats(a, root):
         print("asked more than once (candidates to automate or to settle in the policy):")
         for q, n in sorted(repeated, key=lambda x: -x[1]):
             print("  %d× %s" % (n, q[:120]))
+    print_trace(root, loops)
+
+
+def cmd_map(a, root):
+    loops_dir = root / "loops"
+    if not (loops_dir / "profile.yaml").exists():
+        sys.exit("no loops/profile.yaml: run `loops.py init` and fill the profile first")
+    prof, cards = read_profile(loops_dir), super_loops()
+    built, checks = loops_at(loops_dir), named_at(prof.get("existing_checks"), cards)
+    pains = named_at(prof.get("pains"), cards)
+    has, not_here = prof.get("super_loops") or {}, prof.get("not_here") or {}
+    tools = ", ".join(prof.get("tools") or {}) or "none"
+    print("Profile: %s · stages %s · tools %s" % (", ".join(prof.get("kind") or []) or "?",
+                                                 ", ".join(prof.get("stages") or []) or "local only", tools))
+    print("Ends at: %s" % (prof.get("ends_at") or "?"))
+    if pains:
+        print("Pains: %s" % ", ".join("%s (%s)" % (", ".join(n), p) for p, n in pains.items()))
+    print()
+    for loop, card in cards.items():
+        if loop in not_here:
+            print("%-12s not here: %s" % (loop, not_here[loop]))
+            continue
+        if loop not in has:
+            print("%-12s not in the profile: add it to super_loops or not_here" % loop)
+            continue
+        cells = []
+        for phase in card["phases"]:
+            token = "%s/%s" % (loop, phase)
+            live = [i for i, s in built.get(token, []) if s in LIVE]
+            pending = ["%s (%s)" % (i, s) for i, s in built.get(token, []) if s not in LIVE + ("retired",)]
+            names = live + checks.get(token, [])
+            if names:
+                cell = "%s ✓ %s" % (phase, ", ".join(names))
+            elif phase == "entry":
+                cell = "entry: %s" % re.split(r"[;:,]", str(has[loop]))[0][:48]
+            else:
+                cell = "%s ✗" % phase
+            if pending:
+                cell += " + %s" % ", ".join(pending)
+            if token in pains:
+                cell += " ! %s" % ", ".join(pains[token])
+            cells.append(cell)
+        print("%-12s %s" % (loop, " · ".join(cells)))
+    harness = sorted({"%s (%s)" % (i, t.split(":", 1)[1]) for t, ls in built.items() if t.startswith("harness:")
+                      for i, s in ls if s in LIVE})
+    if harness:
+        print("%-12s %s" % ("harness", ", ".join(harness)))
+
+
+def cmd_candidates(a, root):
+    loops_dir, cards = root / "loops", super_loops()
+    problem = place_problem(a.place, cards)
+    if problem:
+        sys.exit("place %r %s" % (a.place, problem))
+    types, by_place = catalog()
+    prof = read_profile(loops_dir)
+    stages = set(prof.get("stages") or []) | ALWAYS_STAGES
+    tools = set(prof.get("tools") or {})
+    here = ["%s (%s)" % (i, s) for i, s in loops_at(loops_dir).get(a.place, [])] + \
+        named_at(prof.get("existing_checks"), cards).get(a.place, [])
+    ids = by_place.get(a.place) or []
+    print("%s: %d loop types can stand here%s" % (a.place, len(ids), "; already here: " + ", ".join(here) if here else ""))
+    for i in ids:
+        t = types.get(i, {})
+        why = []
+        runs = t.get("stages") or []
+        if runs and not set(runs) & stages:
+            why.append("runs at %s, which the project does not have" % ", ".join(runs))
+        missing = [n for n in t.get("needs") or [] if n not in tools]
+        if missing:
+            why.append("needs %s, which the agent cannot reach" % ", ".join(missing))
+        print("  %-32s %s" % (i, "fits" if not why else "no: " + "; ".join(why)))
+
+
+def cmd_trace(a, root):
+    loops = root / "loops"
+    if a.kind not in TRACE_KINDS:
+        sys.exit("kind must be one of %s" % ", ".join(sorted(TRACE_KINDS)))
+    problem = place_problem(a.place, super_loops())
+    if problem:
+        sys.exit("place %r %s" % (a.place, problem))
+    entry = {"at": datetime.datetime.now().isoformat(timespec="seconds"), "kind": a.kind, "place": a.place,
+             "item": a.item, "note": a.note}
+    with open(loops / "trace.jsonl", "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    print("logged %s at %s" % (a.kind, a.place))
+
+
+def trace_records(root, prof):
+    """The exits the project's own systems record: JSON lines from every file in the profile's trace."""
+    records, missing = [], []
+    for src in prof.get("trace") or []:
+        path = pathlib.Path(os.path.expanduser(str(src)))
+        path = path if path.is_absolute() else root / path
+        if not path.exists():
+            missing.append(str(src))
+            continue
+        for raw in path.read_text(encoding="utf-8").splitlines():
+            try:
+                records.append(json.loads(raw))
+            except ValueError:
+                continue
+    return records, missing
+
+
+def print_trace(root, loops):
+    prof = read_profile(loops)
+    records, missing = trace_records(root, prof)
+    own = [json.loads(l) for l in (loops / "trace.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()] \
+        if (loops / "trace.jsonl").exists() else []
+    for src in missing:
+        print("trace: %s is not there" % src)
+    judged = [r for r in records if r.get("action") == "confirm"]
+    if judged:
+        c = collections.Counter(r.get("result") for r in judged)
+        print("releases judged: %d — %s" % (len(judged), ", ".join("%s %d" % kv for kv in sorted(c.items()))))
+        decided = c["confirmed"] + c["not-confirmed"]
+        if decided:
+            print("  change failure rate: %d%% (not confirmed, of the releases confirmed or not)"
+                  % round(100.0 * c["not-confirmed"] / decided))
+        print("  rollbacks: %d" % sum(1 for r in records if r.get("action") == "rollback"))
+        analysed = {e.get("item") for e in own if e.get("kind") == "escape"}
+        todo = [r for r in judged if r.get("result") == "not-confirmed" and r.get("version") not in analysed]
+        for r in todo:
+            print("  not confirmed: %s at %s, evidence %s" % (r.get("version"), r.get("at"), r.get("evidence") or "-"))
+        if todo:
+            print("  -> for each, find the phase that should have caught it (loop type steering-loop) and log it:")
+            print("     loops.py trace escape <super-loop>/<phase> --item <version> --note \"…\"")
+        deploys = [r for r in records if r.get("action") == "deploy" and r.get("result") == "ok"]
+        never = [r.get("version") for r in deploys if not any(
+            j.get("version") == r.get("version") and j.get("at", "") >= r.get("at", "") for j in judged)]
+        if never:
+            print("  deployed without a verdict yet: %s" % ", ".join(never))
+    elif prof.get("trace"):
+        print("releases judged: none yet")
+    if own:
+        by_place = collections.Counter(e.get("place") for e in own)
+        print("escapes, corrections and reverts by place: %s" % ", ".join("%s %d" % kv for kv in by_place.most_common()))
+        for place, n in by_place.most_common():
+            if n >= 2:
+                print("  -> %s: %d times; the loop at this place is missing or too weak" % (place, n))
 
 
 def main():
@@ -702,6 +965,16 @@ def main():
     p.add_argument("--outcome", required=True)
     p.add_argument("--note", default="")
     p.set_defaults(fn=cmd_outcome)
+    sub.add_parser("map").set_defaults(fn=cmd_map)
+    p = sub.add_parser("candidates")
+    p.add_argument("place")
+    p.set_defaults(fn=cmd_candidates)
+    p = sub.add_parser("trace")
+    p.add_argument("kind")
+    p.add_argument("place")
+    p.add_argument("--note", required=True)
+    p.add_argument("--item", default="")
+    p.set_defaults(fn=cmd_trace)
     a = ap.parse_args()
     a.fn(a, project_root(a.root))
 

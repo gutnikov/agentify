@@ -5,6 +5,8 @@ group: production
 agent: [investigator]
 qualities: [availability, reliability]
 stages: [production]
+places: [delivery/confirmation, remediation/entry, remediation/confirmation, maintenance/confirmation]
+needs: [metrics]
 ---
 
 # SLO degradation

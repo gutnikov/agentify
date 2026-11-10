@@ -4,6 +4,7 @@ title: "Executable documentation"
 group: testing
 qualities: [understandability, self-descriptiveness]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Executable documentation

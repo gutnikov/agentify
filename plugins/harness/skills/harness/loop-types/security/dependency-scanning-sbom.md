@@ -4,6 +4,7 @@ title: "Dependency analysis (SCA) and SBOM"
 group: security
 qualities: [security, supportability]
 stages: [ci]
+places: [delivery/work, remediation/work, maintenance/entry, maintenance/work]
 ---
 
 # Dependency analysis (SCA) and SBOM

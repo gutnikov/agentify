@@ -5,6 +5,8 @@ group: testing
 agent: [explorer]
 qualities: [functional suitability, operability]
 stages: [local, ci]
+places: [delivery/work, remediation/work, maintenance/work]
+needs: [browser]
 ---
 
 # E2E through browser automation

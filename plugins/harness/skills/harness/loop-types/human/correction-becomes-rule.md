@@ -5,6 +5,7 @@ group: human
 initiator: human
 stages: [continuous]
 speed: [minutes]
+places: [harness:remediation/entry, harness:remediation/oracle]
 ---
 
 # Steering: every correction becomes a rule

@@ -1,11 +1,13 @@
 ---
 id: ci-clean-infra
 title: "CI on clean infrastructure"
-group: delivery
+group: deployability
 agent: [investigator]
 qualities: [reproducibility, deployability]
 stages: [ci]
 speed: [minutes]
+places: [delivery/work, remediation/work, maintenance/work]
+needs: [ci]
 ---
 
 # CI on clean infrastructure

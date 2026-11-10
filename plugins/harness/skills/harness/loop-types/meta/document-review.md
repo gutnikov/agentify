@@ -6,6 +6,7 @@ agent: [reviewer]
 qualities: [understandability, correctness]
 stages: [local]
 speed: [minutes]
+places: [delivery/work, discovery/gate, harness:delivery/work]
 ---
 
 # Review of document texts

@@ -6,6 +6,8 @@ agent: [investigator]
 qualities: [scalability, elasticity, capacity]
 stages: [staging]
 speed: [minutes]
+places: [delivery/release, maintenance/release]
+needs: [traces]
 ---
 
 # Load testing

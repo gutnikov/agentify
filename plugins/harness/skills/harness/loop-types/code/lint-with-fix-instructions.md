@@ -5,6 +5,7 @@ group: code
 qualities: [maintainability]
 stages: [commit, ci]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Linter with fix instructions

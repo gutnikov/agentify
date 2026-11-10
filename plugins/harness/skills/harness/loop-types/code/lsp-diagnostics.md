@@ -5,6 +5,7 @@ group: code
 qualities: [analysability]
 stages: [edit, local]
 speed: [sub-second]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # LSP diagnostics after every edit

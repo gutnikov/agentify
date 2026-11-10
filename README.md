@@ -5,7 +5,7 @@ Private Claude Code plugins.
 | Plugin | Skill | What it does |
 |---|---|---|
 | `text-quality` | [`text-quality`](plugins/text-quality/skills/text-quality/SKILL.md) | Writes a text a person will decide on, in Russian (`ru/`) or English (`en/`) |
-| `harness` | [`harness`](plugins/harness/skills/harness/SKILL.md) | Sets up and maintains a project's agent loops: designs, builds, validates and revises them, with a catalog of 91 loop types and a per-project policy for when an agent may call a person |
+| `harness` | [`harness`](plugins/harness/skills/harness/SKILL.md) | Sets up and maintains a project's agent loops and the super-loops they make up (delivery, remediation, maintenance, discovery): designs, builds, validates and revises them, with a catalog of 96 loop types and a per-project policy for when an agent may call a person |
 | `playwright` | [`fixture-modify`](plugins/playwright/skills/fixture-modify/SKILL.md), [`pom-modify`](plugins/playwright/skills/pom-modify/SKILL.md) | Writes the Playwright code tests stand on: fixtures that seed test state, and Page Objects |
 | `app-probing` | [`app-probing`](plugins/app-probing/skills/app-probing/SKILL.md) | Probes the running web app with a throwaway Playwright script and reports what it really does |
 | `ui-prototypes` | [`ui-prototypes`](plugins/ui-prototypes/skills/ui-prototypes/SKILL.md) | Finds a project's design system, sets up one command that serves prototypes built from its components at a local URL, and makes, opens, lists and deletes named prototypes |
@@ -27,7 +27,9 @@ Install:
 
 `text-quality` writes its runs to `.text-quality-runs/` at the root of the current project: add it to the project's `.gitignore`.
 
-`harness` keeps a project's loops in `loops/` at its root, to be committed. Its `document-review` loop uses `text-quality`.
+`harness` keeps a project's loops in `loops/` at its root, to be committed. It builds them as parts of four super-loops
+(delivery, remediation, maintenance, discovery), each ending in a change confirmed where it is used. Its
+`document-review` loop uses `text-quality`.
 
 `app-probing` builds a missing fixture or Page Object with the skills of `playwright`: install both.
 

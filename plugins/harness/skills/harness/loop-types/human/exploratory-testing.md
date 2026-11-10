@@ -9,6 +9,7 @@ sync: async
 assesses: [result]
 stages: [preview, staging]
 speed: [hours]
+places: [delivery/release, remediation/entry]
 ---
 
 # Exploratory testing

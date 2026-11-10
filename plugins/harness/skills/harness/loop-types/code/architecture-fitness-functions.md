@@ -5,6 +5,7 @@ group: code
 qualities: [modularity, modifiability, evolvability]
 stages: [commit, ci]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Architecture fitness functions

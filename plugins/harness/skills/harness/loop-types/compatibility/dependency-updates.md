@@ -5,6 +5,8 @@ group: compatibility
 agent: [worker]
 qualities: [upgradeability, sustainability]
 stages: [scheduled]
+places: [maintenance/entry, maintenance/work]
+needs: [ci]
 ---
 
 # Dependency updates

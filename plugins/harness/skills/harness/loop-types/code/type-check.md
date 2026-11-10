@@ -5,6 +5,7 @@ group: code
 qualities: [correctness, analysability]
 stages: [local]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Type checking

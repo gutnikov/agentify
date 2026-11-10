@@ -4,6 +4,7 @@ title: "Property-based tests"
 group: testing
 qualities: [correctness, robustness]
 stages: [local, ci]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Property-based tests

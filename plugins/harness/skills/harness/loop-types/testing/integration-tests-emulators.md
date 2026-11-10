@@ -5,6 +5,7 @@ group: testing
 qualities: [integrability, interoperability]
 stages: [local, ci]
 speed: [minutes]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Integration tests with emulators

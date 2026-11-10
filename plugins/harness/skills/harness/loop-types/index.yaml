@@ -9,7 +9,7 @@ groups:
   performance: "Performance and scalability"
   observability: "Observability and debuggability"
   reliability: "Reliability and resilience"
-  delivery: "Deployability and reproducibility"
+  deployability: "Deployability and reproducibility"
   production: "Production signals"
   interaction: "Interaction and accessibility"
   meta: "Inferential and meta loops"
@@ -24,6 +24,7 @@ loop_types:
     qualities: [modularity, modifiability, evolvability]
     stages: [commit, ci]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: autoformat-hook
     title: "Auto-formatting hook"
     group: code
@@ -32,6 +33,7 @@ loop_types:
     qualities: [maintainability]
     stages: [edit, local]
     speed: [sub-second]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: build
     title: "Build / compile"
     group: code
@@ -40,6 +42,7 @@ loop_types:
     qualities: [correctness, analysability]
     stages: [local, ci]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: coupling-analysis
     title: "Coupling analysis"
     group: code
@@ -48,6 +51,7 @@ loop_types:
     qualities: [modularity]
     stages: [scheduled]
     speed: [minutes]
+    places: [maintenance/entry, maintenance/oracle]
   - id: knowledge-base-doc-lint
     title: "Doc linters for the knowledge base"
     group: code
@@ -55,6 +59,7 @@ loop_types:
     summary: "CI checks that the `docs/` folder is current, cross-linked and correctly structured. The agent reads the errors CI reports and fixes the docs."
     qualities: [understandability, supportability]
     stages: [ci, scheduled]
+    places: [delivery/work, remediation/work, maintenance/entry, maintenance/work]
   - id: lint-with-fix-instructions
     title: "Linter with fix instructions"
     group: code
@@ -63,6 +68,7 @@ loop_types:
     qualities: [maintainability]
     stages: [commit, ci]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: lsp-diagnostics
     title: "LSP diagnostics after every edit"
     group: code
@@ -71,6 +77,7 @@ loop_types:
     qualities: [analysability]
     stages: [edit, local]
     speed: [sub-second]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: taste-invariants
     title: "Taste invariants: custom lints"
     group: code
@@ -79,6 +86,7 @@ loop_types:
     qualities: [consistency, observability]
     stages: [local, ci]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: type-check
     title: "Type checking"
     group: code
@@ -87,6 +95,7 @@ loop_types:
     qualities: [correctness, analysability]
     stages: [local]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: agentic-manual-testing
     title: "Agentic manual testing"
     group: testing
@@ -95,6 +104,7 @@ loop_types:
     qualities: [correctness, demonstrability]
     stages: [local]
     agent: [explorer]
+    places: [delivery/work, remediation/oracle, remediation/work, maintenance/work, discovery/work]
   - id: approved-fixtures
     title: "Snapshot / golden / approved fixtures"
     group: testing
@@ -104,6 +114,7 @@ loop_types:
     stages: [local]
     speed: [seconds]
     agent: [reviewer]
+    places: [delivery/work, remediation/work, maintenance/oracle, maintenance/work]
   - id: bug-failing-test-fix
     title: "Bug → failing test → fix"
     group: testing
@@ -112,6 +123,7 @@ loop_types:
     qualities: [reproducibility, debuggability]
     stages: [local]
     agent: [explorer]
+    places: [remediation/oracle, remediation/work]
   - id: code-coverage
     title: "Code coverage"
     group: testing
@@ -119,6 +131,7 @@ loop_types:
     summary: "The agent runs coverage and writes tests for the uncovered branches."
     qualities: [testability]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/oracle]
   - id: contract-tests
     title: "Contract tests"
     group: testing
@@ -127,6 +140,7 @@ loop_types:
     qualities: [compatibility, integrability, deployability]
     stages: [ci]
     speed: [minutes]
+    places: [delivery/work, delivery/gate, remediation/work, maintenance/gate]
   - id: e2e-browser
     title: "E2E through browser automation"
     group: testing
@@ -135,6 +149,8 @@ loop_types:
     qualities: [functional suitability, operability]
     stages: [local, ci]
     agent: [explorer]
+    places: [delivery/work, remediation/work, maintenance/work]
+    needs: [browser]
   - id: executable-docs
     title: "Executable documentation"
     group: testing
@@ -142,6 +158,7 @@ loop_types:
     summary: "Doctests, and checking API responses against the OpenAPI schema, turn a mismatch between the docs and the code into a failing test."
     qualities: [understandability, self-descriptiveness]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: fuzzing
     title: "Fuzzing"
     group: testing
@@ -149,6 +166,7 @@ loop_types:
     summary: "The fuzzer finds a crash. The agent turns the minimal input into a regression test and fixes the code."
     qualities: [robustness, security (resistance)]
     stages: [ci, scheduled]
+    places: [remediation/entry, remediation/oracle]
   - id: integration-tests-emulators
     title: "Integration tests with emulators"
     group: testing
@@ -157,6 +175,7 @@ loop_types:
     qualities: [integrability, interoperability]
     stages: [local, ci]
     speed: [minutes]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: mutation-testing
     title: "Mutation testing"
     group: testing
@@ -164,6 +183,7 @@ loop_types:
     summary: "The agent sees surviving mutants — code changes the tests did not notice — and writes tests that catch them."
     qualities: [testability, faultlessness]
     stages: [local, ci]
+    places: [delivery/work, remediation/work, maintenance/oracle]
   - id: property-based-tests
     title: "Property-based tests"
     group: testing
@@ -171,6 +191,7 @@ loop_types:
     summary: "The agent states invariants and writes property tests for them. The framework finds a minimal counterexample, and the agent fixes the code."
     qualities: [correctness, robustness]
     stages: [local, ci]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: red-green-tdd
     title: "Unit tests, red/green TDD"
     group: testing
@@ -180,6 +201,7 @@ loop_types:
     stages: [local]
     speed: [seconds]
     agent: [reviewer]
+    places: [delivery/work, remediation/work]
   - id: run-tests-first
     title: "Run the tests first"
     group: testing
@@ -187,6 +209,7 @@ loop_types:
     summary: "Before changing anything the agent runs the whole suite. It learns the state of the project and which tests already fail, so later it does not mistake them for its own regressions."
     qualities: [testability, reproducibility]
     stages: [local]
+    places: [delivery/work, remediation/work, maintenance/oracle]
   - id: spec-check
     title: "Spec check"
     group: testing
@@ -195,6 +218,7 @@ loop_types:
     qualities: [functional suitability, testability, analysability]
     stages: [edit, commit, ci]
     speed: [seconds]
+    places: [delivery/oracle]
   - id: visual-screenshot-check
     title: "Visual check with screenshots"
     group: testing
@@ -203,6 +227,8 @@ loop_types:
     qualities: [interaction capability (user engagement)]
     stages: [local, ci]
     agent: [judge]
+    places: [delivery/work, remediation/work, maintenance/work]
+    needs: [browser]
   - id: agent-audit-trail
     title: "Audit trail of agent actions"
     group: security
@@ -210,6 +236,7 @@ loop_types:
     summary: "The agent leaves evidence: commands with their output, screenshots, videos, commits. The reviewer checks the evidence instead of re-running everything."
     qualities: [auditability, accountability]
     stages: [task]
+    places: [delivery/gate, remediation/gate, maintenance/gate]
   - id: compliance-mutants
     title: "Compliance hardening with mutants"
     group: security
@@ -218,6 +245,7 @@ loop_types:
     qualities: [compliance, privacy]
     stages: [ci, scheduled]
     agent: [worker]
+    places: [maintenance/entry, maintenance/work]
   - id: dast
     title: "DAST"
     group: security
@@ -226,6 +254,7 @@ loop_types:
     qualities: [security (resistance)]
     stages: [staging]
     speed: [minutes]
+    places: [delivery/release, remediation/entry]
   - id: dependency-scanning-sbom
     title: "Dependency analysis (SCA) and SBOM"
     group: security
@@ -233,6 +262,7 @@ loop_types:
     summary: "The scanner reports a CVE in a dependency the agent added. The agent then picks a safe version."
     qualities: [security, supportability]
     stages: [ci]
+    places: [delivery/work, remediation/work, maintenance/entry, maintenance/work]
   - id: license-check
     title: "License check"
     group: security
@@ -241,6 +271,7 @@ loop_types:
     qualities: [legal, compliance]
     stages: [ci]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: sast
     title: "SAST"
     group: security
@@ -249,6 +280,7 @@ loop_types:
     qualities: [security]
     stages: [local, ci]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: secret-scanning
     title: "Secret scanning"
     group: security
@@ -256,6 +288,7 @@ loop_types:
     summary: "GitLeaks in pre-commit blocks a commit that contains a secret; the agent moves the secret into environment variables."
     qualities: [confidentiality]
     stages: [commit]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: security-review-agent
     title: "Security and data-handling review by an agent"
     group: security
@@ -265,6 +298,7 @@ loop_types:
     stages: [scheduled]
     speed: [minutes]
     agent: [reviewer]
+    places: [remediation/entry]
   - id: api-breaking-changes
     title: "Breaking changes in the API"
     group: compatibility
@@ -273,6 +307,7 @@ loop_types:
     qualities: [compatibility, evolvability]
     stages: [local, ci]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/gate]
   - id: config-validation
     title: "Configuration check"
     group: compatibility
@@ -280,6 +315,7 @@ loop_types:
     summary: "Two checks catch configuration errors: a validator checks the configuration against its schema; a smoke start runs with each configuration profile."
     qualities: [configurability, installability]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: db-migration-lint
     title: "Lint and run database migrations"
     group: compatibility
@@ -288,6 +324,7 @@ loop_types:
     qualities: [compatibility, availability, recoverability]
     stages: [ci]
     speed: [seconds, minutes]
+    places: [delivery/work, remediation/work, maintenance/gate]
   - id: dependency-updates
     title: "Dependency updates"
     group: compatibility
@@ -296,6 +333,8 @@ loop_types:
     qualities: [upgradeability, sustainability]
     stages: [scheduled]
     agent: [worker]
+    places: [maintenance/entry, maintenance/work]
+    needs: [ci]
   - id: i18n-pseudolocalization
     title: "i18n and pseudo-localization"
     group: compatibility
@@ -303,6 +342,7 @@ loop_types:
     summary: "A linter finds missing keys and hard-coded strings. E2E on a pseudo-locale shows truncated text."
     qualities: [localizability]
     stages: [ci]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: platform-matrix
     title: "Platform matrix"
     group: compatibility
@@ -310,6 +350,8 @@ loop_types:
     summary: "CI runs the tests on several operating systems, runtimes and browsers. The agent sees which exact combination failed and fixes it."
     qualities: [adaptability, installability, co-existence]
     stages: [ci]
+    places: [delivery/work, remediation/work, maintenance/work]
+    needs: [ci]
   - id: benchmarks-vs-baseline
     title: "Benchmarks against a baseline"
     group: performance
@@ -317,6 +359,7 @@ loop_types:
     summary: "The agent compares its result with a baseline. If the result is worse than the baseline, the agent optimizes the result."
     qualities: [time behaviour]
     speed: [minutes]
+    places: [delivery/work, maintenance/oracle, discovery/work]
   - id: bundle-size-budget
     title: "Bundle size budget"
     group: performance
@@ -325,6 +368,7 @@ loop_types:
     qualities: [resource utilization]
     stages: [ci]
     speed: [seconds]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: lighthouse-ci
     title: "Lighthouse CI"
     group: performance
@@ -333,6 +377,8 @@ loop_types:
     qualities: [performance, accessibility]
     stages: [preview]
     speed: [minutes]
+    places: [delivery/release]
+    needs: [browser]
   - id: load-testing
     title: "Load testing"
     group: performance
@@ -342,6 +388,8 @@ loop_types:
     stages: [staging]
     speed: [minutes]
     agent: [investigator]
+    places: [delivery/release, maintenance/release]
+    needs: [traces]
   - id: perf-budgets-telemetry
     title: "Performance budgets through telemetry"
     group: performance
@@ -350,6 +398,8 @@ loop_types:
     qualities: [performance, responsiveness]
     stages: [local]
     agent: [investigator]
+    places: [delivery/work, maintenance/work, maintenance/confirmation]
+    needs: [traces]
   - id: profiling
     title: "Profiling"
     group: performance
@@ -358,6 +408,7 @@ loop_types:
     qualities: [resource utilization, energy efficiency]
     stages: [local]
     agent: [investigator]
+    places: [remediation/work, maintenance/work]
   - id: browser-console-devtools
     title: "Browser console and DevTools"
     group: observability
@@ -366,6 +417,8 @@ loop_types:
     qualities: [debuggability]
     speed: [seconds]
     agent: [investigator]
+    places: [delivery/work, remediation/oracle, remediation/work]
+    needs: [browser]
   - id: debugger-repl
     title: "Debugger and REPL"
     group: observability
@@ -373,6 +426,7 @@ loop_types:
     summary: "The agent sets a breakpoint or opens a REPL and checks its hypothesis against real values instead of guessing."
     qualities: [debuggability]
     speed: [seconds]
+    places: [delivery/work, remediation/oracle, remediation/work, discovery/work]
   - id: metrics-promql
     title: "Metrics (PromQL)"
     group: observability
@@ -381,6 +435,8 @@ loop_types:
     qualities: [observability, availability]
     speed: [seconds]
     agent: [investigator]
+    places: [delivery/work, delivery/confirmation, remediation/confirmation, maintenance/confirmation]
+    needs: [metrics]
   - id: structured-logs
     title: "Structured logs and log queries"
     group: observability
@@ -390,6 +446,8 @@ loop_types:
     stages: [local]
     speed: [seconds]
     agent: [investigator]
+    places: [delivery/work, delivery/confirmation, remediation/oracle, remediation/confirmation, maintenance/confirmation]
+    needs: [logs]
   - id: traces-opentelemetry
     title: "Traces (OpenTelemetry)"
     group: observability
@@ -398,6 +456,8 @@ loop_types:
     qualities: [analysability, performance]
     speed: [seconds]
     agent: [investigator]
+    places: [delivery/work, remediation/oracle]
+    needs: [traces]
   - id: backup-restore-rollback
     title: "Restore from backup and rollback"
     group: reliability
@@ -405,6 +465,8 @@ loop_types:
     summary: "A job restores the database from a backup and rolls the release back. When the check fails, the agent fixes the procedure."
     qualities: [recoverability, durability]
     stages: [scheduled]
+    places: [remediation/entry]
+    needs: [deploy]
   - id: chaos-engineering
     title: "Chaos engineering"
     group: reliability
@@ -413,6 +475,8 @@ loop_types:
     qualities: [availability, recoverability, continuity]
     stages: [staging]
     agent: [investigator]
+    places: [remediation/entry]
+    needs: [metrics, deploy]
   - id: fault-injection
     title: "Fault injection (Toxiproxy)"
     group: reliability
@@ -420,6 +484,7 @@ loop_types:
     summary: "A test calls the Toxiproxy HTTP API (port 8474) to add latency, a timeout or an outage to a dependency. Toxiproxy does not report pass or fail. Your test does."
     qualities: [fault tolerance, resilience]
     stages: [local, ci]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: health-checks-smoke
     title: "Health checks and smoke tests after deploy"
     group: reliability
@@ -429,53 +494,64 @@ loop_types:
     stages: [preview, staging]
     speed: [seconds]
     agent: [investigator]
+    places: [delivery/release, remediation/release, maintenance/release]
+    needs: [logs]
   - id: canary-feature-flags
     title: "Canaries and feature flags"
-    group: delivery
-    path: delivery/canary-feature-flags.md
+    group: deployability
+    path: deployability/canary-feature-flags.md
     summary: "An analysis compares the canary release with the baseline. If the canary performs worse, the release rolls back automatically, and the agent gets the metrics."
     qualities: [deployability, availability]
     stages: [production]
+    places: [delivery/release, delivery/confirmation, remediation/release, remediation/confirmation, maintenance/release, maintenance/confirmation]
+    needs: [metrics, deploy]
   - id: ci-clean-infra
     title: "CI on clean infrastructure"
-    group: delivery
-    path: delivery/ci-clean-infra.md
+    group: deployability
+    path: deployability/ci-clean-infra.md
     summary: "The agent pushes; autofixes apply themselves; the agent fixes the remaining failures locally."
     qualities: [reproducibility, deployability]
     stages: [ci]
     speed: [minutes]
     agent: [investigator]
+    places: [delivery/work, remediation/work, maintenance/work]
+    needs: [ci]
   - id: isolated-environment
     title: "Isolated reproducible environment"
-    group: delivery
-    path: delivery/isolated-environment.md
+    group: deployability
+    path: deployability/isolated-environment.md
     summary: "At the start of every task, the agent gets a clean environment: a devbox, a devcontainer, or a worktree with its own instance of the app. The aim is that the sensors give the same result for the same code."
     qualities: [reproducibility, safety (limits the blast radius)]
     stages: [task]
+    places: [delivery/work, remediation/work, maintenance/work, discovery/work]
   - id: pre-commit-pre-push
     title: "Pre-commit / pre-push"
-    group: delivery
-    path: delivery/pre-commit-pre-push.md
+    group: deployability
+    path: deployability/pre-commit-pre-push.md
     summary: "Fast checks run when the agent commits or pushes. If a check fails, it rejects the commit before the change reaches CI. The one check it names is linting, in Stripe's case below."
     qualities: [maintainability, security]
     stages: [commit]
     speed: [sub-second]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: preview-environments
     title: "Preview environments per PR"
-    group: delivery
-    path: delivery/preview-environments.md
+    group: deployability
+    path: deployability/preview-environments.md
     summary: "Every PR gets its own deployed environment. The agent runs e2e, DAST, Lighthouse and load tests against it and reads its logs."
     qualities: [deployability, integrability]
     stages: [preview]
     speed: [minutes]
+    places: [delivery/release]
+    needs: [deploy]
   - id: stop-hook
     title: "Stop hook / `/goal`"
-    group: delivery
-    path: delivery/stop-hook.md
+    group: deployability
+    path: deployability/stop-hook.md
     summary: "A hook runs a check and does not let the agent end its turn until the check passes."
     qualities: [any attribute a script can check]
     stages: [local]
     agent: [refuter]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: ai-judges-telemetry
     title: "AI judges on telemetry"
     group: production
@@ -484,6 +560,8 @@ loop_types:
     qualities: [quality in use]
     stages: [continuous]
     agent: [judge]
+    places: [remediation/entry]
+    needs: [logs]
   - id: error-tracking
     title: "Error tracking (Sentry)"
     group: production
@@ -492,6 +570,19 @@ loop_types:
     qualities: [faultlessness, operability]
     stages: [production]
     agent: [investigator]
+    places: [delivery/confirmation, remediation/entry, remediation/confirmation, maintenance/confirmation]
+    needs: [errors]
+  - id: release-confirmation
+    title: "Release confirmation: the change is there, it happened, nothing broke"
+    group: production
+    path: production/release-confirmation.md
+    summary: "After a release, a job waits for a window and judges a snapshot of it. A change counts as confirmed only when production runs it, its own signal appeared often enough, and nothing broke compared with the previous version. This is the confirmation phase of delivery, remediation and maintenance; the three differ in the second check."
+    qualities: [functional suitability, reliability, observability]
+    stages: [production]
+    speed: [minutes, hours, days]
+    agent: [investigator]
+    places: [delivery/confirmation, remediation/confirmation, maintenance/confirmation]
+    needs: [logs, deploy]
   - id: slo-degradation
     title: "SLO degradation"
     group: production
@@ -500,6 +591,8 @@ loop_types:
     qualities: [availability, reliability]
     stages: [production]
     agent: [investigator]
+    places: [delivery/confirmation, remediation/entry, remediation/confirmation, maintenance/confirmation]
+    needs: [metrics]
   - id: user-feedback
     title: "User feedback"
     group: production
@@ -507,6 +600,7 @@ loop_types:
     summary: "A person turns user feedback into acceptance criteria. The agent gets these criteria and uses them as both the spec for its work and the test of that work."
     qualities: [functional suitability, satisfaction]
     speed: [days]
+    places: [delivery/entry, delivery/oracle, remediation/entry, discovery/entry]
   - id: accessibility-checks
     title: "Accessibility checks (axe, ARIA)"
     group: interaction
@@ -515,6 +609,8 @@ loop_types:
     qualities: [inclusivity, user assistance]
     speed: [seconds]
     agent: [explorer]
+    places: [delivery/work, remediation/work, maintenance/work]
+    needs: [browser]
   - id: accessibility-tree-navigation
     title: "Agent navigation by the accessibility tree"
     group: interaction
@@ -522,6 +618,8 @@ loop_types:
     summary: "Playwright MCP gives the agent an accessibility snapshot of the page instead of pixels."
     qualities: [operability, self-descriptiveness]
     speed: [seconds]
+    places: [delivery/work, remediation/work, discovery/work]
+    needs: [browser]
   - id: ux-evaluator
     title: "UX evaluator with thresholds"
     group: interaction
@@ -530,6 +628,8 @@ loop_types:
     qualities: [user engagement, functional completeness]
     stages: [sprint]
     agent: [explorer, judge]
+    places: [delivery/gate]
+    needs: [browser]
   - id: acceptance-loop
     title: "Acceptance loop: from requirements to green acceptance tests"
     group: meta
@@ -539,6 +639,7 @@ loop_types:
     stages: [task, local, ci]
     speed: [minutes, hours]
     agent: [reviewer, refuter]
+    places: [delivery/oracle, delivery/gate]
   - id: agent-calibration
     title: "Calibration of a loop's agent"
     group: meta
@@ -547,6 +648,7 @@ loop_types:
     qualities: [correctness of non-deterministic components, trustworthiness]
     stages: [local, scheduled]
     speed: [minutes]
+    places: [harness:delivery/gate, harness:delivery/confirmation, harness:remediation/oracle, harness:maintenance/gate]
   - id: agent-code-review
     title: "Code review by another agent"
     group: meta
@@ -555,6 +657,27 @@ loop_types:
     qualities: [maintainability, correctness]
     speed: [minutes]
     agent: [reviewer]
+    places: [delivery/work, remediation/work, maintenance/work]
+  - id: behaviour-invariance
+    title: "Behaviour invariance: maintenance that changes no expected value"
+    group: meta
+    path: meta/behaviour-invariance.md
+    summary: "Before a maintenance change, the baseline is recorded: the expected values of every existing test, and the current value of the measure the change should improve. After the change, the gate reports whether any expected value changed, whether the tests pass, and whether the measure improved. A changed expected value sends the work back to triage: it is delivery or remediation, not maintenance."
+    qualities: [maintainability, correctness, modifiability]
+    stages: [local, ci]
+    speed: [minutes]
+    agent: [reviewer]
+    places: [maintenance/oracle, maintenance/gate]
+  - id: discovery-decision
+    title: "Discovery decision: an answer whose every claim has its evidence"
+    group: meta
+    path: meta/discovery-decision.md
+    summary: "Before the work, the question and the evidence that would answer it are written down and agreed. The agent builds prototypes, probes and spikes, and writes the answer. The gate checks that every claim in the answer names its evidence, that the evidence says what the claim says, and that none of the work's code reached the main branch."
+    qualities: [functional suitability, traceability]
+    stages: [task]
+    speed: [hours, days]
+    agent: [refuter]
+    places: [discovery/oracle, discovery/gate, discovery/confirmation]
   - id: document-review
     title: "Review of document texts"
     group: meta
@@ -564,6 +687,7 @@ loop_types:
     stages: [local]
     speed: [minutes]
     agent: [reviewer]
+    places: [delivery/work, discovery/gate, harness:delivery/work]
   - id: garbage-collection
     title: "Garbage collection"
     group: meta
@@ -572,6 +696,7 @@ loop_types:
     qualities: [maintainability, evolvability]
     stages: [scheduled]
     agent: [worker, reviewer]
+    places: [maintenance/entry, maintenance/work]
   - id: llm-evals
     title: "Eval suites for LLM features"
     group: meta
@@ -580,6 +705,7 @@ loop_types:
     qualities: [correctness of non-deterministic components]
     speed: [minutes]
     agent: [judge]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: progress-file-feature-list
     title: "Progress file and feature list"
     group: meta
@@ -587,13 +713,36 @@ loop_types:
     summary: "An initializer creates a JSON list of features, each with `\"passes\": false`. Every session takes one feature and marks it as passing only after an e2e check."
     qualities: [process recoverability, auditability]
     stages: [task]
+    places: [delivery/oracle, delivery/gate]
+  - id: reproduction-gate
+    title: "Reproduction gate: a fix counts only against a reproduction that failed first"
+    group: meta
+    path: meta/reproduction-gate.md
+    summary: "A problem gets a reproduction before any fix: a test, a script or a recorded scenario that fails the way the problem does. The agent fixes the code until the reproduction passes. The gate reports, for each problem, whether its reproduction exists, failed before the fix and passes after it, and whether any other test changed on the way."
+    qualities: [correctness, reproducibility, traceability]
+    stages: [local, ci]
+    speed: [minutes]
+    agent: [reviewer]
+    places: [remediation/oracle, remediation/gate]
   - id: steering-loop
-    title: "Steering loop"
+    title: "Steering loop: every escape becomes a check at the phase that should have caught it"
     group: meta
     path: meta/steering-loop.md
-    summary: "A mistake the agent keeps repeating becomes a new guide or sensor."
+    summary: "An escape is a failure that got further than it should have: a change that passed the gate and was not confirmed in production, a problem a recent change introduced, a mistake the agent keeps repeating, a correction a person had to make. For each escape, the harness finds the phase of the super-loop that should have caught it, records the escape as a must-fire case there, and fixes or adds the loop at that phase: a sensor where it can, a guide where it cannot."
     qualities: [process evolvability]
     stages: [continuous]
+    agent: [investigator]
+    places: [harness:remediation/entry, harness:remediation/oracle, harness:remediation/work]
+  - id: triage
+    title: "Triage: every signal goes to one super-loop, with its oracle"
+    group: meta
+    path: meta/triage.md
+    summary: "A signal arrives: an error from the tracker, an alert, a pull request from a dependency bot, a message from a user, a ticket. Before any work, triage merges it with what is already open on the same thing, and routes it to one super-loop. The route decides the oracle, so a wrong route means the wrong check at the gate."
+    qualities: [functional suitability, traceability]
+    stages: [continuous]
+    speed: [minutes]
+    agent: [judge]
+    places: [delivery/entry, remediation/entry, maintenance/entry, discovery/entry]
   - id: verification-subagent
     title: "Verification subagent"
     group: meta
@@ -602,6 +751,7 @@ loop_types:
     qualities: [correctness, auditability]
     speed: [minutes]
     agent: [refuter]
+    places: [delivery/gate, remediation/gate, maintenance/gate, discovery/gate]
   - id: async-questions-with-assumptions
     title: "Asynchronous questions with assumptions"
     group: human
@@ -612,6 +762,7 @@ loop_types:
     sync: async
     stages: [task]
     speed: [minutes]
+    places: [delivery/work, remediation/work, maintenance/work, discovery/work]
   - id: choose-from-options
     title: "Choose from options"
     group: human
@@ -621,6 +772,7 @@ loop_types:
     initiator: agent
     assesses: [result, code]
     speed: [minutes]
+    places: [delivery/oracle, delivery/work, discovery/confirmation]
   - id: correction-becomes-rule
     title: "Steering: every correction becomes a rule"
     group: human
@@ -629,6 +781,7 @@ loop_types:
     initiator: human
     stages: [continuous]
     speed: [minutes]
+    places: [harness:remediation/entry, harness:remediation/oracle]
   - id: escalation-on-uncertainty
     title: "Escalation on uncertainty"
     group: human
@@ -639,6 +792,7 @@ loop_types:
     sync: blocking
     assesses: [intent]
     speed: [minutes, hours]
+    places: [delivery/work, remediation/work, maintenance/work, discovery/work]
   - id: exploratory-testing
     title: "Exploratory testing"
     group: human
@@ -651,6 +805,7 @@ loop_types:
     stages: [preview, staging]
     speed: [hours]
     agent: [explorer]
+    places: [delivery/release, remediation/entry]
   - id: human-acceptance-criteria
     title: "Acceptance criteria and references from a person"
     group: human
@@ -662,6 +817,7 @@ loop_types:
     stages: [task]
     speed: [seconds]
     agent: [reviewer]
+    places: [delivery/oracle]
   - id: human-diff-review
     title: "Diff review by a person"
     group: human
@@ -671,6 +827,8 @@ loop_types:
     assesses: [code, intent]
     stages: [ci]
     speed: [hours, days]
+    places: [delivery/gate, remediation/gate, maintenance/gate]
+    needs: [ci]
   - id: interview
     title: "Interview"
     group: human
@@ -682,6 +840,7 @@ loop_types:
     assesses: [intent]
     stages: [task]
     speed: [minutes]
+    places: [delivery/oracle, discovery/oracle]
   - id: llm-judge-calibration
     title: "Calibrating an LLM judge on an expert (critique shadowing)"
     group: human
@@ -690,6 +849,7 @@ loop_types:
     sync: async
     assesses: [result]
     speed: [seconds]
+    places: [harness:delivery/oracle, harness:delivery/gate]
   - id: observe-and-interrupt
     title: "Observe and interrupt"
     group: human
@@ -699,6 +859,7 @@ loop_types:
     initiator: human
     sync: async
     speed: [sub-second]
+    places: [delivery/work, remediation/work, maintenance/work]
   - id: plan-approval
     title: "Plan approval"
     group: human
@@ -710,6 +871,7 @@ loop_types:
     assesses: [plan]
     stages: [task]
     speed: [minutes]
+    places: [delivery/oracle, discovery/oracle]
   - id: production-users
     title: "Users in production"
     group: human
@@ -721,6 +883,7 @@ loop_types:
     assesses: [intent]
     stages: [production]
     speed: [days, weeks]
+    places: [delivery/entry, delivery/confirmation, remediation/entry, discovery/entry]
   - id: result-demo
     title: "Result demo"
     group: human
@@ -731,6 +894,7 @@ loop_types:
     assesses: [result]
     stages: [task]
     speed: [minutes]
+    places: [delivery/gate, discovery/confirmation]
   - id: risky-action-gates
     title: "Gates on risky actions"
     group: human
@@ -741,6 +905,7 @@ loop_types:
     sync: blocking
     assesses: [action-risk]
     speed: [seconds, minutes]
+    places: [delivery/work, delivery/release, remediation/work, remediation/release, maintenance/work, maintenance/release]
   - id: sample-audit
     title: "Sample audit"
     group: human
@@ -752,6 +917,7 @@ loop_types:
     assesses: [result]
     stages: [scheduled]
     speed: [minutes]
+    places: [remediation/entry, harness:delivery/confirmation, harness:remediation/entry]
   - id: task-restatement
     title: "Task restatement"
     group: human
@@ -763,3 +929,39 @@ loop_types:
     assesses: [intent]
     stages: [task]
     speed: [seconds]
+    places: [delivery/oracle, discovery/oracle]
+
+# The loop types at each place: <super-loop>/<phase>, or harness:<super-loop>/<phase> at the harness
+# level (super-loops/). The Phases table of each super-loop names the same types, except in the work phase.
+by_place:
+  delivery/entry: [production-users, triage, user-feedback]
+  delivery/oracle: [acceptance-loop, choose-from-options, human-acceptance-criteria, interview, plan-approval, progress-file-feature-list, spec-check, task-restatement, user-feedback]
+  delivery/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, benchmarks-vs-baseline, browser-console-devtools, build, bundle-size-budget, choose-from-options, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, document-review, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, metrics-promql, mutation-testing, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stop-hook, structured-logs, taste-invariants, traces-opentelemetry, type-check, visual-screenshot-check]
+  delivery/gate: [acceptance-loop, agent-audit-trail, contract-tests, human-diff-review, progress-file-feature-list, result-demo, ux-evaluator, verification-subagent]
+  delivery/release: [canary-feature-flags, dast, exploratory-testing, health-checks-smoke, lighthouse-ci, load-testing, preview-environments, risky-action-gates]
+  delivery/confirmation: [canary-feature-flags, error-tracking, metrics-promql, production-users, release-confirmation, slo-degradation, structured-logs]
+  remediation/entry: [ai-judges-telemetry, backup-restore-rollback, chaos-engineering, dast, error-tracking, exploratory-testing, fuzzing, production-users, sample-audit, security-review-agent, slo-degradation, triage, user-feedback]
+  remediation/oracle: [agentic-manual-testing, browser-console-devtools, bug-failing-test-fix, debugger-repl, fuzzing, reproduction-gate, structured-logs, traces-opentelemetry]
+  remediation/work: [accessibility-checks, accessibility-tree-navigation, agent-code-review, agentic-manual-testing, api-breaking-changes, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, browser-console-devtools, bug-failing-test-fix, build, bundle-size-budget, ci-clean-infra, code-coverage, config-validation, contract-tests, db-migration-lint, debugger-repl, dependency-scanning-sbom, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, mutation-testing, observe-and-interrupt, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, red-green-tdd, risky-action-gates, run-tests-first, sast, secret-scanning, stop-hook, taste-invariants, type-check, visual-screenshot-check]
+  remediation/gate: [agent-audit-trail, human-diff-review, reproduction-gate, verification-subagent]
+  remediation/release: [canary-feature-flags, health-checks-smoke, risky-action-gates]
+  remediation/confirmation: [canary-feature-flags, error-tracking, metrics-promql, release-confirmation, slo-degradation, structured-logs]
+  maintenance/entry: [compliance-mutants, coupling-analysis, dependency-scanning-sbom, dependency-updates, garbage-collection, knowledge-base-doc-lint, triage]
+  maintenance/oracle: [approved-fixtures, behaviour-invariance, benchmarks-vs-baseline, code-coverage, coupling-analysis, mutation-testing, run-tests-first]
+  maintenance/work: [accessibility-checks, agent-code-review, agentic-manual-testing, approved-fixtures, architecture-fitness-functions, async-questions-with-assumptions, autoformat-hook, build, bundle-size-budget, ci-clean-infra, compliance-mutants, config-validation, dependency-scanning-sbom, dependency-updates, e2e-browser, escalation-on-uncertainty, executable-docs, fault-injection, garbage-collection, i18n-pseudolocalization, integration-tests-emulators, isolated-environment, knowledge-base-doc-lint, license-check, lint-with-fix-instructions, llm-evals, lsp-diagnostics, observe-and-interrupt, perf-budgets-telemetry, platform-matrix, pre-commit-pre-push, profiling, property-based-tests, risky-action-gates, sast, secret-scanning, stop-hook, taste-invariants, type-check, visual-screenshot-check]
+  maintenance/gate: [agent-audit-trail, api-breaking-changes, behaviour-invariance, contract-tests, db-migration-lint, human-diff-review, verification-subagent]
+  maintenance/release: [canary-feature-flags, health-checks-smoke, load-testing, risky-action-gates]
+  maintenance/confirmation: [canary-feature-flags, error-tracking, metrics-promql, perf-budgets-telemetry, release-confirmation, slo-degradation, structured-logs]
+  discovery/entry: [production-users, triage, user-feedback]
+  discovery/oracle: [discovery-decision, interview, plan-approval, task-restatement]
+  discovery/work: [accessibility-tree-navigation, agentic-manual-testing, async-questions-with-assumptions, benchmarks-vs-baseline, debugger-repl, escalation-on-uncertainty, isolated-environment]
+  discovery/gate: [discovery-decision, document-review, verification-subagent]
+  discovery/confirmation: [choose-from-options, discovery-decision, result-demo]
+  harness:delivery/oracle: [llm-judge-calibration]
+  harness:delivery/work: [document-review]
+  harness:delivery/gate: [agent-calibration, llm-judge-calibration]
+  harness:delivery/confirmation: [agent-calibration, sample-audit]
+  harness:remediation/entry: [correction-becomes-rule, sample-audit, steering-loop]
+  harness:remediation/oracle: [agent-calibration, correction-becomes-rule, steering-loop]
+  harness:remediation/work: [steering-loop]
+  harness:maintenance/gate: [agent-calibration]

@@ -4,6 +4,7 @@ title: "Code coverage"
 group: testing
 qualities: [testability]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/oracle]
 ---
 
 # Code coverage

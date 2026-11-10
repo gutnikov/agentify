@@ -5,6 +5,7 @@ group: testing
 qualities: [compatibility, integrability, deployability]
 stages: [ci]
 speed: [minutes]
+places: [delivery/work, delivery/gate, remediation/work, maintenance/gate]
 ---
 
 # Contract tests

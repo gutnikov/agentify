@@ -5,6 +5,7 @@ group: security
 qualities: [security]
 stages: [local, ci]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # SAST

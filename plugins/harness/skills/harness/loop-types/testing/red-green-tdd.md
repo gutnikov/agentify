@@ -6,6 +6,7 @@ agent: [reviewer]
 qualities: [testability, correctness]
 stages: [local]
 speed: [seconds]
+places: [delivery/work, remediation/work]
 ---
 
 # Unit tests, red/green TDD

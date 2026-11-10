@@ -6,6 +6,8 @@ when: [after]
 assesses: [code, intent]
 stages: [ci]
 speed: [hours, days]
+places: [delivery/gate, remediation/gate, maintenance/gate]
+needs: [ci]
 ---
 
 # Diff review by a person

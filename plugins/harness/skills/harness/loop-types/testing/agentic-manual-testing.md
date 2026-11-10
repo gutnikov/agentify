@@ -5,6 +5,7 @@ group: testing
 agent: [explorer]
 qualities: [correctness, demonstrability]
 stages: [local]
+places: [delivery/work, remediation/oracle, remediation/work, maintenance/work, discovery/work]
 ---
 
 # Agentic manual testing

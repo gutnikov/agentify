@@ -8,6 +8,7 @@ sync: blocking
 assesses: [intent]
 stages: [task]
 speed: [minutes]
+places: [delivery/oracle, discovery/oracle]
 ---
 
 # Interview

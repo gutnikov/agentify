@@ -4,6 +4,7 @@ title: "Secret scanning"
 group: security
 qualities: [confidentiality]
 stages: [commit]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Secret scanning

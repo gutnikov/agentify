@@ -4,6 +4,7 @@ title: "Configuration check"
 group: compatibility
 qualities: [configurability, installability]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Configuration check

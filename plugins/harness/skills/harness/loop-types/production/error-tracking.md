@@ -5,6 +5,8 @@ group: production
 agent: [investigator]
 qualities: [faultlessness, operability]
 stages: [production]
+places: [delivery/confirmation, remediation/entry, remediation/confirmation, maintenance/confirmation]
+needs: [errors]
 ---
 
 # Error tracking (Sentry)

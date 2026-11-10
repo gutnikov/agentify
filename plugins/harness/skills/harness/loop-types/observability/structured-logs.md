@@ -6,6 +6,8 @@ agent: [investigator]
 qualities: [observability, debuggability]
 stages: [local]
 speed: [seconds]
+places: [delivery/work, delivery/confirmation, remediation/oracle, remediation/confirmation, maintenance/confirmation]
+needs: [logs]
 ---
 
 # Structured logs and log queries

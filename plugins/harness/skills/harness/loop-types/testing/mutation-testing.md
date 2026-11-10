@@ -4,6 +4,7 @@ title: "Mutation testing"
 group: testing
 qualities: [testability, faultlessness]
 stages: [local, ci]
+places: [delivery/work, remediation/work, maintenance/oracle]
 ---
 
 # Mutation testing

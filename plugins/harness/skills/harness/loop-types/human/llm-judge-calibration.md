@@ -5,6 +5,7 @@ group: human
 sync: async
 assesses: [result]
 speed: [seconds]
+places: [harness:delivery/oracle, harness:delivery/gate]
 ---
 
 # Calibrating an LLM judge on an expert (critique shadowing)

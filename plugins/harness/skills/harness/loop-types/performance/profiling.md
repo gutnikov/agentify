@@ -5,6 +5,7 @@ group: performance
 agent: [investigator]
 qualities: [resource utilization, energy efficiency]
 stages: [local]
+places: [remediation/work, maintenance/work]
 ---
 
 # Profiling

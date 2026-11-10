@@ -7,6 +7,7 @@ initiator: agent
 assesses: [result]
 stages: [task]
 speed: [minutes]
+places: [delivery/gate, discovery/confirmation]
 ---
 
 # Result demo
@@ -36,7 +37,7 @@ At the end of a task; 1–5 minutes of the person's time.
 ## Related
 
 - [agent-audit-trail](../security/agent-audit-trail.md): the evidence the agent leaves.
-- [preview-environments](../delivery/preview-environments.md): where the demo runs.
+- [preview-environments](../deployability/preview-environments.md): where the demo runs.
 - [app-probing](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/app-probing/skills/app-probing) (plugin `app-probing`): the URL, credentials and screenshot for the demo, or a
   browser held open.
 

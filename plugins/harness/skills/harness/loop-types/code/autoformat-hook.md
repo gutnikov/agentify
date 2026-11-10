@@ -5,6 +5,7 @@ group: code
 qualities: [maintainability]
 stages: [edit, local]
 speed: [sub-second]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Auto-formatting hook

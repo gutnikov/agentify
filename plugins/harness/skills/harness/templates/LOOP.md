@@ -4,6 +4,7 @@ title: "<what the loop guards, in a few words>"
 type: <loop-type-id>            # from the plugin's loop-types/index.yaml, or custom
 status: proposed                # proposed | built | validated | active | retired
 trigger: []                     # edit | local | commit | ci | preview | staging | production | scheduled | task | sprint | continuous
+places: []                      # where it stands in the super-loops, as <super-loop>/<phase>: delivery/confirmation
 run: ./run                      # one command; exit 0 = passes, non-zero = fires; machine-readable output
 budget_seconds: 10              # one run must finish within this time
 validation: cases               # cases (cases/must-fire, cases/must-pass) or manual (say why below)
@@ -17,7 +18,8 @@ wiring: []                      # where the loop is hooked in, e.g. .claude/sett
 
 ## Requirement
 
-<The failure this loop prevents, and who asked for it. One or two sentences.>
+<The failure this loop prevents, who asked for it, and its place: the super-loop and the phase that should have
+caught the failure, such as `delivery/gate`. One or two sentences.>
 
 ## Loop
 

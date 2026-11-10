@@ -5,6 +5,7 @@ group: security
 qualities: [security (resistance)]
 stages: [staging]
 speed: [minutes]
+places: [delivery/release, remediation/entry]
 ---
 
 # DAST

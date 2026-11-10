@@ -4,6 +4,8 @@ title: "Restore from backup and rollback"
 group: reliability
 qualities: [recoverability, durability]
 stages: [scheduled]
+places: [remediation/entry]
+needs: [deploy]
 ---
 
 # Restore from backup and rollback

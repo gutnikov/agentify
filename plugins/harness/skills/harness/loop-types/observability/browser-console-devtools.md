@@ -5,6 +5,8 @@ group: observability
 agent: [investigator]
 qualities: [debuggability]
 speed: [seconds]
+places: [delivery/work, remediation/oracle, remediation/work]
+needs: [browser]
 ---
 
 # Browser console and DevTools

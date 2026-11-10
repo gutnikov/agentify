@@ -5,6 +5,7 @@ group: meta
 agent: [reviewer]
 qualities: [maintainability, correctness]
 speed: [minutes]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Code review by another agent

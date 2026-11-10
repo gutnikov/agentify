@@ -8,6 +8,7 @@ sync: async
 assesses: [result]
 stages: [scheduled]
 speed: [minutes]
+places: [remediation/entry, harness:delivery/confirmation, harness:remediation/entry]
 ---
 
 # Sample audit

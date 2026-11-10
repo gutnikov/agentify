@@ -1,10 +1,12 @@
 ---
 id: preview-environments
 title: "Preview environments per PR"
-group: delivery
+group: deployability
 qualities: [deployability, integrability]
 stages: [preview]
 speed: [minutes]
+places: [delivery/release]
+needs: [deploy]
 ---
 
 # Preview environments per PR

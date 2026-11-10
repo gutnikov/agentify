@@ -4,6 +4,8 @@ title: "Agent navigation by the accessibility tree"
 group: interaction
 qualities: [operability, self-descriptiveness]
 speed: [seconds]
+places: [delivery/work, remediation/work, discovery/work]
+needs: [browser]
 ---
 
 # Agent navigation by the accessibility tree

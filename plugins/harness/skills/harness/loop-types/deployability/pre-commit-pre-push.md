@@ -1,10 +1,11 @@
 ---
 id: pre-commit-pre-push
 title: "Pre-commit / pre-push"
-group: delivery
+group: deployability
 qualities: [maintainability, security]
 stages: [commit]
 speed: [sub-second]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Pre-commit / pre-push

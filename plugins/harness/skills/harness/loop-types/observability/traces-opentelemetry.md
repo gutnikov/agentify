@@ -5,6 +5,8 @@ group: observability
 agent: [investigator]
 qualities: [analysability, performance]
 speed: [seconds]
+places: [delivery/work, remediation/oracle]
+needs: [traces]
 ---
 
 # Traces (OpenTelemetry)

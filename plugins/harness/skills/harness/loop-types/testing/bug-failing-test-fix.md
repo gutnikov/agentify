@@ -5,6 +5,7 @@ group: testing
 agent: [explorer]
 qualities: [reproducibility, debuggability]
 stages: [local]
+places: [remediation/oracle, remediation/work]
 ---
 
 # Bug → failing test → fix

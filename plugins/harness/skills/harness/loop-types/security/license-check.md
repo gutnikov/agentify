@@ -5,6 +5,7 @@ group: security
 qualities: [legal, compliance]
 stages: [ci]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # License check

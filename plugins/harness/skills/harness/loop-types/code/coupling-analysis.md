@@ -5,6 +5,7 @@ group: code
 qualities: [modularity]
 stages: [scheduled]
 speed: [minutes]
+places: [maintenance/entry, maintenance/oracle]
 ---
 
 # Coupling analysis

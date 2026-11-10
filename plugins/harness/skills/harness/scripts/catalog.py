@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""The loop-type catalog (../loop-types): build its index and validate it.
+"""The loop-type catalog (../loop-types) and the super-loops (../super-loops): build the index and validate both.
 
     python3 catalog.py index   write loop-types/index.yaml from the cards' frontmatter
-    python3 catalog.py check   validate every card and fail if index.yaml is out of date
+    python3 catalog.py check   validate every card and every super-loop, and fail if index.yaml is out of date
 
 Group titles come from the "### <title> — `<group>/`" headings in loop-types/README.md.
 A card's summary is the start of its Loop section: the first paragraph (with its list, if it leads into one),
 without sentences about the source, at most 3 sentences.
 No dependencies: frontmatter holds only scalars and flow lists; strings are written as JSON, which is valid YAML.
 """
+import collections
 import json
 import pathlib
 import re
@@ -16,7 +17,11 @@ import sys
 
 CATALOG = pathlib.Path(__file__).resolve().parent.parent / "loop-types"
 INDEX = CATALOG / "index.yaml"
-FIELDS = ["qualities", "when", "initiator", "sync", "assesses", "stages", "speed", "agent"]
+SUPER = CATALOG.parent / "super-loops"
+PHASES = ["entry", "oracle", "work", "gate", "release", "confirmation"]
+SUPER_SECTIONS = ("## Super-loop", "## Oracle", "## Phases", "## Gate", "## Confirmation", "## Exits", "## Trace",
+                  "## When a project needs it", "## Sources")
+FIELDS = ["qualities", "when", "initiator", "sync", "assesses", "stages", "speed", "agent", "places", "needs"]
 VOCAB = {
     "stages": {"edit", "local", "commit", "ci", "preview", "staging", "production", "scheduled", "task", "sprint",
                "continuous"},
@@ -26,6 +31,7 @@ VOCAB = {
     "sync": {"blocking", "async"},
     "assesses": {"intent", "plan", "result", "code", "action-risk"},
     "agent": {"reviewer", "refuter", "investigator", "judge", "explorer", "worker"},
+    "needs": {"ci", "logs", "errors", "metrics", "traces", "browser", "deploy"},
 }
 ITEM = re.compile(r"^\s*(\d+\.|-)\s+")
 
@@ -97,12 +103,107 @@ def build_index():
                 if key in fm:
                     v = fm[key]
                     out.append("    %s: %s" % (key, "[%s]" % ", ".join(v) if isinstance(v, list) else v))
+    out += ["", "# The loop types at each place: <super-loop>/<phase>, or harness:<super-loop>/<phase> at the harness",
+            "# level (super-loops/). The Phases table of each super-loop names the same types, except in the work phase.",
+            "by_place:"]
+    for place, ids in places_index():
+        out.append("  %s: [%s]" % (place, ", ".join(ids)))
     return "\n".join(out) + "\n"
+
+
+def super_loop_phases():
+    """{super-loop id: its phases}, from the cards in super-loops/, in the order super-loops/README.md links them."""
+    phases = {}
+    for path in sorted(SUPER.glob("*.md")):
+        fm = frontmatter(path.read_text(encoding="utf-8"))
+        if fm and fm.get("id"):
+            phases[fm["id"]] = fm.get("phases") or []
+    readme = (SUPER / "README.md").read_text(encoding="utf-8") if (SUPER / "README.md").exists() else ""
+    order = [n for n in dict.fromkeys(re.findall(r"\]\(([a-z-]+)\.md\)", readme)) if n in phases]
+    return {n: phases[n] for n in order + [n for n in phases if n not in order]}
+
+
+def places_index():
+    """[(place, [loop-type ids])]: the product level first, then by super-loop and phase."""
+    by = collections.defaultdict(list)
+    for path in cards():
+        fm = frontmatter(path.read_text(encoding="utf-8")) or {}
+        for token in fm.get("places") or []:
+            by[token].append(fm.get("id"))
+    loops = list(super_loop_phases())
+
+    def key(token):
+        level, _, place = token.rpartition(":")
+        loop, _, phase = place.partition("/")
+        return (level, loops.index(loop) if loop in loops else len(loops),
+                PHASES.index(phase) if phase in PHASES else len(PHASES), token)
+    return [(t, sorted(by[t])) for t in sorted(by, key=key)]
+
+
+def place_problem(token, loop_phases):
+    """None when the token is <super-loop>/<phase> or harness:<super-loop>/<phase> and that super-loop has the phase."""
+    level, _, place = token.rpartition(":")
+    loop, _, phase = place.partition("/")
+    if level not in ("", "harness"):
+        return "has an unknown level %r; the only one is harness" % level
+    if loop not in loop_phases:
+        return "names no super-loop; they are %s" % ", ".join(loop_phases)
+    if phase not in loop_phases[loop]:
+        return "names a phase that %s has not; it has %s" % (loop, ", ".join(loop_phases[loop]))
+    return None
+
+
+def phase_rows(text):
+    """{phase: {loop-type ids linked in its row}}, from the Phases table of a super-loop card."""
+    m = re.search(r"^## Phases\n(.*?)(?=^## |\Z)", text, re.S | re.M)
+    rows = {}
+    for line in (m.group(1) if m else "").splitlines():
+        cells = line.split("|")
+        if len(cells) > 2 and cells[1].strip() in PHASES:
+            rows[cells[1].strip()] = set(re.findall(r"\]\(\.\./loop-types/[a-z-]+/([a-z0-9-]+)\.md\)", line))
+    return rows
+
+
+def check_places(places_of, path_of):
+    """The Phases tables of the super-loops and the places in the cards say the same thing. Every loop type in a row
+    has that place, and every loop type with a place is in its row, except in the work phase: that row names a few of
+    the inner loops, and index.yaml lists all of them under by_place. The harness level's document links exactly the
+    loop types that have a harness: place."""
+    errors = []
+    for path in sorted(SUPER.glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        fm = frontmatter(text)
+        if fm is None:
+            continue
+        loop, rows = fm.get("id"), phase_rows(text)
+        for phase, ids in sorted(rows.items()):
+            for i in sorted(ids & set(places_of)):
+                if "%s/%s" % (loop, phase) not in places_of[i]:
+                    errors.append("super-loops/%s: %s is in the %s row, but its card has no place %s/%s"
+                                  % (path.name, i, phase, loop, phase))
+        for i, places in sorted(places_of.items()):
+            for token in places:
+                tloop, _, tphase = token.partition("/")
+                if tloop == loop and tphase != "work" and i not in rows.get(tphase, set()):
+                    errors.append("%s: place %s, but the %s row of super-loops/%s does not name it"
+                                  % (path_of[i], token, tphase, path.name))
+    level = SUPER / "harness-level.md"
+    text = level.read_text(encoding="utf-8") if level.exists() else ""
+    linked = set(re.findall(r"\]\(\.\./loop-types/[a-z-]+/([a-z0-9-]+)\.md\)", text))
+    for i, places in sorted(places_of.items()):
+        harness = any(t.startswith("harness:") for t in places)
+        if harness and i not in linked:
+            errors.append("%s: a harness: place, but super-loops/harness-level.md does not link it" % path_of[i])
+        if i in linked and not harness:
+            errors.append("super-loops/harness-level.md links %s, but its card has no harness: place" % i)
+    return errors
 
 
 def check():
     errors = []
     group_ids = [g for _, g in groups()]
+    loop_phases = super_loop_phases()
+    places_of, path_of = {}, {}
     for path in cards():
         rel = path.relative_to(CATALOG)
         text = path.read_text(encoding="utf-8")
@@ -110,6 +211,14 @@ def check():
         if fm is None:
             errors.append("%s: no frontmatter" % rel)
             continue
+        places = fm.get("places") or []
+        places_of[path.stem], path_of[path.stem] = places, "loop-types/%s" % rel
+        if not places:
+            errors.append("%s: no places: where it serves in the super-loops, as <super-loop>/<phase>" % rel)
+        for token in places:
+            problem = place_problem(token, loop_phases)
+            if problem:
+                errors.append("%s: place %r %s" % (rel, token, problem))
         human = path.parent.name == "human"
         if fm.get("id") != path.stem:
             errors.append("%s: id %r does not match the file name" % (rel, fm.get("id")))
@@ -141,16 +250,53 @@ def check():
             errors.append("%s: the agent field and the Agent step section go together" % rel)
         if not summary(text):
             errors.append("%s: empty Loop section" % rel)
-    for path in CATALOG.rglob("*.md"):
+    for path in list(CATALOG.rglob("*.md")) + list(SUPER.rglob("*.md")):
         for link in re.findall(r"\]\(([^)#]+?\.(?:md|yaml))(?:#[^)]*)?\)", path.read_text(encoding="utf-8")):
             if not link.startswith("http") and not (path.parent / link).resolve().exists():
-                errors.append("%s: broken link %s" % (path.relative_to(CATALOG), link))
+                errors.append("%s: broken link %s" % (path.relative_to(CATALOG.parent), link))
+    errors += check_super_loops()
+    errors += check_places(places_of, path_of)
     readme = (CATALOG / "README.md").read_text(encoding="utf-8")
     for path in cards():
         if "](%s)" % path.relative_to(CATALOG) not in readme:
             errors.append("README.md does not list %s" % path.relative_to(CATALOG))
     if not INDEX.exists() or INDEX.read_text(encoding="utf-8") != build_index():
         errors.append("index.yaml is out of date: run python3 scripts/catalog.py index")
+    return errors
+
+
+def check_super_loops():
+    """The super-loop cards: id, title, phases from the vocabulary and in its order, sections, a link from the
+    README. A file without frontmatter, such as the harness level, is a document about the super-loops, not a card."""
+    errors = []
+    readme = SUPER / "README.md"
+    listed = readme.read_text(encoding="utf-8") if readme.exists() else ""
+    for path in sorted(SUPER.glob("*.md")):
+        if path.name == "README.md":
+            continue
+        rel = "super-loops/%s" % path.name
+        if "](%s)" % path.name not in listed:
+            errors.append("super-loops/README.md does not link %s" % path.name)
+        text = path.read_text(encoding="utf-8")
+        fm = frontmatter(text)
+        if fm is None:
+            continue
+        if fm.get("id") != path.stem:
+            errors.append("%s: id %r does not match the file name" % (rel, fm.get("id")))
+        if "# %s\n" % fm.get("title") not in text:
+            errors.append("%s: H1 does not match the title" % rel)
+        phases = fm.get("phases") or []
+        unknown = [p for p in phases if p not in PHASES]
+        if unknown or not phases:
+            errors.append("%s: phases %s: each must be one of %s" % (rel, phases, ", ".join(PHASES)))
+        elif phases != [p for p in PHASES if p in phases]:
+            errors.append("%s: phases are not in the order %s" % (rel, " → ".join(PHASES)))
+        for key in ("entry", "exits"):
+            if not fm.get(key):
+                errors.append("%s: no %s" % (rel, key))
+        for section in SUPER_SECTIONS:
+            if section + "\n" not in text:
+                errors.append("%s: missing %s" % (rel, section))
     return errors
 
 

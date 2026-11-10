@@ -4,6 +4,7 @@ title: "Fault injection (Toxiproxy)"
 group: reliability
 qualities: [fault tolerance, resilience]
 stages: [local, ci]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Fault injection (Toxiproxy)

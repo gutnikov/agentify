@@ -5,6 +5,8 @@ group: interaction
 agent: [explorer]
 qualities: [inclusivity, user assistance]
 speed: [seconds]
+places: [delivery/work, remediation/work, maintenance/work]
+needs: [browser]
 ---
 
 # Accessibility checks (axe, ARIA)

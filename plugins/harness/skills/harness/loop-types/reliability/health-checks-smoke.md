@@ -6,6 +6,8 @@ agent: [investigator]
 qualities: [availability, operability]
 stages: [preview, staging]
 speed: [seconds]
+places: [delivery/release, remediation/release, maintenance/release]
+needs: [logs]
 ---
 
 # Health checks and smoke tests after deploy

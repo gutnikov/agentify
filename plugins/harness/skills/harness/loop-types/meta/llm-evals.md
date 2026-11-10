@@ -5,6 +5,7 @@ group: meta
 agent: [judge]
 qualities: [correctness of non-deterministic components]
 speed: [minutes]
+places: [delivery/work, remediation/work, maintenance/work]
 ---
 
 # Eval suites for LLM features

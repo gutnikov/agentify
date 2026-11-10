@@ -5,6 +5,8 @@ group: production
 agent: [judge]
 qualities: [quality in use]
 stages: [continuous]
+places: [remediation/entry]
+needs: [logs]
 ---
 
 # AI judges on telemetry

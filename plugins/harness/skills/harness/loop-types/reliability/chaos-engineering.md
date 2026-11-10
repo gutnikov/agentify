@@ -5,6 +5,8 @@ group: reliability
 agent: [investigator]
 qualities: [availability, recoverability, continuity]
 stages: [staging]
+places: [remediation/entry]
+needs: [metrics, deploy]
 ---
 
 # Chaos engineering

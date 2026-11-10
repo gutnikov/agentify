@@ -4,6 +4,7 @@ title: "Benchmarks against a baseline"
 group: performance
 qualities: [time behaviour]
 speed: [minutes]
+places: [delivery/work, maintenance/oracle, discovery/work]
 ---
 
 # Benchmarks against a baseline
