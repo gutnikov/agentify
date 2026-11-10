@@ -45,8 +45,8 @@
     {
       "name": "spec",
       "source": "./plugins/spec",
-      "description": "Turn requirements (a text or a ticket by link) into a spec that tests can be derived from without guessing: a catalog of spec types with an event model as the spine, per-project layers chosen by risk, checks, requirement-to-spec traceability, and the delta for the test writer.",
-      "version": "0.2.0"
+      "description": "Turn requirements (a text or a ticket by link) into a spec that tests can be derived from without guessing: a catalog of spec types with an event model as the spine, per-project layers chosen by risk, checks, requirement-to-spec traceability, the delta for the test writer, and the production signal of every requirement for the release's confirmation.",
+      "version": "0.3.0"
     }
   ]
 }

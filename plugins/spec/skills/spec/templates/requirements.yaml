@@ -13,6 +13,10 @@ requirements:
     kind: functional           # functional | nfr | constraint
     text: ""                   # one requirement, one sentence, in the source's words
     metric: ""                 # nfr only: how it is measured and the threshold
+    prod:                      # functional: how it shows in production, for the release's confirmation
+      signal: ""               # what appears, in words: "a team is created"; or "none", with a why
+      match: {}                # the log fields that pick it out, e.g. {event: TeamCreated}
+      min: 10                  # how many times the release's window must see it
 
 questions: []
 #  - id: <KEY>?1

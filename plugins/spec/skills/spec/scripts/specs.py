@@ -7,6 +7,10 @@
   specs.py trace     [--root .] [--req KEY]           which spec elements cover each requirement, and the reverse
   specs.py delta     [--root .] [--base REF]          spec elements added, changed and removed since REF: the test
                                                       writer's work list (default REF: HEAD)
+  specs.py signals   [--root .] (--req KEY | --base REF) [--out FILE]
+                                                      the production signals of a change, for the release's
+                                                      confirmation: of one requirement file, or of every
+                                                      requirement whose spec changed since REF
   specs.py catalog   index|check                      build or check this skill's spec-types/index.yaml
 
 The layers' own checks (such as em.py check for the event model) run separately; `check` lists them.
@@ -219,6 +223,21 @@ def cmd_check(args):
                 E(f"{rel} [{rid}]: empty text")
             if r.get("kind") == "nfr" and not (r.get("metric") or "").strip():
                 W(f"{rel} [{rid}]: an nfr without a metric cannot be tested: add how it is measured and the threshold")
+            prod = r.get("prod")
+            signal = str((prod or {}).get("signal") or "").strip() if isinstance(prod, dict) else ""
+            if prod is not None and not isinstance(prod, dict):
+                E(f"{rel} [{rid}]: prod must be a mapping: signal, match, min")
+            elif signal == "none" and not str(prod.get("why") or "").strip():
+                E(f"{rel} [{rid}]: prod signal is none but there is no why")
+            elif signal and signal != "none":
+                if not isinstance(prod.get("match"), dict) or not prod.get("match"):
+                    E(f"{rel} [{rid}]: prod has a signal but no match: the log fields that pick it out")
+                least = prod.get("min")
+                if not isinstance(least, int) or least < 1:
+                    E(f"{rel} [{rid}]: prod min must be a whole number, 1 or more")
+            if r.get("kind") == "functional" and doc.get("status") == "approved" and not signal:
+                W(f"{rel} [{rid}]: no production signal, so a release's confirmation cannot tell it happened: add "
+                  f"prod (signal, match, min), or signal: none with a why")
     for rid, where in reqs.items():
         if len(where) > 1:
             E(f"requirement id {rid} defined {len(where)} times")
@@ -317,27 +336,27 @@ def git(root, *a):
     return subprocess.run(["git", "-C", str(root), *a], capture_output=True, text=True)
 
 
-def cmd_delta(args):
-    sd = specs_dir(args.root)
+def delta_since(sd, base):
+    """What changed in the spec since a git ref: (added, changed, removed, new, old, reqs, req_added, req_changed)."""
     root = sd.parent
     top = git(root, "rev-parse", "--show-toplevel")
     if top.returncode:
         die("delta needs a git repository")
     top = pathlib.Path(top.stdout.strip())
-    if git(root, "rev-parse", "--verify", args.base).returncode:
-        die(f"unknown git ref {args.base}")
+    if git(root, "rev-parse", "--verify", base).returncode:
+        die(f"unknown git ref {base}")
     layers = (read_yaml(sd / "layers.yaml")).get("layers") or []
 
     def at_base(path):
         rel = path.resolve().relative_to(top.resolve())
-        r = git(root, "show", f"{args.base}:{rel.as_posix()}")
+        r = git(root, "show", f"{base}:{rel.as_posix()}")
         return yaml.safe_load(r.stdout) or {} if r.returncode == 0 else {}
 
     def flatten(doc):
         return {eid: (kind, json.dumps(c, sort_keys=True, default=str), refs) for eid, kind, c, refs in model_elements(doc)}
 
     now_files = model_files(sd, layers)
-    base_list = git(root, "ls-tree", "-r", "--name-only", args.base).stdout.split()
+    base_list = git(root, "ls-tree", "-r", "--name-only", base).stdout.split()
     model_dirs = [(sd.parent / lay.get("path", "")).resolve() for lay in layers if lay.get("type") in MODEL_TYPES]
     gone = [top / f for f in base_list if f.endswith((".yaml", ".yml"))
             and any(str((top / f).resolve()).startswith(str(d)) for d in model_dirs)
@@ -360,7 +379,12 @@ def cmd_delta(args):
             req_old[r.get("id")] = (r.get("text") or "").strip()
     req_added = [r for r in reqs if r not in req_old]
     req_changed = [r for r in reqs if r in req_old and (reqs[r][0][1].get("text") or "").strip() != req_old[r]]
+    return added, changed, removed, new, old, reqs, req_added, req_changed
 
+
+def cmd_delta(args):
+    sd = specs_dir(args.root)
+    added, changed, removed, new, old, reqs, req_added, req_changed = delta_since(sd, args.base)
     print(f"# Spec delta since {args.base}\n")
     print("For the test writer: add tests for what was added, update tests for what changed, delete tests for what"
           " was removed. Examples are matched to tests by slice id and example name.\n")
@@ -380,6 +404,50 @@ def cmd_delta(args):
             print(f"- added {r}: {(reqs[r][0][1].get('text') or '').strip()}")
         for r in req_changed:
             print(f"- changed {r}: {(reqs[r][0][1].get('text') or '').strip()}")
+    return 0
+
+
+# ----------------------------------------------------------------------------------------------- signals
+def cmd_signals(args):
+    """The production signals of a change, as the release's confirmation reads them: [{name, req, match, min}]."""
+    sd = specs_dir(args.root)
+    if bool(args.req) == bool(args.base):
+        die("say which change, one of: --req KEY (a requirement file) or --base REF (what changed since a git ref)")
+    if args.req:
+        reqs, _files = load_requirements(sd)
+        chosen = sorted(rid for rid in reqs if rid and rid.startswith(args.req + "#"))
+        if not chosen:
+            die(f"no requirements with the key {args.req}")
+    else:
+        added, changed, _removed, new, _old, reqs, req_added, req_changed = delta_since(sd, args.base)
+        chosen = sorted({ref for e in added + changed for ref in new[e][2]} | set(req_added) | set(req_changed))
+    signals, notes = [], []
+    for rid in chosen:
+        if rid not in reqs:
+            notes.append(f"{rid}: the spec refers to it, but no requirement file defines it")
+            continue
+        _p, r, doc = reqs[rid][0]
+        if r.get("kind") != "functional":
+            continue
+        prod = r.get("prod") if isinstance(r.get("prod"), dict) else {}
+        signal = str(prod.get("signal") or "").strip()
+        if doc.get("status") != "approved":
+            notes.append(f"{rid}: its file is {doc.get('status')}, not approved: left out")
+        elif not signal:
+            notes.append(f"{rid}: no production signal: the release's confirmation cannot tell it happened")
+        elif signal == "none":
+            notes.append(f"{rid}: shows nothing in production: {prod.get('why') or 'no why given'}")
+        else:
+            signals.append({"name": f"{rid}: {signal}", "req": rid, "match": prod.get("match") or {},
+                            "min": int(prod.get("min") or 1)})
+    out = json.dumps(signals, indent=1, ensure_ascii=False) + "\n"
+    if args.out:
+        pathlib.Path(args.out).write_text(out)
+        print(f"wrote {len(signals)} signal(s) to {args.out}", file=sys.stderr)
+    else:
+        sys.stdout.write(out)
+    for n in notes:
+        print(f"note: {n}", file=sys.stderr)
     return 0
 
 
@@ -475,11 +543,16 @@ def main():
             p.add_argument("--req", help="only the requirements of this key")
         if name == "delta":
             p.add_argument("--base", default="HEAD")
+    p = sub.add_parser("signals")
+    p.add_argument("--root", default=".")
+    p.add_argument("--req", help="the requirements of this key")
+    p.add_argument("--base", help="the requirements whose spec changed since this git ref")
+    p.add_argument("--out", help="write the signals here instead of printing them")
     p = sub.add_parser("catalog")
     p.add_argument("action", choices=["index", "check"])
     args = ap.parse_args()
     return {"init": cmd_init, "new-req": cmd_new_req, "check": cmd_check, "trace": cmd_trace, "delta": cmd_delta,
-            "catalog": cmd_catalog}[args.cmd](args)
+            "signals": cmd_signals, "catalog": cmd_catalog}[args.cmd](args)
 
 
 if __name__ == "__main__":

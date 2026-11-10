@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Turns requirements — a text, or a ticket by link — into a spec of the system that tests can be derived from without guessing. Picks the spec formats a project needs from a catalog (an event model as the spine; decision tables, state machines, API contracts, TLA+, a context map and a glossary as layers), keeps them checked, traces every requirement to the spec elements that cover it, asks a person only what the sources do not settle, and hands the test writer the list of what changed. Writes neither tests nor product code. Use when the user brings a requirement, a ticket or a feature to specify ("spec this ticket <url>", "write the spec for refunds", "what does this change do to the spec"), wants specs set up for a project, or types "/spec <text or ticket URL>".
+description: Turns requirements — a text, or a ticket by link — into a spec of the system that tests can be derived from without guessing. Picks the spec formats a project needs from a catalog (an event model as the spine; decision tables, state machines, API contracts, TLA+, a context map and a glossary as layers), keeps them checked, traces every requirement to the spec elements that cover it, asks a person only what the sources do not settle, hands the test writer the list of what changed, and hands a release's confirmation the production signal of every requirement in it. Writes neither tests nor product code. Use when the user brings a requirement, a ticket or a feature to specify ("spec this ticket <url>", "write the spec for refunds", "what does this change do to the spec"), wants specs set up for a project, or types "/spec <text or ticket URL>".
 ---
 
 # Spec engineering
@@ -19,7 +19,9 @@ without guessing?**
    system lists its outcomes. Everything that happens on time is a slice with a clock. A test writer can list what
    to test mechanically.
 2. **Observable.** Every result is something a test can see: a screen, a field, a value, an error. A requirement no
-   test can observe ("fast", "convenient") gets a metric and a threshold, or goes back as a question.
+   test can observe ("fast", "convenient") gets a metric and a threshold, or goes back as a question. Every
+   functional requirement is also observable in production: its `prod` names the signal a release's confirmation
+   looks for, or says why nothing in production can show it.
 3. **Concrete.** Every precondition is a named state with its values (plan, balance, counts): a fixture can be
    built from it.
 4. **Traceable.** Requirements, slices, rules and examples have stable ids. Tests are tagged with them; the trace
@@ -54,6 +56,10 @@ without guessing?**
   each time-driven step, each decision-table row, each field on a screen). `em.py check` lists the ones no example
   pins down yet.
 - **Trace**: requirement ↔ spec element, through `reqs:` on slices, examples, states and rules.
+- **Production signal**: `prod` on a functional requirement: what shows in production that it happened (`signal`,
+  in words), the log fields that pick it out (`match`), and how many times a release's window must see it (`min`). A
+  slice's event is usually the signal, logged as `{"event": "TeamCreated"}`. `specs.py signals` hands the signals of
+  a change to the release's confirmation, so the trace runs on from the test to production.
 - **Delta**: the spec elements added, changed and removed since a git ref.
 - **Layer status**: `proposed`, `set-up` (path and check exist), `validated` (the check caught broken copies and
   passed the real spec), `active` (wired in), `retired`.
@@ -105,7 +111,9 @@ skill loads: "Base directory for this skill").
    requirement; what is unclear becomes a question.
 3. **Write the spec.** Find the slices, examples, states and rules the requirements change or add, and write them
    in their layers' formats; the event model through the `event-model` skill. Every element you add or change
-   lists its requirements in `reqs:`.
+   lists its requirements in `reqs:`. For every functional requirement, write `prod`: the signal that shows it
+   happened in production, the fields that pick it out, and how many times the release's window must see it; or
+   `signal: none` with a `why`.
 4. **Check until clean**: `python3 $S/scripts/specs.py check` and every layer check it lists. Zero errors. For the
    elements you touched, pin down every test obligation `em.py check` reports, or turn it into a question.
 5. **Ask once** (R1–R3): all open questions of the file in one message; status `questions`. Record the answers, then
@@ -116,6 +124,9 @@ skill loads: "Base directory for this skill").
    or the last commit before your change), and the contract, `python3 $S/../event-model/scripts/em.py export
    specs/model/ --out <file>`. Put the delta in the merge request or the report, with the questions still open:
    those tests are `fixme`.
+8. **Hand off to the release's confirmation**: `python3 $S/scripts/specs.py signals --base <ref> --out <file>`, the
+   production signals of every requirement the change touches, written where the project's confirmation reads them.
+   In a project with `harness`, that is the input of its `release-confirmation` loop.
 
 ## Reverse engineering an existing app
 
@@ -145,7 +156,7 @@ Look again when:
 | `$S/defaults/` | `policy.yaml`, `profile.yaml`, `layers.yaml` that setup starts from |
 | `$S/templates/requirements.yaml` | A requirement file |
 | `$S/spec-types/` | The catalog: `README.md`, `index.yaml`, one card per spec type |
-| `$S/scripts/specs.py` | `init`, `new-req`, `check`, `trace`, `delta`, `catalog index|check` |
+| `$S/scripts/specs.py` | `init`, `new-req`, `check`, `trace`, `delta`, `signals`, `catalog index|check` |
 | `$S/../event-model/` | The spine's skill: `SKILL.md`, `format.md`, `scripts/em.py` (`check`, `export`), a template and an example |
 
 In the project:
@@ -174,4 +185,5 @@ In the project:
 - its file is `approved`, and every requirement in it is covered by a spec element (`specs.py trace`);
 - `specs.py check` and every layer check report zero errors;
 - every test obligation of the elements it touched is pinned down by an example, or has an open question;
-- the delta went to the test writer.
+- every functional requirement in it has a production signal, or says why it has none;
+- the delta went to the test writer, and the signals to the release's confirmation.
