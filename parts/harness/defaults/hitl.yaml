@@ -1,0 +1,51 @@
+# When agentify may call a person: the plugin's reasons, the same in every project. Every call names one of these ids
+# and is logged in agentify/hitl-log.jsonl. A call that fits none of them is not allowed. What the user does not want
+# to be asked about goes into the Notes of agentify/agentify.md.
+
+version: 1
+
+hitl:
+  allowed:
+    - id: H1
+      name: intent
+      when: The requirement is still ambiguous after reading the code, the docs, the history and the existing loops.
+    - id: H2
+      name: action
+      when: >-
+        The next action is beyond the autonomy level in agentify.md, or cannot be undone: anything that touches production,
+        deletes data, sends something outside the project, or costs money in an external service.
+    - id: H3
+      name: access
+      when: A credential, an account or an installation agentify cannot get by itself.
+    - id: H4
+      name: taste
+      when: >-
+        Two or more valid options differ in a trade-off only the user can weigh: which loops come first, how strict
+        a loop is, how much noise is acceptable.
+    - id: H5
+      name: reference
+      when: >-
+        Approving a reference the loops will trust: a baseline, a golden file, a threshold, a person's grades for
+        calibrating an LLM judge.
+    - id: H6
+      name: budget
+      when: Spend would go over budget_usd in agentify.md. Never applies while it is null.
+    - id: H7
+      name: preferences
+      when: Changing agentify.md, or the reasons in this file.
+
+  # Never a reason to call a person, whatever the case.
+  never_ask:
+    - Anything the repository, its docs, a tool's --help or running a command can answer.
+    - Style and naming inside loop artifacts.
+    - Confirmation of an action the autonomy level allows and that can be undone.
+
+  # How every call is made.
+  rules:
+    - >-
+      One question per message. The one exception is the form of the first /agentify: up to 4 questions in
+      one call. Say what was already checked to answer it without the user.
+    - 2–4 options, the recommended one first, plus a free answer.
+    - Show, don't describe: a schema of the loop, a table, a screenshot, real command output.
+    - Ask in the agent session only, with its question tool when it has one.
+    - Log the call and the answer in agentify/hitl-log.jsonl.

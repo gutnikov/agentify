@@ -1,17 +1,20 @@
 # The project profile
 
-`/agentify:init` ends with a map of the project's super-loops, and the first harness task with a short list of loops
-for its pains. To draw them you need six facts about the project. The repository shows most of them; you ask about the rest in one form. Facts and answers go
-into `agentify/profile.yaml`, so nobody is asked twice.
+The first `/agentify` ends with a map of the project's super-loops, and the first harness task with a short list of
+loops for its pains. To draw them you need these facts. The repository shows most of them; the user is asked the rest
+in one form. What agentify found goes into `agentify/map.yaml`; what the user decides goes into
+`agentify/agentify.md`. `loops.py` reads both as one profile, and nobody is asked twice.
 
-| Fact | Field in the profile | Usually |
-|---|---|---|
-| The stack: languages, the build, test and lint commands | `stack` | found |
-| What the project ships: web, API, mobile… | `kind` | found, sometimes asked |
-| Where a change goes after the agent: CI, preview, staging, production | `stages` | partly found, asked |
-| What the agent itself can reach: CI logs, logs, error tracking, metrics, a browser | `tools` | partly found, asked |
-| How work goes through the project now: where it comes from, where a change ends, which checks stand at which place | `super_loops`, `not_here`, `ends_at`, `existing_checks` | found |
-| Which failures the loops must catch first, and the place that should catch each | `pains` | asked |
+| Fact | Field | File | Usually |
+|---|---|---|---|
+| The stack: languages, the build, test and lint commands | `stack` | `map.yaml` | found |
+| Where a change can go after the agent: CI, preview, staging, production | `stages` | `map.yaml` | found |
+| How work goes through the project now: where it comes from, where a change ends, which checks stand at which place | `super_loops`, `not_here`, `ends_at`, `existing_checks`, `trace` | `map.yaml` | found |
+| Which failures the loops must catch first, and the place that should catch each | `pains` | `map.yaml` | found in the history; asked by the first harness task |
+| What the project is and what it ships: web, API, mobile… | `kind`, the body | `agentify.md` | found, confirmed |
+| What the agent itself can reach: CI logs, logs, error tracking, metrics, a browser | `tools` | `agentify.md` | partly found, asked |
+| How far agentify goes on its own | `autonomy` | `agentify.md` | asked |
+| Where a change counts as done | `done_at` | `agentify.md` | asked |
 
 A place is a super-loop and one of its phases, such as `delivery/confirmation` (`$S/super-loops/README.md`).
 
@@ -33,28 +36,28 @@ SDK in the code means the project sends data there, not that the agent can read 
 
 ## 2. Ask what is left, in one form
 
-Ask only the questions that finding out did not settle. Put them all in one call of the session's question tool;
-it takes up to 4 questions. This form is the one exception to "one question at a time": the answers do not depend
-on each other and you need them together.
+Ask only the questions that finding out and the user's own words did not settle. Put them all in one call of the
+session's question tool; it takes up to 4 questions. This form is the one exception to "one question at a time":
+the answers do not depend on each other and you need them together.
 
 - The user may see only the form. So each question starts with what you found: "Found: `.gitlab-ci.yml` with the
   jobs test and deploy-staging."
-- What you found is the first option, marked "(found)".
-- Every question is multi-select.
-- The stack is not a question when the repository shows it. Write it at the start of the first question ("Stack:
-  Go 1.23, `make test`, golangci-lint"), so the user can correct it in a free answer. Ask about it only when the
-  repository is empty, or when it is a monorepo and it is unclear which part the loops are for.
-- If the user already said what the loops must catch, that is the answer to Q4: do not ask it.
+- What you found, or the level you recommend, is the first option.
+- Tools is multi-select; the others are single-select.
+- The stack is not a question when the repository shows it. Write it into the first question ("Stack: Go 1.23,
+  `make test`, golangci-lint"), so the user can correct it in a free answer.
 
-Log each question as its own call: Q1–Q3 under H1, Q4 under H4.
+Log each question as its own call: Project and Tools under H1, Autonomy and Done at under H7.
 
-### Q1. What the project ships — header `Project`
+### Q1. What the project is — header `Project`
 
-"What does this project ship? Found: <…>."
+"What is <project>? Found: <the kind and the stack; what the README says it does>." Options: "As found"; "I'll
+describe it". A free answer goes into the body of `agentify.md` in the user's words. Text the user gave with the
+first `/agentify` that describes the project is this answer: do not ask it.
 
-Offer the 4 options closest to what you found:
+`kind`, from what you found or the user's answer:
 
-| Option | `kind` |
+| What it ships | `kind` |
 |---|---|
 | Web frontend | `web` |
 | Backend service or API | `api` |
@@ -64,22 +67,14 @@ Offer the 4 options closest to what you found:
 | LLM feature in the product | `llm` |
 | Infrastructure as code | `infra` |
 
-### Q2. Where a change goes — header `Dev flow`
+### Q2. How far agentify goes on its own — header `Autonomy`
 
-"Where does a change go after the agent writes it? Found: <…>. Local runs and git hooks are always there; if
-there is nothing else, answer 'local only'."
+"How far may agentify go without asking you? Found: <branch protection, required reviews, the deploy and who starts
+it>." The options are the four levels of `$S/README.md`, "Preferences": `ask`, `branch`, `merge`, `deploy`. Recommend
+the one the project's setup supports: `branch` where a protected branch needs a review, `merge` where CI gates every
+pull request, `deploy` only where a confirmation judges every release.
 
-| Option | What it means | `stages` |
-|---|---|---|
-| CI on every PR | Checks run on clean machines before the merge | `ci`, `scheduled` |
-| Preview per PR | Each PR gets its own deployed environment | `preview` |
-| Shared staging | A common test stand the team deploys to | `staging` |
-| Production | We deploy it and can see how it behaves | `production` |
-
-For a mobile app, an internal track (TestFlight, Firebase App Distribution) is staging, and a store release is
-production.
-
-### Q3. What the agent can reach — header `Tools`
+### Q3. What the agent can reach — header `Tools`, multi-select
 
 "Which of these can the agent use from this session, through a CLI, MCP or API? It is not enough that the company
 has it. Checked and working: <…>."
@@ -97,10 +92,25 @@ an H3 call.
 | A browser or a simulator | `browser` | Playwright, Chrome DevTools MCP, iOS Simulator, `adb` |
 | Deploys to a stand | `deploy` | `kubectl`, `helm`, the Vercel CLI, a CI job the agent can start |
 
-### Q4. What to catch first — header `Catch first`
+### Q4. Where a change is done — header `Done at`
 
-`/agentify:init` does not ask this one: it writes the failures the history shows into `pains`, and the first
-harness task that chooses loops asks it.
+"Where does a change count as done? Found: <the stages>." Offer only the stages the project has, the last one the
+agent can read first:
+
+| Option | `done_at` |
+|---|---|
+| The tests pass locally | `local` |
+| CI is green on the pull request | `ci` |
+| It works on staging | `staging` |
+| It is confirmed in production | `production` |
+
+For a mobile app, an internal track (TestFlight, Firebase App Distribution) is staging, and a store release is
+production. Where the agent cannot read the stage the user picks, a person confirms there.
+
+### Catch first — header `Catch first`
+
+Not a question of the setup: the setup writes the failures the history shows into `pains`. The first harness
+task that chooses loops asks it, under H4, when the user has not already said what the loops must catch.
 
 "What should the loops catch first? In the history: <e.g. 6 of the last 30 pipelines failed on lint; 2 reverts of
 migrations>."
@@ -122,14 +132,14 @@ Write each pain as `"<pain>: <place> — <evidence>"`, such as `"escapes: delive
 releases rolled back"`. A free answer goes into `pains` in the user's words, with the place you would put its loop
 at.
 
-## 3. The profile file
+## 3. The two files
 
-`loops.py init` creates `agentify/profile.yaml` from `$S/defaults/profile.yaml`; the comments there describe each
-field. Fill it in after the form, and commit it with the setup. Write the facts of the map as you find them: every
+`loops.py init` creates `agentify/map.yaml` and `agentify/agentify.md` from `$S/defaults/`; the comments there
+describe each field. Fill them in after the form, and commit them with the setup. Write the facts of the map as you find them: every
 existing check with its places, every pain with the place that should catch it.
 
 Keep it current. When the project changes (a new CI job or stand, a tool connected or lost, a pain fixed), update
-the file from what you see; do not ask again. Then check which loops the change allows or makes useless.
+`agentify/map.yaml` from what you see; do not ask again. Then check which loops the change allows or makes useless.
 
 ## 4. From the profile to the map and the loops
 

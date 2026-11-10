@@ -1,6 +1,6 @@
 # Page Objects
 
-A part of agentify: `/agentify:task` uses it when a test, a fixture or a probe needs a Page Object method.
+A part of agentify: `/agentify` uses it when a test, a fixture or a probe needs a Page Object method.
 
 A Page Object (POM) is an API for one page or panel. A PIN screen with four separate inputs gets one method,
 `fillPin(pin)`; the method knows how to fill the inputs and what to do when one does not take focus. Tests read as

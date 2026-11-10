@@ -1,12 +1,15 @@
 # agentify
 
 A Claude Code plugin that makes an agent's work on a project checkable, from the task to the change confirmed where
-it is used. It has two commands:
+it is used. It has one command, `/agentify`:
 
-| Command | What it does |
+| You run | What happens |
 |---|---|
-| `/agentify:init` | Studies the project, recognizes the loops it already runs (CI jobs, hooks, linters, deploy checks, specs, agent loops), places each in the project's super-loops, and confirms that map and the policy with you. Writes `loops/`; builds nothing |
-| `/agentify:task <text or ticket URL>` | Runs one task through its super-loop. Triage picks the level (product or harness) and the super-loop; each phase runs the loops the map has; the task ends at an exit, such as a change confirmed in production |
+| `/agentify` in a project without `agentify/agentify.md` | The setup. It studies the project, recognizes the loops it already runs (CI jobs, hooks, linters, deploy checks, specs, agent loops) and places each in the project's super-loops. It asks only what the code does not tell: what the project is, how far agentify may go on its own, what it can reach, and where a change counts as done. It writes `agentify/agentify.md` and shows the map. It builds nothing |
+| `/agentify <a task, or a ticket URL>` | The task, through its super-loop. Triage picks the level (product or harness) and the super-loop; each phase runs the loops the map has; the task ends at an exit, such as a change confirmed in production, or at the `done_at` the user chose |
+| `/agentify` | The status: the map, the measures, the work in flight |
+
+The command is `agentify:agentify` in the command list; typing `/agentify` runs it.
 
 ## The model
 
@@ -52,8 +55,8 @@ The repository is private, so the machine needs git access to it (`gh auth login
 
 | Path | What |
 |---|---|
-| `skills/init/`, `skills/task/` | The two commands |
-| `parts/` | What they read: the harness, spec, event-model, text-quality, app-probing, fixture-modify, pom-modify and ui-prototypes parts ([`parts/README.md`](parts/README.md)) |
+| `skills/agentify/` | The command |
+| `parts/` | What it reads: the harness, spec, event-model, text-quality, app-probing, fixture-modify, pom-modify and ui-prototypes parts ([`parts/README.md`](parts/README.md)) |
 
 ## What it keeps in a project
 
@@ -61,12 +64,12 @@ Everything agentify keeps is in one folder, `agentify/`, so that one path is wha
 not write, and what a CODEOWNERS entry or a branch rule protects:
 
 ```
-agentify/policy.yaml                 init: what agentify may do alone, and when it calls a person
-agentify/profile.yaml                init: the project's facts and the map of its super-loops
-agentify/hitl-log.jsonl              init: every call to a person, with its answer
-agentify/agents.yaml                 init: the registry of the agents that are steps of loops
-agentify/.gitignore                  init: keeps .runs/ out of git
-agentify/loops/index.yaml            init: the registry of loops
+agentify/agentify.md                 setup: the user's preferences, and the sign that the project is set up
+agentify/map.yaml                    setup: what agentify found, the facts the map of the super-loops is drawn from
+agentify/hitl-log.jsonl              setup: every call to a person, with its answer
+agentify/agents.yaml                 setup: the registry of the agents that are steps of loops
+agentify/.gitignore                  setup: keeps .runs/ out of git
+agentify/loops/index.yaml            setup: the registry of loops
 agentify/loops/<id>/                 task: a loop's LOOP.md, run, CHANGELOG.md, cases/must-fire/, cases/must-pass/
 agentify/agents/<id>/                task: an agent's evals/, results/, report.md
 agentify/trace.jsonl                 task: escapes, corrections and reverts no system of the project records
@@ -89,4 +92,5 @@ agentify joins the plugins of [`gutnikov/my-claude-plugins`](https://github.com/
 `0e3c71d`: harness 0.5.0 became `parts/harness`; spec 0.3.1 became `parts/spec` and `parts/event-model`; text-quality,
 app-probing, playwright (`fixture-modify`, `pom-modify`) and ui-prototypes became parts of the same names. bb is left
 out. A project that harness, spec or agentify 0.1 set up keeps `loops/` and `specs/` at its root: its first task is
-`/agentify:task move loops/ and specs/ into agentify/`, which runs `loops.py migrate`.
+`/agentify move loops/ and specs/ into agentify/`, which runs `loops.py migrate`: the old policy becomes
+`agentify/agentify.md`, and the old profile `agentify/map.yaml`.

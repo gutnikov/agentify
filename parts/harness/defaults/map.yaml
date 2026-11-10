@@ -1,15 +1,12 @@
-# The project's profile: what /agentify:init found in the project and what the user confirmed.
+# What agentify found in the project: the facts the map of its super-loops is drawn from. agentify rebuilds them from
+# what it sees and never asks for them twice; what only the user can say is in agentify.md next to this file.
 #
-# The map of the super-loops and the loops are chosen from it (agentify's parts/harness/profile.md, "From the profile to the map
-# and the loops"). Keep it current: when the project changes, update this file from what you see instead of asking
-# again.
+# The map and the loops are chosen from these facts (agentify's parts/harness/profile.md, "From the profile to the map
+# and the loops"). Keep them current: when the project changes, update this file from what you see.
 #
 # A place is <super-loop>/<phase>, such as delivery/confirmation (agentify's parts/harness/super-loops/README.md).
 
 version: 1
-
-# What the project ships, one or more of: web, api, mobile, library, data, llm, infra.
-kind: []
 
 # The project's own commands, as found in the repository.
 stack:
@@ -21,11 +18,6 @@ stack:
 # Where a change goes after the agent writes it, besides edit, local, commit, task and continuous, which are always
 # there. Values from a loop's trigger: ci, scheduled, preview, staging, production.
 stages: []
-
-# What the agent can use from its own session, each checked with one real call.
-# Keys: ci, logs, errors, metrics, traces, browser, deploy. Value: what and how, e.g. "GitLab CI via glab".
-# Leave out what the agent cannot reach.
-tools: {}
 
 # The super-loops the project has work for, each with where its work comes from now, e.g.
 #   delivery: "Jira tickets of the PAY project"

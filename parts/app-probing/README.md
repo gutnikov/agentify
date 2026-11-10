@@ -1,6 +1,6 @@
 # App probing
 
-A part of agentify: `/agentify:task` uses it whenever a phase needs to see what the running web app does. `S`
+A part of agentify: `/agentify` uses it whenever a phase needs to see what the running web app does. `S`
 is this part's folder.
 
 A probe is a Playwright script, run on demand against the running app and thrown away. "Log in and open the

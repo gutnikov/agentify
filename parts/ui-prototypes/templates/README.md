@@ -1,7 +1,7 @@
 # Prototypes
 
 Screens sketched from __DESIGN_SYSTEM__, one file each. This folder is maintained by agentify, a plugin for
-Claude Code: ask `/agentify:task` to make, change, open, list or delete a prototype.
+Claude Code: ask `/agentify` to make, change, open, list or delete a prototype.
 
 ```
 __COMMAND__

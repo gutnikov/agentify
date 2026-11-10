@@ -1,6 +1,6 @@
 # UI prototypes
 
-A part of agentify: `/agentify:task` uses it in the work of discovery, to show an idea before it is built.
+A part of agentify: `/agentify` uses it in the work of discovery, to show an idea before it is built.
 
 A **prototype** is one file that composes the project's design-system components into a screen. A dev server shows
 it at `http://localhost:<port>/<name>`. It is a reference for a feature, not the feature: it makes no API calls and

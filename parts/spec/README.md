@@ -1,6 +1,6 @@
 # Spec engineering
 
-The part of agentify that writes the oracle of a delivery task: `/agentify:task` follows it in the oracle phase.
+The part of agentify that writes the oracle of a delivery task: `/agentify` follows it in the oracle phase.
 `S` is this part's folder.
 
 In that phase you are the project's **spec engineer**. You own `agentify/specs/`: the requirements as they came, the spec of
@@ -69,7 +69,7 @@ questions and why you may ask (`ask`, reasons R1–R5). Read it before any actio
 changes only with the user's approval (R5).
 
 Every call to a person is also logged with the harness part's `loops.py hitl`, under the id of
-`agentify/policy.yaml` its reason maps to: R1 and R2 → H1, R3 → H4, R4 → H5, R5 → H7.
+the plugin's reasons (`$S/../harness/defaults/hitl.yaml`) its reason maps to: R1 and R2 → H1, R3 → H4, R4 → H5, R5 → H7.
 
 ## Talking to the user
 
@@ -84,7 +84,7 @@ Every call to a person is also logged with the harness part's `loops.py hitl`, u
 ## Setup: once per project
 
 Run this when the project has no `agentify/specs/policy.yaml`. It sets up the oracle of delivery, so it is a harness task
-(`/agentify:task set up specs`); a delivery task that finds no `agentify/specs/` offers it first.
+(`/agentify set up specs`); a delivery task that finds no `agentify/specs/` offers it first.
 
 1. **Find out** what `$S/profile.md` §1 lists, without asking.
 2. **Create** `agentify/specs/`: `python3 $S/scripts/specs.py init`.

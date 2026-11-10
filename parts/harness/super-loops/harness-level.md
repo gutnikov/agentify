@@ -1,11 +1,11 @@
 # The harness level
 
 The harness engineer's own work is the same four super-loops, run over the harness instead of the product: over its
-loops, the agents in them, the guides and the policy. The product's super-loops are this level's production, and
+loops, the agents in them, the guides and the preferences. The product's super-loops are this level's production, and
 their trace is its signal.
 
 ```
-harness level   discovery · delivery · remediation · maintenance    the harness engineer, under agentify/policy.yaml
+harness level   discovery · delivery · remediation · maintenance    the harness engineer, under agentify/agentify.md
       ▲ the trace: exits not confirmed, failures by the phase that caught them, corrections, escalations,
       │            false positives and misses of agents, reverts
       ▼ new and fixed loops, agents, guides, policy
@@ -16,7 +16,7 @@ product level   discovery · delivery · remediation · maintenance    the agent
 
 | Super-loop | At the harness level | Its oracle | Confirmed when |
 |---|---|---|---|
-| discovery | `/agentify:init` maps the project; then which loops to build | The profile's facts and the failures in the history | The user chose the loops (H4) |
+| discovery | The first `/agentify` maps the project; then which loops to build | The profile's facts and the failures in the history | The user chose the loops (H4) |
 | delivery | A new loop for a failure a person named | Its must-fire and must-pass cases | It is wired in, and in use it catches real failures and stays quiet on correct work |
 | remediation | A failure got past the loops, a loop fires on correct work, or an agent in a loop errs | The failure, recorded as a must-fire case or an eval | The loop is valid again, and the failure does not recur |
 | maintenance | A model, a tool, a loop type or the project changed | The cases and evals as they pass now | Every case and eval gives the result it gave before |
@@ -60,7 +60,7 @@ reads all of it.
 ## The boundary is a permission boundary
 
 The agent doing the product's work does not run this level's loops on its own checks: that is how it would "fix" a
-check that blocks it. The harness engineer changes the loops, under the policy, and the final run of every check
+check that blocks it. The harness engineer changes the loops, under the preferences, and the final run of every check
 happens where the working agent cannot write.
 
 ## Sources

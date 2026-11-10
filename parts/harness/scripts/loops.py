@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Loops of a project: the files under agentify/ and the checks on them.
 
-    python3 loops.py init                        create agentify/ with the default policy, an empty profile, an empty log
-                                                 and the registry
+    python3 loops.py init                        create agentify/: agentify.md with the default preferences, an empty
+                                                 map.yaml, an empty log and the registries
     python3 loops.py new ID --type TYPE          create agentify/loops/ID/ from the template; TYPE is a loop-type id or custom
     python3 loops.py validate ID [--runs N]      run the loop on its cases: must-fire fires, must-pass passes,
                                                  the same result every run, within budget_seconds
@@ -21,16 +21,17 @@
     python3 loops.py outcome ID --loop L --outcome O [--note N]
                                                  log what happened to one of the agent's verdicts in real use
     python3 loops.py map                         the map of the project's super-loops: what stands at each phase,
-                                                 from the profile and the loops' places, with the gaps and the pains
+                                                 from map.yaml, agentify.md and the loops' places, with the gaps and the pains
     python3 loops.py candidates PLACE            the loop types that can stand at PLACE (delivery/confirmation),
                                                  each with whether this project can run it
     python3 loops.py trace KIND PLACE --note N [--item I]
                                                  log what no system records: an escape, a correction or a revert,
                                                  at the place that should have caught it
 
-    python3 loops.py migrate [--refs]            move a project of the harness plugin or of agentify 0.1 (loops/ and
-                                                 specs/ at the root) into agentify/, and list the references to fix;
-                                                 --refs only lists them
+    python3 loops.py migrate [--refs]            move a project of the harness plugin or of agentify before 0.3 (loops/
+                                                 and specs/ at the root) into agentify/: the policy becomes agentify.md,
+                                                 the profile map.yaml; then list the references to fix; --refs only
+                                                 lists them
 
 Options for every command: --root DIR (the project; default: the git top level of the current folder).
 
@@ -52,7 +53,9 @@ import sys
 import time
 
 PLUGIN = pathlib.Path(__file__).resolve().parent.parent
-HOME = "agentify"  # the project's folder: the policy, the profile, the logs and the agents; the loops in its agentify/loops/
+HOME = "agentify"  # the project's folder: agentify.md, map.yaml, the logs and the agents; the loops in its loops/
+AUTONOMY = ["ask", "branch", "merge", "deploy"]  # the levels of agentify.md's `autonomy`, the least first
+DONE_AT = ["local", "ci", "staging", "production"]  # where a change can count as done
 STATUSES = ["proposed", "built", "validated", "active", "retired"]
 AGENT_KINDS = {"reviewer", "refuter", "investigator", "judge", "explorer", "worker"}
 AGENT_STATUSES = ["draft", "evaluated", "advisory", "gate", "retired"]
@@ -130,12 +133,27 @@ def places_in(text, loops):
     return [t for t in re.findall(r"(?:harness:)?[a-z]+/[a-z]+", text or "") if place_problem(t, loops) is None]
 
 
-def read_profile(loops_dir):
-    """agentify/profile.yaml in the subset it is written in: top-level scalars and flow lists, maps one level deep, and
-    block lists of strings. Comments and blank lines are skipped."""
-    path = loops_dir / "profile.yaml"
+def preferences_text(home):
+    """The frontmatter of agentify/agentify.md, or "" when there is none."""
+    path = home / "agentify.md"
+    m = re.match(r"^---\n(.*?)\n---\n", path.read_text(encoding="utf-8"), re.S) if path.exists() else None
+    return m.group(1) if m else ""
+
+
+def read_profile(home):
+    """The project's facts: agentify/map.yaml, what agentify found, with the frontmatter of agentify/agentify.md, what the
+    user decided (kind, autonomy, done_at, tools, budget_usd), over it."""
+    path = home / "map.yaml"
+    data = parse_profile(path.read_text(encoding="utf-8") if path.exists() else "")
+    data.update(parse_profile(preferences_text(home)))
+    return data
+
+
+def parse_profile(text):
+    """YAML in the subset map.yaml and agentify.md are written in: top-level scalars and flow lists, maps one level deep,
+    and block lists of strings. Comments and blank lines are skipped."""
     data, key = {}, None
-    for raw in path.read_text(encoding="utf-8").splitlines() if path.exists() else []:
+    for raw in text.splitlines():
         if not raw.strip() or raw.lstrip().startswith("#"):
             continue
         m = re.match(r"^([A-Za-z_]\w*):\s*(.*)$", raw)
@@ -200,8 +218,9 @@ def named_at(entries, loops):
     return at
 
 
-def policy_ids(loops_dir):
-    path = loops_dir / "policy.yaml"
+def policy_ids(home=None):
+    """The ids of the reasons to call a person: the plugin's defaults/hitl.yaml, the same in every project."""
+    path = PLUGIN / "defaults" / "hitl.yaml"
     return re.findall(r"^\s*- id: (H\d+)\s*$", path.read_text(encoding="utf-8"), re.M) if path.exists() else []
 
 
@@ -317,8 +336,8 @@ def cmd_init(a, root):
     loops = home_of(root)
     (loops / "loops").mkdir(parents=True, exist_ok=True)
     made = []
-    for name, make in (("policy.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "policy.yaml", p)),
-                       ("profile.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "profile.yaml", p)),
+    for name, make in (("agentify.md", lambda p: shutil.copy(PLUGIN / "defaults" / "agentify.md", p)),
+                       ("map.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "map.yaml", p)),
                        ("hitl-log.jsonl", lambda p: p.write_text("", encoding="utf-8")),
                        ("agents.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "agents.yaml", p)),
                        (".gitignore", lambda p: p.write_text("# runs of the text-quality part\n.runs/\n", encoding="utf-8"))):
@@ -328,10 +347,10 @@ def cmd_init(a, root):
     (loops / "loops" / "index.yaml").write_text(build_index(loops), encoding="utf-8")
     made.append("loops/index.yaml")
     print("agentify/: %s" % ", ".join(made))
-    if "policy.yaml" in made:
-        print("agentify/policy.yaml is the plugin default: adjust it to the project and decide it with the user.")
-    if "profile.yaml" in made:
-        print("agentify/profile.yaml is empty: fill it from what you found and the setup form (profile.md).")
+    if "agentify.md" in made:
+        print("agentify/agentify.md holds the default preferences: fill it from what you found and the user's answers.")
+    if "map.yaml" in made:
+        print("agentify/map.yaml is empty: fill it from what you found (profile.md).")
 
 
 def catalog_entry(type_id):
@@ -350,8 +369,8 @@ def catalog_entry(type_id):
 
 def cmd_new(a, root):
     loops = home_of(root)
-    if not (loops / "policy.yaml").exists():
-        sys.exit("no agentify/policy.yaml: run `loops.py init` and set up the project first")
+    if not (loops / "agentify.md").exists():
+        sys.exit("no agentify/agentify.md: set the project up first (the first /agentify, or loops.py init)")
     if not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", a.id):
         sys.exit("loop id must be kebab-case: %s" % a.id)
     d = loops / "loops" / a.id
@@ -449,11 +468,19 @@ def cmd_validate(a, root):
 def cmd_check(a, root):
     loops = home_of(root)
     errors = []
-    if not (loops / "policy.yaml").exists():
-        sys.exit("no agentify/policy.yaml: the project is not set up (loops.py init)")
+    if not (loops / "agentify.md").exists():
+        sys.exit("no agentify/agentify.md: the project is not set up (the first /agentify, or loops.py init)")
     ids = set(policy_ids(loops))
-    if not ids:
-        errors.append("policy.yaml: no policy ids (- id: H1 …)")
+    prefs = parse_profile(preferences_text(loops))
+    if not preferences_text(loops):
+        errors.append("agentify.md: no frontmatter with the preferences")
+    if prefs.get("autonomy") not in AUTONOMY:
+        errors.append("agentify.md: autonomy %r is not one of %s" % (prefs.get("autonomy"), ", ".join(AUTONOMY)))
+    if prefs.get("done_at") not in DONE_AT:
+        errors.append("agentify.md: done_at %r is not one of %s" % (prefs.get("done_at"), ", ".join(DONE_AT)))
+    for key in ("map.yaml", "hitl-log.jsonl"):
+        if not (loops / key).exists():
+            errors.append("%s is missing: loops.py init creates it" % key)
     loop_cards = super_loops()
     status_of, parts_of, agents_of = {}, {}, {}
     for d in loop_dirs(loops):
@@ -483,7 +510,7 @@ def cmd_check(a, root):
             errors.append("%s/LOOP.md: title is still the template placeholder" % rel)
         for h in fm.get("hitl") or []:
             if h not in ids:
-                errors.append("%s/LOOP.md: hitl %r is not in agentify/policy.yaml" % (rel, h))
+                errors.append("%s/LOOP.md: hitl %r is not a reason in the plugin's hitl.yaml" % (rel, h))
         for agent in fm.get("agents") or []:
             if not (root / agent).exists():
                 errors.append("%s/LOOP.md: agent %s does not exist" % (rel, agent))
@@ -603,8 +630,8 @@ def check_agents(root, loops, status_of, agents_of):
 
 def cmd_agent_new(a, root):
     loops = home_of(root)
-    if not (loops / "policy.yaml").exists():
-        sys.exit("no agentify/policy.yaml: run `loops.py init` and set up the project first")
+    if not (loops / "agentify.md").exists():
+        sys.exit("no agentify/agentify.md: set the project up first (the first /agentify, or loops.py init)")
     if not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", a.id):
         sys.exit("agent id must be kebab-case: %s" % a.id)
     if a.kind not in AGENT_KINDS and not a.kind.startswith("other:"):
@@ -750,7 +777,7 @@ def cmd_index(a, root):
 def cmd_hitl(a, root):
     loops = home_of(root)
     if a.policy_id not in policy_ids(loops):
-        sys.exit("%s is not in agentify/policy.yaml: calling a person is not allowed for it" % a.policy_id)
+        sys.exit("%s is not a reason in the plugin's hitl.yaml: calling a person is not allowed for it" % a.policy_id)
     entry = {"at": datetime.datetime.now().isoformat(timespec="seconds"), "policy": a.policy_id, "loop": a.loop,
              "checked": a.checked, "question": a.question, "answer": a.answer}
     with open(loops / "hitl-log.jsonl", "a", encoding="utf-8") as f:
@@ -795,8 +822,8 @@ def cmd_stats(a, root):
 
 def cmd_map(a, root):
     loops_dir = home_of(root)
-    if not (loops_dir / "profile.yaml").exists():
-        sys.exit("no agentify/profile.yaml: run `loops.py init` and fill the profile first")
+    if not (loops_dir / "map.yaml").exists():
+        sys.exit("no agentify/map.yaml: set the project up first (the first /agentify, or loops.py init)")
     prof, cards = read_profile(loops_dir), super_loops()
     built, checks = loops_at(loops_dir), named_at(prof.get("existing_checks"), cards)
     pains = named_at(prof.get("pains"), cards)
@@ -805,6 +832,7 @@ def cmd_map(a, root):
     print("Profile: %s · stages %s · tools %s" % (", ".join(prof.get("kind") or []) or "?",
                                                  ", ".join(prof.get("stages") or []) or "local only", tools))
     print("Ends at: %s" % (prof.get("ends_at") or "?"))
+    print("Done at: %s · autonomy: %s (agentify.md)" % (prof.get("done_at") or "?", prof.get("autonomy") or "?"))
     if pains:
         print("Pains: %s" % ", ".join("%s (%s)" % (", ".join(n), p) for p, n in pains.items()))
     print()
@@ -813,7 +841,7 @@ def cmd_map(a, root):
             print("%-12s not here: %s" % (loop, not_here[loop]))
             continue
         if loop not in has:
-            print("%-12s not in the profile: add it to super_loops or not_here" % loop)
+            print("%-12s not in map.yaml: add it to super_loops or not_here" % loop)
             continue
         cells = []
         for phase in card["phases"]:
@@ -878,7 +906,7 @@ def cmd_trace(a, root):
     print("logged %s at %s" % (a.kind, a.place))
 
 
-OLD_FILES = ["policy.yaml", "profile.yaml", "hitl-log.jsonl", "trace.jsonl", "agent-outcomes.jsonl", "agents.yaml"]
+OLD_FILES = ["hitl-log.jsonl", "trace.jsonl", "agent-outcomes.jsonl", "agents.yaml"]
 
 
 def git_move(root, src, dst):
@@ -917,15 +945,66 @@ def print_refs(root):
         print("  " + r[:200])
 
 
+def drop_blocks(text, keys):
+    """The YAML text without the top-level keys given: each with the comment lines right above it and its own lines."""
+    for key in keys:
+        text = re.sub(r"(?:^#.*\n)*^%s:.*\n(?:^[ \t]+.*\n)*\n?" % key, "", text, flags=re.M)
+    return text
+
+
+def preferences_from(policy_text, prof):
+    """agentify.md from the policy and the profile of the old layout: the autonomy level its flags come closest to, kind
+    and tools from the profile, done_at from the last stage it names."""
+    flag = lambda name: re.search(r"^\s+%s:\s*true\b" % name, policy_text, re.M) is not None
+    level = "ask" if not flag("commit") else "branch" if not (flag("push") and flag("merge")) else "merge"
+    budget = re.search(r"^\s+budget_usd:\s*(\S+)", policy_text, re.M)
+    stages = prof.get("stages") or []
+    done = next((s for s in ("production", "staging", "ci") if s in stages), "local")
+    text = (PLUGIN / "defaults" / "agentify.md").read_text(encoding="utf-8")
+    tools = prof.get("tools") or {}
+    tools_yaml = "tools:\n" + "".join("  %s: %s\n" % (k, json.dumps(v, ensure_ascii=False)) for k, v in tools.items()) \
+        if tools else "tools: {}\n"
+    for old, new in (("kind: []\n", "kind: [%s]\n" % ", ".join(prof.get("kind") or [])),
+                     ("autonomy: branch\n", "autonomy: %s\n" % level), ("done_at: ci\n", "done_at: %s\n" % done),
+                     ("tools: {}\n", tools_yaml),
+                     ("budget_usd: null\n", "budget_usd: %s\n" % (budget.group(1) if budget else "null"))):
+        text = text.replace(old, new, 1)
+    body = text.index("\n---\n", 4) + 5
+    ids = set(re.findall(r"^\s*- id: (H\d+)\s*$", policy_text, re.M)) - set(policy_ids())
+    notes = ["- Moved from loops/policy.yaml and loops/profile.yaml on %s by `loops.py migrate`. `autonomy: %s` is the "
+             "level the old policy's flags come closest to, and `done_at: %s` the last stage of the old profile: "
+             "confirm both (H7)." % (datetime.date.today(), level, done)]
+    for name in ("edit_guides", "write_instrumentation", "create_loop_agents"):
+        if re.search(r"^\s+%s:\s*false\b" % name, policy_text, re.M):
+            notes.append("- The old policy did not allow %s without asking." % name.replace("_", " "))
+    if ids:
+        notes.append("- The old policy had reasons to call a person that the plugin does not: %s." % ", ".join(sorted(ids)))
+    return text[:body] + "\n# <The project>\n\n<What the project is: the next /agentify asks, or takes it from the " \
+        "README.>\n\n## Notes\n\n" + "\n".join(notes) + "\n"
+
+
 def cmd_migrate(a, root):
     if a.refs:
         return print_refs(root)
     old, home = root / "loops", home_of(root)
-    if (home / "policy.yaml").exists():
-        sys.exit("agentify/policy.yaml exists: the project is in agentify/ already")
+    if (home / "agentify.md").exists():
+        sys.exit("agentify/agentify.md exists: the project is in agentify/ already")
     if not (old / "policy.yaml").exists():
-        sys.exit("no loops/policy.yaml: nothing to move; a new project starts with loops.py init")
+        sys.exit("no loops/policy.yaml: nothing to move; a new project is set up by the first /agentify")
+    policy_text = (old / "policy.yaml").read_text(encoding="utf-8")
+    profile_text = (old / "profile.yaml").read_text(encoding="utf-8") if (old / "profile.yaml").exists() else ""
+    prof = parse_profile(profile_text)
     moved = []
+    git_move(root, old / "policy.yaml", home / "agentify.md")
+    (home / "agentify.md").write_text(preferences_from(policy_text, prof), encoding="utf-8")
+    moved.append("policy.yaml → agentify.md")
+    if (old / "profile.yaml").exists():
+        git_move(root, old / "profile.yaml", home / "map.yaml")
+        header = (PLUGIN / "defaults" / "map.yaml").read_text(encoding="utf-8")
+        rest = drop_blocks(profile_text, ("kind", "tools"))
+        (home / "map.yaml").write_text(header[:header.index("version: 1")] + rest[rest.index("version: 1"):]
+                                       if "version: 1" in rest else header, encoding="utf-8")
+        moved.append("profile.yaml → map.yaml and agentify.md")
     for name in OLD_FILES:
         if (old / name).exists():
             git_move(root, old / name, home / name)
@@ -945,12 +1024,15 @@ def cmd_migrate(a, root):
         old.rmdir()
     if not (home / ".gitignore").exists():
         (home / ".gitignore").write_text("# runs of the text-quality part\n.runs/\n", encoding="utf-8")
+    if not (home / "hitl-log.jsonl").exists():
+        (home / "hitl-log.jsonl").write_text("", encoding="utf-8")
     (home / "loops" / "index.yaml").write_text(build_index(home), encoding="utf-8")
     print("moved into agentify/: %s" % ", ".join(moved))
     if old.exists():
         print("left in loops/: %s" % ", ".join(sorted(p.name for p in old.iterdir())))
     if (root / ".text-quality-runs").exists():
         print(".text-quality-runs/ stays where it is: new runs go to agentify/.runs/")
+    print("agentify/agentify.md: confirm autonomy and done_at, and write what the project is (its Notes say so)")
     print_refs(root)
 
 

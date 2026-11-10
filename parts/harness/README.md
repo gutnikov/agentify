@@ -1,7 +1,7 @@
 # Harness engineering
 
-The part of agentify that owns a project's loops. `/agentify:init` follows it to map the loops a project already
-runs, and `/agentify:task` follows it for every task at the harness level. `S` is this part's folder.
+The part of agentify that owns a project's loops. The first `/agentify` follows it to map the loops a project
+already runs, and every task at the harness level follows it. `S` is this part's folder.
 
 In a harness task you are the project's **harness engineer**. You own its super-loops: the paths by which a piece of
 work goes from where it enters to a change confirmed where it is used, one each for delivery, remediation,
@@ -29,7 +29,7 @@ over-engineered refactorings" (Böckeler).
   check before an agent step; an agent step before a person. One `verify` loop over the project's build, lint and
   tests, not four loops.
 - **Nothing the project cannot run.** No loops for stages the project does not have, tools the agent cannot reach,
-  or a kind of project it is not (`agentify/profile.yaml`). A loop that needs new infrastructure, such as a preview
+  or a kind of project it is not (`agentify/map.yaml`, `agentify/agentify.md`). A loop that needs new infrastructure, such as a preview
   environment or a telemetry stack, is proposed with what it costs; it is not built on the way.
 - **Small inside, too.** The simplest `run` that works; one must-fire case per kind of failure and one must-pass
   case; no options nobody asked for.
@@ -49,10 +49,10 @@ over-engineered refactorings" (Böckeler).
   oracle before the release, in CI. The confirmation checks the change where it is used, after the release, over a
   window counted in events. A super-loop is done only when the confirmation passes.
 - **Trace**: what every exit of a product super-loop leaves behind: the item, the exit, the phase where a failure
-  was caught, and the evidence. The project's own systems keep most of it, in the files the profile's `trace` names,
+  was caught, and the evidence. The project's own systems keep most of it, in the files the `trace` of `agentify/map.yaml` names,
   such as the deploy history; what no system keeps goes into `agentify/trace.jsonl` through `loops.py trace`.
 - **Level**: the product level, where an agent does the project's work, and the harness level, your own work: the
-  same four super-loops over the loops, their agents, the guides and the policy, with the product's trace as their
+  same four super-loops over the loops, their agents, the guides and the preferences, with the product's trace as their
   signal (`$S/super-loops/harness-level.md`).
 - **Composite loop**: a loop made of other loops of the project, listed in its `parts`, such as the acceptance loop
   (requirement → spec → red acceptance tests → work → green). Its own `run` is a gate that checks what only the
@@ -66,27 +66,48 @@ over-engineered refactorings" (Böckeler).
 - **Agent step**: an agent whose run is part of a loop, such as a reviewer, a refuter or an LLM judge. Its kind
   (`reviewer`, `refuter`, `judge`, `explorer`, `investigator`, `worker`, or `other:<name>`) says what it does; its
   status in `agentify/agents.yaml` (`draft`, `evaluated`, `advisory`, `gate`, `retired`) says whether it may block.
-- **Profile**: `agentify/profile.yaml`, the facts loops are chosen by: what the project ships, its stack, where a
-  change goes (CI, preview, staging, production), what the agent can reach, how work goes through the project's
-  super-loops now (where it comes from, where a change ends, the checks at each place), and the failures to catch
-  first, each with the place that should catch it. How to fill it and use it: `$S/profile.md`.
+- **Preferences**: `agentify/agentify.md`, what only the user decides (see "Preferences" below).
+- **Profile**: the facts loops are chosen by. What agentify found is in `agentify/map.yaml`: the stack, where a change
+  goes (CI, preview, staging, production), how work goes through the project's super-loops now (where it comes
+  from, where a change ends, the checks at each place), and the failures to catch first, each with the place that
+  should catch it. What the user decided is in the frontmatter of `agentify/agentify.md`: what the project ships,
+  what the agent can reach, the autonomy level, where a change counts as done. `loops.py` reads both as one profile.
+  How to fill it and use it: `$S/profile.md`.
 - **Map**: the project's super-loops drawn from the profile, one line each, with a `✓` and the check at every phase
-  that has one and a `✗` at every gap. `/agentify:init` confirms it with the user; a proposal of loops starts from it.
+  that has one and a `✗` at every gap. The first `/agentify` shows it to the user; a proposal of loops starts from it.
 - **Call to a person**: a question you put to the user in this session, including a request for approval. Every
-  call has a policy id from `hitl.allowed` and goes into `agentify/hitl-log.jsonl`.
+  call has an id of the plugin's reasons, `$S/defaults/hitl.yaml`, and goes into `agentify/hitl-log.jsonl`.
 - **Status** of a loop, in its `LOOP.md`: `proposed` (the spec is written), `built` (`run`, cases and wiring
   exist), `validated` (it passed validation), `active` (wired in on the main branch), `retired`. A loop you revise
   goes back to `built` until it passes validation again.
 
-## The project's policy
+## Preferences
 
-`agentify/policy.yaml` in the project decides two things. Read it before any action; only the project's copy counts.
+`agentify/agentify.md` holds what only the user decides. Read all of it before any action; only the project's copy
+counts. Its frontmatter has the fields the scripts read; its body says what the project is and, in Notes, anything
+every task must know: what never to touch, when releases may happen, what not to ask about. It changes only with the
+user's approval (H7), and the agent doing product work never writes it.
 
-- `autonomy`: what you may do without asking: edit guides, write instrumentation into product code (logs, health
-  endpoints, test seams; never features), create agent steps, commit, push, merge, and the spend limit.
-- `hitl`: the reasons you may call a person (H1–H7 by default), the questions you never ask, and how you ask.
+| Field | What |
+|---|---|
+| `kind` | What the project ships: web, api, mobile, library, data, llm, infra |
+| `autonomy` | How far agentify goes on its own: one of the levels below |
+| `done_at` | Where a change counts as done, and the super-loops end: `local`, `ci`, `staging`, `production` |
+| `tools` | What the agent can use from its own session, each checked with one real call or named by the user |
+| `budget_usd` | The spend limit for evals and inferential loops; `null` means none |
 
-The project's policy changes only with the user's approval (H7).
+| `autonomy` | agentify does on its own | It asks first |
+|---|---|---|
+| `ask` | Reads, runs checks, proposes each change as a plan or a diff | Every change, before it is made |
+| `branch` | Changes on a branch, commits and pushes it, opens a pull request; edits guides, writes instrumentation, creates agent steps, all in that pull request | The merge, which the user makes |
+| `merge` | All of `branch`, and merges a pull request once its gates are green | A release: a deploy, a flag switched on |
+| `deploy` | All of `merge`, and releases and rolls back as the super-loop needs | Only what cannot be undone |
+
+At every level, anything that cannot be undone is a call to a person (H2): deleting data, sending something outside
+the project, spending money in an external service. Below `deploy`, so is anything that touches production.
+
+The reasons to call a person are the plugin's, the same in every project: `$S/defaults/hitl.yaml`, H1–H7, with the
+questions never to ask and how to ask.
 
 ## Talking to the user
 
@@ -95,10 +116,10 @@ question to a subagent either: a subagent cannot talk to the user, it only repor
 
 - **Do not ask what you can find out.** Before any call to a person, look in the repository, its docs and
   history, the tools' `--help`, and run commands. Every question says what you already checked.
-- **Call a person only under a policy id.** If no `hitl.allowed` entry fits, decide yourself and say what you
-  decided.
+- **Call a person only under a reason's id** from `$S/defaults/hitl.yaml`. If none fits, decide yourself and say
+  what you decided.
 - **One question at a time.** Use the session's question tool with 2–4 options, the recommended one first, and
-  room for a free answer. The one exception is the setup form (`$S/profile.md`): up to 4 questions in one call.
+  room for a free answer. The one exception is the form of the first `/agentify`: up to 4 questions in one call.
 - **Short and clear.** Lead with the decision or the result; leave out what the user does not need to act.
 - **Show, do not describe.** A diagram of the loop in a code block, a table for validation results and options,
   a screenshot when a UI is involved, real command output instead of a summary of it.
@@ -112,15 +133,15 @@ A loop diagram looks like this:
                                                      └─► exit 0: commit goes through
 ```
 
-## Setup: `/agentify:init`
+## Setup: the first `/agentify`
 
-`/agentify:init` sets a project up: it finds out what `$S/profile.md` lists, recognizes the checks the project
-already runs and places each in its super-loops, confirms that map with the user, and decides the policy. It builds
-no loop.
+The first `/agentify` in a project sets it up: it finds out what `$S/profile.md` lists, recognizes the checks the
+project already runs and places each in its super-loops, asks the user only what the code does not tell, and writes
+`agentify/agentify.md` and `agentify/map.yaml`. It builds no loop.
 
 ## Choosing loops: the harness level's discovery
 
-A harness task that asks which loops to build, such as the first one after init:
+A harness task that asks which loops to build, such as the first one after the setup:
 
 1. If the profile has no `pains`, ask the form's Q4 (`$S/profile.md`) under H4.
 2. Draw the map with its gaps (`python3 $S/scripts/loops.py map`) and propose one loop per pain at the earliest phase
@@ -136,7 +157,7 @@ A harness task that asks which loops to build, such as the first one after init:
    super-loop and the phase that should have caught the failure. Pick the loop type: read the summaries in
    `loop-types/index.yaml` (its `by_place` lists the loop types of each place), then the card. Create the loop:
    `python3 $S/scripts/loops.py new <id> --type <type-id>` (or `--type custom`).
-2. **Confirm the tools.** Find each tool the loop needs, install it if the policy allows, run it once, and note
+2. **Confirm the tools.** Find each tool the loop needs, install it if the autonomy level allows, run it once, and note
    its version in the Tools section of `LOOP.md`. Missing access is H3.
 3. **Build it.**
    - `run`: takes the directory to check as its only argument, exits 0 when the check passes and non-zero when it
@@ -160,7 +181,7 @@ A harness task that asks which loops to build, such as the first one after init:
    - Review `LOOP.md` and every agent prompt you wrote with the `document-review` loop type
      (card `loop-types/meta/document-review.md`, part `text-quality`).
    - `python3 $S/scripts/loops.py index`, then `python3 $S/scripts/loops.py check`.
-   - Commit, push and merge as far as the policy allows. Once the loop is wired in on the main branch, set
+   - Commit, push and merge as far as the autonomy level allows. Once the loop is wired in on the main branch, set
      `status: active`.
 
 A composite loop is built after its parts: each part is its own loop, built and validated by the steps above.
@@ -197,7 +218,7 @@ loop's failure; there is no fixed list of agents to install.
 **Create and calibrate** (loop type `meta/agent-calibration`):
 
 1. Create an agent only for a loop whose `LOOP.md` lists it under `agents`, and only if
-   `autonomy.create_loop_agents` allows it: `python3 $S/scripts/loops.py agent-new <id> --kind <kind>`. It
+   the autonomy level allows it (`branch` and up): `python3 $S/scripts/loops.py agent-new <id> --kind <kind>`. It
    registers the agent as `draft` and, if the definition is missing, writes it from `$S/templates/agent.md`.
 2. Write eval cases in `agentify/agents/<id>/evals/` (`$S/agent-formats.md`, Evals): for a reviewer, a guard or a
    refuter, broken copies that must fire and clean ones that must pass, usually taken from the loop's own cases;
@@ -231,11 +252,11 @@ Look at a loop again when:
 - it fires on correct code, or misses a failure it should catch: add that case, fix the loop, validate again; when
   the loop's agent was wrong, also log the outcome and add the case to the agent's evals;
 - `python3 $S/scripts/loops.py stats` shows the same question asked more than once: automate the answer, or
-  propose to settle it in the policy (H7);
+  propose to settle it in the Notes of `agentify/agentify.md` (H7);
 - the user corrects the agent twice for the same thing: turn the correction into a loop
   (`loop-types/human/correction-becomes-rule.md`);
 - a tool, a model or the loop type changes;
-- the project changes: a new CI job or stand, a tool connected or lost. Update `agentify/profile.yaml` and redraw the
+- the project changes: a new CI job or stand, a tool connected or lost. Update `agentify/map.yaml` and redraw the
   map, then check which loops the change allows or makes useless.
 
 Retire a loop when it fires mostly on correct code and cannot be fixed, or when the failure it catches is now
@@ -253,12 +274,12 @@ maintenance task: nothing about the loops may change but their paths.
    every line of the repository that still names `loops/` or `specs/`.
 3. **Fix each reference** it listed: CI jobs and scheduled workflows, hooks, the project's own scripts, the `run`
    and `collect` scripts of the loops, the `wiring` and the text of every `LOOP.md`, the paths in
-   `agentify/specs/layers.yaml`, tests that read the spec, `agentify/profile.yaml`, the cases of the loops that
+   `agentify/specs/layers.yaml`, tests that read the spec, `agentify/map.yaml`, the cases of the loops that
    hold a copy of the spec. A recorded oracle keyed by paths (the acceptance loop's hashes of the spec) gets the new
    paths with the same hashes; a changed hash is not a move. Run `python3 $S/scripts/loops.py migrate --refs` again
    until only lines that mean something else are left.
 4. **Gate**: `loops.py check`, every loop validated again with the same results, and the CI of the branch green.
-5. **Release** as far as the policy allows; the **confirmation** is the next run of every moved loop where it is
+5. **Release** as far as the autonomy level allows; the **confirmation** is the next run of every moved loop where it is
    wired: the next pull request, the next scheduled run, the next release.
 
 ## Before every commit that touches `agentify/`
@@ -273,8 +294,9 @@ retires a loop.
 | Path | What |
 |---|---|
 | `$S/profile.md` | The setup form, the profile and how to choose loops from it |
-| `$S/defaults/policy.yaml` | The default policy that setup starts from |
-| `$S/defaults/profile.yaml` | The empty profile that setup fills in |
+| `$S/defaults/agentify.md` | The preferences the setup starts from |
+| `$S/defaults/map.yaml` | The empty map file the setup fills in |
+| `$S/defaults/hitl.yaml` | The reasons to call a person, H1–H7, the same in every project |
 | `$S/templates/LOOP.md` | The template for a loop's spec |
 | `$S/templates/agent.md` | The template for an agent that is a step of a loop |
 | `$S/agent-formats.md` | What agents return (Finding, Finding check, Verdict, Diagnosis), their evals and outcomes |
@@ -287,8 +309,8 @@ In the project:
 
 | Path | What |
 |---|---|
-| `agentify/policy.yaml` | The project's policy |
-| `agentify/profile.yaml` | The project's profile: what loops are chosen by |
+| `agentify/agentify.md` | The user's preferences, and the sign that the project is set up |
+| `agentify/map.yaml` | What agentify found: the facts the map and the loops are chosen by |
 | `agentify/loops/index.yaml` | The registry of loops, built from every `LOOP.md` |
 | `agentify/hitl-log.jsonl` | Every call to a person, with its policy id and answer |
 | `agentify/loops/<id>/` | `LOOP.md`, `run`, `cases/must-fire/`, `cases/must-pass/`, `CHANGELOG.md` |

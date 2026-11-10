@@ -10,7 +10,7 @@ budget_seconds: 10              # one run must finish within this time
 validation: cases               # cases (cases/must-fire, cases/must-pass) or manual (say why below)
 agents: []                      # agents whose execution is a step of this loop, e.g. .claude/agents/reviewer.md
 parts: []                       # composite loop only: ids of the loops under agentify/loops/ it is made of
-hitl: []                        # ids from agentify/policy.yaml this loop may call a person under
+hitl: []                        # ids from the plugin's defaults/hitl.yaml this loop may call a person under
 wiring: []                      # where the loop is hooked in, e.g. .claude/settings.json hooks.PostToolUse
 ---
 

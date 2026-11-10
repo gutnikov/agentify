@@ -1,6 +1,6 @@
 # Fixtures
 
-A part of agentify: `/agentify:task` uses it when a test, a probe or a state of the spec needs a fixture.
+A part of agentify: `/agentify` uses it when a test, a probe or a state of the spec needs a fixture.
 
 A test is mostly its precondition. In "log in as a new user, create an invoice, send it, open its details, check
 the status", the first steps are where the work is; the check on top is a few lines. That first part is the
