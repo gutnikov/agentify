@@ -31,6 +31,11 @@ The source does not say what the subagent receives, what starts it or where its 
 For a web app, the [`app-probing`](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/app-probing/skills/app-probing) skill (plugin `app-probing@private-plugins`) lets the subagent open the app and check the claim there, not
 only in the diff.
 
+## Related
+
+- [acceptance-loop](acceptance-loop.md): the verifier can be its fourth role, next to the spec writer, the test
+  writer and the implementing agent.
+
 ## Sources
 
 - [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices)

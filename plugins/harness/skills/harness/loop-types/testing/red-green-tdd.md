@@ -30,6 +30,11 @@ To set up the loop:
 - Kent Beck names as a warning sign "any indication that the genie was cheating, for example by disabling or
   deleting tests". He also describes the agent deleting assertions and faking the implementation.
 
+## Related
+
+- [acceptance-loop](../meta/acceptance-loop.md): the outer loop around this one, from requirements to acceptance
+  tests.
+
 ## Sources
 
 - [Red/green TDD — Agentic Engineering Patterns](https://andrewmurphy.io/stdlib/b139fcdd-2733-435b-a97f-6d7e47836719) (Simon Willison)

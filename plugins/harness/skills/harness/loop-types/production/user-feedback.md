@@ -29,6 +29,11 @@ The source does not say what the skill does, what input it takes or where to get
 - No sensor can check correctness if a person has not specified what they want.
 - The human side of this loop: [production-users](../human/production-users.md).
 
+## Related
+
+- [acceptance-loop](../meta/acceptance-loop.md): the loop that turns such criteria into a spec, red acceptance tests
+  and a gate.
+
 ## Sources
 
 - [Harness engineering: leveraging Codex in an agent-first world](https://openai.com/index/harness-engineering/) (OpenAI)

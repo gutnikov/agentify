@@ -30,6 +30,7 @@ At the start of a task; after that, seconds per run.
 ## Related
 
 - [approved-fixtures](../testing/approved-fixtures.md): the automated side of the same references.
+- [acceptance-loop](../meta/acceptance-loop.md): where the approved criteria become the oracle of the whole task.
 
 ## Sources
 

@@ -24,6 +24,10 @@ A hook runs a check and does not let the agent end its turn until the check pass
 - With these mechanisms, an autonomous run can finish without a person. With a Stop hook, the run ends when the check passes, or after 8 blocks in a row. A passing check shows only what the script tests.
 - Hooks make a check mandatory; CLAUDE.md is only advice.
 
+## Related
+
+- [acceptance-loop](../meta/acceptance-loop.md): a Stop hook keeps the agent working until its gate passes.
+
 ## Sources
 
 - [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices)

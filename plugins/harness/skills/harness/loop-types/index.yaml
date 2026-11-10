@@ -182,6 +182,14 @@ loop_types:
     summary: "Before changing anything the agent runs the whole suite. It learns the state of the project and which tests already fail, so later it does not mistake them for its own regressions."
     qualities: [testability, reproducibility]
     stages: [local]
+  - id: spec-check
+    title: "Spec check"
+    group: testing
+    path: testing/spec-check.md
+    summary: "The agent changes the spec under `specs/` and runs `specs.py check` and the check of each spec layer, such as `em.py check` for the event model. A field that comes from nowhere, an error with no example, a decision-table row no example checks, or a requirement no spec element covers comes back as a message that names the element and what is missing. The test writer gets the spec only after the check is clean, with `specs.py delta` as the list of what to add, change and delete in the tests."
+    qualities: [functional suitability, testability, analysability]
+    stages: [edit, commit, ci]
+    speed: [seconds]
   - id: visual-screenshot-check
     title: "Visual check with screenshots"
     group: testing
@@ -497,6 +505,14 @@ loop_types:
     summary: "A separate agent walks through the app with Playwright MCP the way a user would, and grades it on criteria: depth, functionality, design, code. If any criterion is below its threshold, the sprint fails, and the generator gets a detailed breakdown (\"FAIL — `PUT /frames/reorder` route defined after `/{frame_id}`…\")."
     qualities: [user engagement, functional completeness]
     stages: [sprint]
+  - id: acceptance-loop
+    title: "Acceptance loop: from requirements to green acceptance tests"
+    group: meta
+    path: meta/acceptance-loop.md
+    summary: "A requirement comes in, becomes an approved spec, the spec becomes acceptance tests that fail, and the agent works until those tests pass. The loop's gate reports, for each requirement, whether its tests exist, failed before the work and pass after it. It is a composite loop: its stages are other loops of the project, and its own check is the gate over them."
+    qualities: [functional suitability, correctness, traceability]
+    stages: [task, local, ci]
+    speed: [minutes, hours]
   - id: agent-code-review
     title: "Code review by another agent"
     group: meta

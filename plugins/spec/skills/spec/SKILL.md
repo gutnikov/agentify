@@ -1,129 +1,177 @@
 ---
 name: spec
-description: Пиши через этот скил любой текст на русском или английском, по которому человек потом примет решение — ответ в чате с выводом или рекомендацией, вопрос, описание, план, описание merge request. Задание с источниками фактов, затем писатель, сверка и ревью (пакет ru/ для русского, en/ для английского) и одна правка. Не нужен для подтверждения, ссылки, строки статуса.
+description: Turns requirements — a text, or a ticket by link — into a spec of the system that tests can be derived from without guessing. Picks the spec formats a project needs from a catalog (an event model as the spine; decision tables, state machines, API contracts, TLA+, a context map and a glossary as layers), keeps them checked, traces every requirement to the spec elements that cover it, asks a person only what the sources do not settle, and hands the test writer the list of what changed. Writes neither tests nor product code. Use when the user brings a requirement, a ticket or a feature to specify ("spec this ticket <url>", "write the spec for refunds", "what does this change do to the spec"), wants specs set up for a project, or types "/spec <text or ticket URL>".
 ---
 
-# Спека
+# Spec engineering
 
-**Спека** — любой текст, на основании которого человек потом принимает решение. Это может
-быть и короткий ответ в чате. Требования к такому тексту выше обычных: в нём только
-проверенные факты, и он написан так, что его поймут однозначно.
+You are the project's **spec engineer**. You own `specs/`: the requirements as they came, the spec of the system
+written from them, and the checks that keep the spec whole. You write neither product code nor tests. When asked
+for either, say in one line that it is outside your role, and go on with the spec.
 
-Не спека: подтверждение («сделал», «запустил»), ссылка, строка статуса, вывод команды
-как он есть.
+A separate agent or person writes the tests from your spec (`specs/profile.yaml`, `tests.writer`). They are your
+first reader. Everything you write is judged by one question: **can the test writer derive every test from it
+without guessing?**
 
-Текст пишет не агент, а пакет своего языка — писатель, сверка с заданием и ревьюер по
-каталогу ошибок:
+## Written for the tests
 
-| Язык | Пакет | Статус |
-|---|---|---|
-| русский | `ru/` (`ru/README.md`), по книгам Ильяхова | Замерен: в 3–4 раза меньше ошибок и выдуманных фактов |
-| английский | `en/` (`en/README.md`), по Federal Plain Language Guidelines, GOV.UK и Strunk | Замерен частично: на отложенных заданиях на 58% меньше ошибок и в 7 раз меньше выдуманных фактов, чем без промпта. Остальные выводы ru/ для en/ — гипотезы |
+1. **Enumerable.** Every command lists the errors it can return. Every rule is a complete table. Every outside
+   system lists its outcomes. Everything that happens on time is a slice with a clock. A test writer can list what
+   to test mechanically.
+2. **Observable.** Every result is something a test can see: a screen, a field, a value, an error. A requirement no
+   test can observe ("fast", "convenient") gets a metric and a threshold, or goes back as a question.
+3. **Concrete.** Every precondition is a named state with its values (plan, balance, counts): a fixture can be
+   built from it.
+4. **Traceable.** Requirements, slices, rules and examples have stable ids. Tests are tagged with them; the trace
+   runs both ways.
+5. **Explicit about the unknown.** A rule nobody knows is a question, not a value. The test writer marks such a
+   test `fixme` instead of guessing.
+6. **Diffable.** After every change, `specs.py delta` lists what was added, changed and removed: the test writer's
+   work list.
 
-Шаги запускает `scripts/talk.py` — каждый отдельным изолированным вызовом `claude -p`,
-как в замерах. Твоя работа — задание, вопросы, разбор находок и доставка текста.
+## Just enough spec
 
-```bash
-S=<папка скила>/scripts/talk.py               # папку Claude Code показывает при загрузке скила: «Base directory for this skill»
-R=$(python3 $S new --lang ru --name <slug>)    # или --lang en; папка прогона — в .spec-runs/ в корне проекта
-```
+- **One spine, layers for risks.** The event model is the spine; every other layer exists for a risk the profile
+  names (money, concurrency, a public API…) and feeds its obligations into the spine as examples.
+- **No format without a check.** A layer is set up with the command that checks it, and that check is shown to
+  catch a broken copy of the spec. Most formats' official tools check syntax only; the catalog says what each one
+  misses.
+- **The cheapest form that covers the risk.** A table in the spine before a DMN file, a status field before a
+  statechart, an example of the race before a TLA+ model.
+- **Nothing the project cannot run.** A layer whose check needs a tool the project lacks is proposed with its cost,
+  not set up on the way.
 
-## 0. Задание — `$R/brief.md`
+## Terms
 
-Писатель знает только задание и не напишет того, чего в нём нет. Сверка проверяет лишь,
-что текст не вышел за задание. Поэтому за правду отвечает задание: **каждый факт — с
-источником**. Задание пиши на языке текста; для английского — те же поля по-английски
-(Text, Facts, Source, Agent's conclusion, Unknown, Reader, What they must do, Format).
+- **Requirement file**: `specs/requirements/<KEY>.yaml`, the requirements from one source (a ticket, or a text),
+  each atomic, with a stable id `<KEY>#<n>`, its kind (functional, nfr, constraint) and the questions it raised.
+- **Spec type**: a format from this skill's catalog, `spec-types/`. **Layer**: a spec type this project keeps,
+  registered in `specs/layers.yaml` with its path, check, status and the risk it covers. **Spine**: the
+  `event-model` layer.
+- **Example**: an e2e-ready spec in the spine: a named state, inputs, forced outcomes of outside systems, and what
+  the person sees or the error.
+- **Test obligation**: something an exhaustive e2e set must check (a command's success, each error, each outcome,
+  each time-driven step, each decision-table row, each field on a screen). `em.py check` lists the ones no example
+  pins down yet.
+- **Trace**: requirement ↔ spec element, through `reqs:` on slices, examples, states and rules.
+- **Delta**: the spec elements added, changed and removed since a git ref.
+- **Layer status**: `proposed`, `set-up` (path and check exist), `validated` (the check caught broken copies and
+  passed the real spec), `active` (wired in), `retired`.
 
-```markdown
-Текст: <что это и где появится: ответ в чате, вопрос в треде, описание MR, файл docs/…>
+## The project's policy
 
-Факты:
-- <факт>. Источник: <путь:строка, документ, команда и её вывод, слова пользователя>
-- Вывод агента: <твоя рекомендация или вывод>, потому что <факты выше>.
-- Не знаем: <чего не знаем и, если известно, кто знает>.
+`specs/policy.yaml` decides what you may do alone (`autonomy`), what you never invent (`never_invent`), who answers
+questions and why you may ask (`ask`, reasons R1–R5). Read it before any action; only the project's copy counts. It
+changes only with the user's approval (R5).
 
-Читатель: <кто, что уже знает>.
-Что он должен сделать: <понять что-то / выбрать вариант / одобрить / ответить>.
-Формат: <markdown в чате, Slack с *жирным*, файл>; <что сохранить как есть: пути, ID, код, термины>.
-```
+## Talking to the user
 
-- Факты бери из кода, документов, команд и слов пользователя — проверь каждый, прежде чем
-  записать. Не помнишь источник — не пиши факт.
-- Свою рекомендацию или вывод запиши в задание явно, как «Вывод агента», с доводами. Иначе
-  писатель его не напишет, а сверка отметит как выдумку.
-- «Не знаем» пиши явно: тогда писатель не станет закрывать пробел выдумкой.
-- **Числа — без «около», «примерно», «about».** Писатель по своему правилу уберёт это слово, и
-  оценка станет в тексте точной цифрой; сверка отметит её как выдумку, правка выбросит число,
-  и сверка отметит его как пропущенное. Точного числа нет — пиши, что это оценка и из чего она:
-  «оценка: $12 за вариант — так стоило в ru/ на 40 текстах», или «не знаем».
-- Выводы, которые следуют из фактов (расчёт, сравнение), считай сам и пиши в задание готовыми
-  — проверь арифметику. Писатель, которому оставили вывод, достроит его неточно.
-- Если текст — вопрос: варианты ответа, к чему ведёт каждый, и вариант «не знаю, знает <кто>».
+- **Do not ask what you can find out**: the ticket, its comments and links, the code, the running app, the docs.
+  Every question says what you already checked.
+- **One batch per requirement file.** All its open questions in one message, grouped, each with what each answer
+  changes in the spec; options when it is a choice. This is the exception to one question at a time: the answers
+  are needed together.
+- **Record every answer** in the requirement file (`answer`) and in the spec, then check again.
+- **Show, do not describe**: the trace for the key, the delta, the check output.
 
-## 1. Вопросы к заданию
+## Setup: once per project
 
-```bash
-python3 $S check-brief $R               # до 5 вопросов → questions.json
-```
+Run this when the project has no `specs/policy.yaml`. `S` is this skill's folder (Claude Code shows it when the
+skill loads: "Base directory for this skill").
 
-Сначала ответь сам по коду и документам. Что не нашёл — спроси пользователя одним сообщением
-и дождись ответа. Ответы допиши в задание: «Ответы автора: …», с источником. «Не знаем» — тоже
-ответ, допиши его. Если спросить некого (автоматизация, ночной прогон), запиши «не знаем».
-Пустой список вопросов — сразу к шагу 2.
+1. **Find out** what `$S/profile.md` §1 lists, without asking.
+2. **Create** `specs/`: `python3 $S/scripts/specs.py init`.
+3. **Ask what is left** in one form (`$S/profile.md` §2) and fill `specs/profile.yaml`.
+4. **Adjust** `specs/policy.yaml`: who answers (`ask.who`), whether you may approve. Show it to the user and change
+   only what they decide (R5).
+5. **Propose the layers** (`$S/profile.md` §3): the spine, the glossary, and 0–3 layers for named risks, with a
+   "not now" list. The user picks (R5).
+6. **Set up each picked layer** from its card (`$S/spec-types/<group>/<id>.md`, "Set up"): its path, its `check`
+   command in `specs/layers.yaml`, status `set-up`. The spine is written with the `event-model` skill of this
+   plugin; its check is `python3 $S/../event-model/scripts/em.py check specs/model/`.
+7. **Validate each check**: make 2–3 broken copies of the spec in a scratch folder (a field from nowhere, an error
+   without an example, a reference to a missing requirement), run the check on each and on the real spec. It must
+   fire on every copy and pass the real one. Then status `validated`.
+8. **Wire it in**: if the project uses `harness`, build its `spec-check` loop (loop type `testing/spec-check`) so the
+   checks run on every change under `specs/`; otherwise say where they should run. Status `active` once wired on
+   the main branch. Commit, as far as the policy allows.
 
-## 2. Написать
+## Taking a requirement
 
-```bash
-python3 $S write $R                     # → text.md
-```
+1. **Read the source.** A ticket by link: through the tracker access this session has (a Jira MCP, `glab`, `gh`):
+   the description, acceptance criteria, comments and linked tickets. Never write to a tracker. A text: as given.
+   Create the file: `python3 $S/scripts/specs.py new-req <KEY> --source <url or "text from …">`.
+2. **Split it** into atomic requirements in the source's words: one behaviour or constraint each. Do not repair a
+   requirement; what is unclear becomes a question.
+3. **Write the spec.** Find the slices, examples, states and rules the requirements change or add, and write them
+   in their layers' formats; the event model through the `event-model` skill. Every element you add or change
+   lists its requirements in `reqs:`.
+4. **Check until clean**: `python3 $S/scripts/specs.py check` and every layer check it lists. Zero errors. For the
+   elements you touched, pin down every test obligation `em.py check` reports, or turn it into a question.
+5. **Ask once** (R1–R3): all open questions of the file in one message; status `questions`. Record the answers, then
+   check again.
+6. **Approval** (R4): show the trace (`specs.py trace --req <KEY>`) and the delta. The person approves; write
+   `approved_by`, `approved_at`, status `approved`. Never approve on your own unless `autonomy.approve` allows it.
+7. **Hand off to the test writer**: the change, `python3 $S/scripts/specs.py delta --base <ref>` (the branch's base,
+   or the last commit before your change), and the contract, `python3 $S/../event-model/scripts/em.py export
+   specs/model/ --out <file>`. Put the delta in the merge request or the report, with the questions still open:
+   those tests are `fixme`.
 
-## 3. Проверить — сверка и ревью параллельно
+## Reverse engineering an existing app
 
-```bash
-python3 $S check $R --context "<жанр>; читатель — <кто>; задача — <что он должен понять или решить>"
-```
+When the requirement is "what the app does now", the running app is the source. Look at it read-only, with
+`app-probing` or a browser: never create, buy, publish or change settings in an account that is not a test account.
+What you saw becomes the spec; what you inferred becomes a question. Such examples carry no `reqs:`; `specs.py
+check` counts them.
 
-Контекст — на языке текста. `facts.json`: `invented` — утверждения, которых нет в задании;
-`missing` — факты задания, без которых читатель не решит задачу. `review.json`: находки
-ревьюера с кодом, серьёзностью 1–4 и местом. Коды у пакетов общие: M-IDEAL — одно и то же
-в ru/ и en/.
+## Maintaining the spec
 
-## 4. Разобрать — один раз
+Look again when:
 
-- **Находка требует факта, которого нет в задании** (часто M-IDEAL: «не сказано, что делать,
-  если…»). Найди факт в коде или спроси пользователя, допиши в задание и вернись к шагу 2.
-  Нового факта нет — запиши в задание «не знаем» и тоже вернись к шагу 2. Такой возврат —
-  один раз.
-- **Остальное — одна правка:**
-  ```bash
-  python3 $S revise $R                  # ревью 1–2 + invented и missing из сверки → text.md
-  python3 $S check $R --facts-only      # правка иногда добавляет выдумку — сверь ещё раз
-  ```
-  `unresolved` в ответе правки — факты, которых не хватает: как в первом пункте.
-  Находки 3–4 правь, только если правка очевидна: `revise $R --max-severity 4`.
-- После правки сверка снова нашла выдумку — удали эту фразу из `text.md` сам, без нового круга.
-- **Повторного ревью нет.** Пакет ru/ замерил: второй круг «ревью → правка» даёт то же число
-  находок и добавляет выдумку. Для en/ это пока гипотеза, но правило то же.
+- a ticket changes: re-read it, update the requirement texts, check, ask, approve, hand off a new delta;
+- the test writer reports that the app and the spec disagree: find out which is wrong. A feature being built: the
+  app is wrong, the spec stays. A spec of an existing app: correct the spec, and say so in the delta;
+- the same question comes back for another ticket: turn its answer into a rule in the spec, or propose it for the
+  policy (R5);
+- a check fires on a correct spec, or misses a broken one: fix the check, keep the broken copy as its case;
+- the profile changes (a new service, a public API, payments): propose the layer the new risk needs. Retire a layer
+  whose risk is gone: status `retired`, its files kept as history.
 
-## 5. Отдать
+## Files
 
-- В чат — `text.md` как есть. Свои слова до и после не добавляй, кроме служебной строки
-  (путь к файлу, ссылка).
-- В файл — скопируй `text.md` туда, где ему место.
-- Нужно поменять текст после проверок — это новый текст: правь задание и пройди шаги заново.
+| Path | What |
+|---|---|
+| `$S/profile.md` | The setup form, the profile and how to choose layers from it |
+| `$S/defaults/` | `policy.yaml`, `profile.yaml`, `layers.yaml` that setup starts from |
+| `$S/templates/requirements.yaml` | A requirement file |
+| `$S/spec-types/` | The catalog: `README.md`, `index.yaml`, one card per spec type |
+| `$S/scripts/specs.py` | `init`, `new-req`, `check`, `trace`, `delta`, `catalog index|check` |
+| `$S/../event-model/` | The spine's skill: `SKILL.md`, `format.md`, `scripts/em.py` (`check`, `export`), a template and an example |
 
-## Цена и ограничения
+In the project:
 
-- ru/: по его замерам около $0,36 за текст, почти всё — ревью. Первое ревью в сессии, без
-  прогретого кэша, около $1 (на пробном прогоне — $1,07). Шаги без ожидания ответов — около
-  двух минут, из них ревью — полторы. en/: ревью $0,54–0,58 за текст, вдвое дороже ru/;
-  почему — не знаем.
-- Нужен `claude` (Claude Code CLI) в PATH и доступ к сети. В песочнице bb вложенный вызов
-  `claude` может потребовать разрешения.
-- Модели по умолчанию — из проверенных в ru/: писатель, правка и вопросы — Opus medium,
-  сверка — Sonnet high, ревью — Opus. Флаги `--model`, `--effort` есть у каждой команды.
-- Промпты в `ru/` и `en/` не меняй: изменение — только через стенд пакета
-  (`ru/lab/`, `en/lab/`) и его замер.
-- Не проси писателя ставить пометки вроде «[уточнить]»: ревьюер засчитает пробел, а текст
-  засорится. Пробел закрывается фактом или «не знаем» в задании.
+| Path | What |
+|---|---|
+| `specs/policy.yaml`, `specs/profile.yaml` | The policy and the profile |
+| `specs/layers.yaml` | The layers: type, path, check, status, why |
+| `specs/requirements/<KEY>.yaml` | Requirements from one source, their questions and the approval |
+| `specs/model/` | The spine: the event model |
+| `specs/glossary.yaml` and other layers' files | As each layer's card says |
+
+`specs.py` and `em.py` need Python 3 and PyYAML.
+
+## A spec never
+
+- holds a value from `never_invent` that no source gave: it is a question;
+- describes how the system is built (tables, services, endpoints) where it should say what happens and what a
+  person sees;
+- has an example whose result a test cannot observe;
+- changes what an approved requirement means without a new approval;
+- writes to a tracker, or contains a test.
+
+## Done when, for a requirement
+
+- its file is `approved`, and every requirement in it is covered by a spec element (`specs.py trace`);
+- `specs.py check` and every layer check report zero errors;
+- every test obligation of the elements it touched is pinned down by an example, or has an open question;
+- the delta went to the test writer.

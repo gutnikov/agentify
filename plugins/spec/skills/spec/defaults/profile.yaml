@@ -1,0 +1,21 @@
+# The facts spec layers are chosen by. How to fill it: the spec skill's profile.md.
+
+product:
+  kind: []          # web | api | mobile | data | llm | library
+  summary: ""       # one line: what it does and for whom
+
+sources:
+  trackers: []      # jira | gitlab | github | linear: only the ones this session can read
+  docs: []          # where PRDs, designs and policies live
+  running_app: ""   # URL of a running app the spec can be checked against, if any
+
+people:
+  approver: ""      # who answers questions about requirements and approves specs
+  readers: []       # who else reads the specs: developers, qa, product, business, auditors
+
+tests:
+  writer: ""        # the agent, plugin or person that turns the spec into tests
+  e2e: ""           # playwright | cypress | none
+  seeding: ""       # how tests put the app into a state: testing API, fixtures folder
+
+risks: []           # money | permissions | concurrency | timers | integrations | public-api | multi-team | regulated

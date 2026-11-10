@@ -26,6 +26,11 @@ The source entry leaves out these points. Decide them yourself before you set up
 - how a session picks which feature to take
 - what a session does when the e2e check fails, or when the session ends before the feature passes
 
+## Related
+
+- [acceptance-loop](acceptance-loop.md): the same idea built on requirements, an approved spec and acceptance tests
+  derived from it; it settles the points the Notes above leave open.
+
 ## Sources
 
 - [Effective harnesses for long-running agents](https://anthropic.com/engineering/effective-harnesses-for-long-running-agents) (Anthropic)

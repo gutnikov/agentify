@@ -1,0 +1,21 @@
+# Requirements from one source: a ticket or a text. Ids are stable: spec elements refer to them in `reqs:`.
+
+key: <KEY>
+source: <SOURCE>
+title: ""
+fetched: <DATE>
+status: draft                  # draft | questions | approved | superseded
+approved_by: ""
+approved_at: ""
+
+requirements:
+  - id: <KEY>#1
+    kind: functional           # functional | nfr | constraint
+    text: ""                   # one requirement, one sentence, in the source's words
+    metric: ""                 # nfr only: how it is measured and the threshold
+
+questions: []
+#  - id: <KEY>?1
+#    reason: R1                # from specs/policy.yaml ask.reasons
+#    text: ""
+#    answer: ""

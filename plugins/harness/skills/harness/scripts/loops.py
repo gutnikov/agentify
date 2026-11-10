@@ -6,7 +6,8 @@
     python3 loops.py new ID --type TYPE          create loops/ID/ from the template; TYPE is a loop-type id or custom
     python3 loops.py validate ID [--runs N]      run the loop on its cases: must-fire fires, must-pass passes,
                                                  the same result every run, within budget_seconds
-    python3 loops.py check                       loops/ is consistent: files, fields, policy ids, agents, registry
+    python3 loops.py check                       loops/ is consistent: files, fields, policy ids, agents, parts of
+                                                 composite loops, registry
     python3 loops.py index                       rebuild loops/index.yaml from every LOOP.md
     python3 loops.py hitl HID --loop ID --question Q --answer A [--checked C]
                                                  log a call to a person under policy id HID
@@ -87,7 +88,7 @@ def build_index(loops_dir):
             continue
         out.append("  - id: %s" % fm.get("id"))
         out.append("    title: %s" % json.dumps(fm.get("title", ""), ensure_ascii=False))
-        for key in ("type", "status", "trigger", "validation", "agents", "hitl"):
+        for key in ("type", "status", "trigger", "validation", "agents", "hitl", "parts"):
             v = fm.get(key)
             if v not in (None, "", []):
                 out.append("    %s: %s" % (key, "[%s]" % ", ".join(v) if isinstance(v, list) else v))
@@ -235,6 +236,12 @@ def cmd_check(a, root):
     ids = set(policy_ids(loops))
     if not ids:
         errors.append("policy.yaml: no policy ids (- id: H1 …)")
+    status_of, parts_of = {}, {}
+    for d in loop_dirs(loops):
+        fm = frontmatter((d / "LOOP.md").read_text(encoding="utf-8")) if (d / "LOOP.md").exists() else None
+        if fm:
+            status_of[d.name] = fm.get("status")
+            parts_of[d.name] = fm.get("parts") or []
     for d in loop_dirs(loops):
         rel = "loops/%s" % d.name
         if not (d / "LOOP.md").exists():
@@ -272,6 +279,26 @@ def cmd_check(a, root):
             errors.append("%s: manual validation but the Validation section is empty" % rel)
         if live and not fm.get("wiring"):
             errors.append("%s: status %s but no wiring" % (rel, fm.get("status")))
+        # a composite loop: its parts exist, contain no cycle, and are at least as far along as the whole
+        rank = {s: i for i, s in enumerate(STATUSES)}
+        for part in parts_of.get(d.name, []):
+            if part == d.name:
+                errors.append("%s/LOOP.md: lists itself in parts" % rel)
+            elif part not in status_of:
+                errors.append("%s/LOOP.md: part %r is not a loop under loops/" % (rel, part))
+            elif fm.get("status") in ("validated", "active") and \
+                    rank.get(status_of[part], -1) < rank[fm.get("status")]:
+                errors.append("%s: status %s but its part %s is %s" % (rel, fm.get("status"), part,
+                                                                       status_of[part]))
+        seen, stack = set(), list(parts_of.get(d.name, []))
+        while stack:
+            p = stack.pop()
+            if p == d.name:
+                errors.append("%s/LOOP.md: parts form a cycle back to %s" % (rel, d.name))
+                break
+            if p not in seen:
+                seen.add(p)
+                stack += parts_of.get(p, [])
     index = loops / "index.yaml"
     if not index.exists() or index.read_text(encoding="utf-8") != build_index(loops):
         errors.append("loops/index.yaml is out of date: run loops.py index")

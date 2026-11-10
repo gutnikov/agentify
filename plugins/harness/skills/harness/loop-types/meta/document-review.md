@@ -41,14 +41,14 @@ Not correspondence: chat replies, comments in threads, messages, confirmations, 
 
 ## Set up
 
-- The `spec` skill (plugin `spec@private-plugins`, enabled in the project's `.claude/settings.json`). Its
+- The `text-quality` skill (plugin `text-quality@private-plugins`, enabled in the project's `.claude/settings.json`). Its
   `scripts/talk.py` runs each step as a separate, isolated `claude -p` call: `new`, `check-brief`, `write`,
   `check`, `revise`.
 - `claude` (the Claude Code CLI) in PATH, with network access. In a bb sandbox the nested `claude` call may need
   permission.
 - A language package: `ru/` (built on Ilyakhov's books) or `en/` (US Federal Plain Language Guidelines, GOV.UK
   style guide, Strunk). The error codes are shared: M-IDEAL means the same in both.
-- Runs are kept in `.spec-runs/` at the repository root: add it to the project's `.gitignore`.
+- Runs are kept in `.text-quality-runs/` at the repository root: add it to the project's `.gitignore`.
 - Do not change the packages' prompts by hand: a change goes through the package's test bench (`ru/lab/`,
   `en/lab/`) and its measurement.
 
@@ -87,9 +87,9 @@ most of these; reading the diff caught the rest.
 
 - [knowledge-base-doc-lint](../code/knowledge-base-doc-lint.md): structural checks of `docs/` in CI.
 - [agent-code-review](agent-code-review.md): the same idea, a fresh reviewer, for code.
-- [interview](../human/interview.md): where the facts for a spec's brief come from.
+- [interview](../human/interview.md): where the facts for a text's brief come from.
 
 ## Sources
 
-- [spec plugin](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/spec): `SKILL.md`,
+- [text-quality plugin](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/text-quality): `SKILL.md`,
   `en/README.md` (process and measurements), `en/review/error-patterns.md` (the error catalogue)

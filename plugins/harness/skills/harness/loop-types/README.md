@@ -7,9 +7,11 @@ testability and observability. This approach is now called harness engineering.
 
 This catalog has one file per loop type: a pattern the harness engineer turns into a concrete loop in a project.
 
-- 72 automated loop types in 11 groups. 71 come from the research "Циклы обратной связи для автономного
-  coding-агента: каталог по атрибутам качества" (in Russian; it says 70 cycles but lists 71). One,
-  [review of document texts](meta/document-review.md), is built on the `spec` skill.
+- 74 automated loop types in 11 groups. 71 come from the research "Циклы обратной связи для автономного
+  coding-агента: каталог по атрибутам качества" (in Russian; it says 70 cycles but lists 71). Three were added
+  here: [review of document texts](meta/document-review.md), built on the `text-quality` skill;
+  [the spec check](testing/spec-check.md), built on the `spec` plugin; and
+  [the acceptance loop](meta/acceptance-loop.md), a composite loop from requirements to green acceptance tests.
 - 16 [human-in-the-loop loop types](human/README.md), where a person gives the signal.
 
 ## File format
@@ -97,6 +99,8 @@ profile and the failures it has ([../profile.md](../profile.md)).
    result".
 2. **Behaviour**: [red/green TDD](testing/red-green-tdd.md) with protected tests,
    [mutations on the diff](testing/mutation-testing.md), [property-based tests](testing/property-based-tests.md).
+   When requirements come as tickets or texts: the [acceptance loop](meta/acceptance-loop.md), which makes them
+   the oracle.
 3. **The agent sees the app**: [an app per worktree](delivery/isolated-environment.md),
    [Playwright](testing/e2e-browser.md) with [screenshots](testing/visual-screenshot-check.md),
    [axe](interaction/accessibility-checks.md), `init.sh`.
@@ -122,7 +126,8 @@ profile and the failures it has ([../profile.md](../profile.md)).
 - The OpenAI and Stripe numbers are the companies' own reports. OpenAI writes that the result "depends heavily
   on the specific structure and tooling of this repository".
 - A harness that checks behaviour is not solved yet. No sensor can check correctness if a person has not
-  specified what they want.
+  specified what they want. The [acceptance loop](meta/acceptance-loop.md) is this catalog's answer: the person
+  specifies once, as an approved spec, and acceptance tests derived from it check every change.
 - Too many rules can drive the agent into a "spiral of over-engineered refactorings" (Böckeler).
 - Inferential sensors are expensive and non-deterministic; run them selectively.
 - Production data is untrusted input. `browser_run_code_unsafe` in Playwright MCP is effectively remote code
@@ -159,6 +164,7 @@ profile and the failures it has ([../profile.md](../profile.md)).
 - [Visual check with screenshots](testing/visual-screenshot-check.md)
 - [Agentic manual testing](testing/agentic-manual-testing.md)
 - [Executable documentation](testing/executable-docs.md)
+- [Spec check](testing/spec-check.md)
 - [Bug → failing test → fix](testing/bug-failing-test-fix.md)
 
 ### Security, compliance, audit — `security/`
@@ -234,6 +240,7 @@ profile and the failures it has ([../profile.md](../profile.md)).
 - [Eval suites for LLM features](meta/llm-evals.md)
 - [Garbage collection](meta/garbage-collection.md)
 - [Progress file and feature list](meta/progress-file-feature-list.md)
+- [Acceptance loop: from requirements to green acceptance tests](meta/acceptance-loop.md)
 - [Steering loop](meta/steering-loop.md)
 - [Review of document texts](meta/document-review.md)
 

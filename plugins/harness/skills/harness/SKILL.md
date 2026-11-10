@@ -34,7 +34,10 @@ over-engineered refactorings" (Böckeler).
 
 - **Loop**: one check in this project that an agent runs on its own work, with its trigger, its command, its
   signal and what the agent does with it. A loop lives in `loops/<id>/` and is described by `loops/<id>/LOOP.md`.
-- **Loop type**: a pattern from this skill's catalog, `loop-types/`, that a loop is built from. 88 types:
+- **Composite loop**: a loop made of other loops of the project, listed in its `parts`, such as the acceptance loop
+  (requirement → spec → red acceptance tests → work → green). Its own `run` is a gate that checks what only the
+  whole can show; it reuses its parts' output and adds no second check for what a part already checks.
+- **Loop type**: a pattern from this skill's catalog, `loop-types/`, that a loop is built from. 90 types:
   automated ones in 11 groups and human-in-the-loop ones in `loop-types/human/`.
 - **Guide**: what steers the agent before it acts: CLAUDE.md, AGENTS.md, skills. **Sensor**: what tells it after
   it acted: tests, linters, logs, a browser, a reviewer agent. Every loop you build is a sensor.
@@ -137,10 +140,15 @@ questions, and how to choose loops from the answers.
 6. **Document and commit.**
    - Complete every section of `LOOP.md`.
    - Review `LOOP.md` and every agent prompt you wrote with the `document-review` loop type
-     (card `loop-types/meta/document-review.md`, skill `spec`).
+     (card `loop-types/meta/document-review.md`, skill `text-quality`).
    - `python3 $S/scripts/loops.py index`, then `python3 $S/scripts/loops.py check`.
    - Commit, push and merge as far as the policy allows. Once the loop is wired in on the main branch, set
      `status: active`.
+
+A composite loop is built after its parts: each part is its own loop, built and validated by the steps above.
+Then build the composite's gate as its `run`, with must-fire cases for states of the whole that no part catches
+(for the acceptance loop: a requirement without a test, a test green before the work, a weakened acceptance test).
+`loops.py check` refuses a composite that is `validated` or `active` while a part is behind it.
 
 Report the result to the user in a few lines: the loop diagram, the validation table, and anything still open.
 
@@ -206,5 +214,5 @@ In the project:
 | `loops/hitl-log.jsonl` | Every call to a person, with its policy id and answer |
 | `loops/<id>/` | `LOOP.md`, `run`, `cases/must-fire/`, `cases/must-pass/`, `evals/`, `CHANGELOG.md` |
 
-The scripts need only Python 3. The `document-review` loop type needs the `spec` plugin and the `claude` CLI;
+The scripts need only Python 3. The `document-review` loop type needs the `text-quality` plugin and the `claude` CLI;
 in a bb sandbox the nested `claude` call may ask for permission.
