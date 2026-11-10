@@ -2,6 +2,7 @@
 id: structured-logs
 title: "Structured logs and log queries"
 group: observability
+agent: [investigator]
 qualities: [observability, debuggability]
 stages: [local]
 speed: [seconds]
@@ -19,6 +20,10 @@ worktree), finds the error and fixes it.
 - Structured logging, enforced by a lint ([taste-invariants](../code/taste-invariants.md)).
 - A log stack per worktree, deleted after the task.
 - A skill with the logging standards (Böckeler).
+
+## Agent step
+
+An investigator runs the log queries and returns a Diagnosis instead of raw lines. It never blocks.
 
 ## Sources
 

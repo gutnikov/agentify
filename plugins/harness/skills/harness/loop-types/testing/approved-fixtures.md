@@ -2,6 +2,7 @@
 id: approved-fixtures
 title: "Snapshot / golden / approved fixtures"
 group: testing
+agent: [reviewer]
 qualities: [correctness, stability]
 stages: [local]
 speed: [seconds]
@@ -25,6 +26,12 @@ A test compares the output with a reference. When the test shows a diff:
 
 - Böckeler reports good results with the approved-fixtures pattern where it applies.
 - Who approves the references: [human-acceptance-criteria](../human/human-acceptance-criteria.md).
+
+## Agent step
+
+A guard sorts each changed reference: explained by the requirement of the change (expected) or not (a regression),
+with the evidence. A person still approves new references. It blocks only once calibrated
+([agent-calibration](../meta/agent-calibration.md)).
 
 ## Sources
 

@@ -2,6 +2,7 @@
 id: stop-hook
 title: "Stop hook / `/goal`"
 group: delivery
+agent: [refuter]
 qualities: [any attribute a script can check]
 stages: [local]
 ---
@@ -23,6 +24,12 @@ A hook runs a check and does not let the agent end its turn until the check pass
 
 - With these mechanisms, an autonomous run can finish without a person. With a Stop hook, the run ends when the check passes, or after 8 blocks in a row. A passing check shows only what the script tests.
 - Hooks make a check mandatory; CLAUDE.md is only advice.
+
+## Agent step
+
+With `/goal`, the separate evaluator is a refuter: it gets the goal and the state of the work and returns a Verdict.
+A hook may block the end of a turn on it only once it is calibrated
+([agent-calibration](../meta/agent-calibration.md)); a script check needs no agent.
 
 ## Related
 

@@ -2,6 +2,7 @@
 id: compliance-mutants
 title: "Compliance hardening with mutants"
 group: security
+agent: [worker]
 qualities: [compliance, privacy]
 stages: [ci, scheduled]
 ---
@@ -28,6 +29,11 @@ The source does not say:
 - where the generated tests go, or what signal reaches the coding agent
 - what to do with mutants that no test catches, or with tests that fail on the unchanged code
 - what starts a CI run, or how often batches run and what goes into each one
+
+## Agent step
+
+A worker generates the concern's mutants and the tests that catch them. A mutation run, not the worker, shows that
+the tests fail on the mutants and pass on the real code: the worker does not grade its own tests.
 
 ## Sources
 

@@ -2,6 +2,7 @@
 id: visual-screenshot-check
 title: "Visual check with screenshots"
 group: testing
+agent: [judge]
 qualities: [interaction capability (user engagement)]
 stages: [local, ci]
 ---
@@ -21,6 +22,12 @@ Set it up in two places:
 
 Locally, the [`app-probing`](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/app-probing/skills/app-probing) skill (plugin `app-probing@private-plugins`) takes a full-page screenshot once the screen has settled; the
 comparison with the mockup stays with the agent.
+
+## Agent step
+
+A judge compares the screenshot with the mockup and returns a Verdict listing each difference. Comparing images is
+judgement: it blocks only after a person graded pairs that match and pairs that do not, and it agreed with them
+([agent-calibration](../meta/agent-calibration.md)).
 
 ## Sources
 

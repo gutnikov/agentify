@@ -2,6 +2,7 @@
 id: browser-console-devtools
 title: "Browser console and DevTools"
 group: observability
+agent: [investigator]
 qualities: [debuggability]
 speed: [seconds]
 ---
@@ -26,6 +27,11 @@ OpenAI built this loop into its own harness. It connected its agent to CDP and g
 
 In a project with Playwright fixtures and Page Objects, the [`app-probing`](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/app-probing/skills/app-probing) skill (plugin `app-probing@private-plugins`) collects console
 errors and the app's failed requests in every probe, without third-party noise.
+
+## Agent step
+
+An investigator groups the console errors and failed requests by cause and returns a Diagnosis for each. It never
+blocks.
 
 ## Sources
 

@@ -2,6 +2,7 @@
 id: document-review
 title: "Review of document texts"
 group: meta
+agent: [reviewer]
 qualities: [understandability, correctness]
 stages: [local]
 speed: [minutes]
@@ -82,6 +83,12 @@ most of these; reading the diff caught the rest.
 - Time: the steps that do not wait for answers take an estimated two minutes, one and a half of them for the review.
 - Do not ask the writer for markers such as "[to be confirmed]": the reviewer counts the gap anyway. A gap is
   closed by a fact or by "we don't know" in the brief.
+
+## Agent step
+
+The reviewer of the `text-quality` skill: it gets the brief and the text and returns findings by its error
+catalogue. It is calibrated by that skill's own test bench (`ru/lab/`, `en/lab/`), not by the harness; its prompt is
+never changed by hand.
 
 ## Related
 

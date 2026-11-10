@@ -2,6 +2,7 @@
 id: agent-code-review
 title: "Code review by another agent"
 group: meta
+agent: [reviewer]
 qualities: [maintainability, correctness]
 speed: [minutes]
 ---
@@ -32,6 +33,13 @@ The source does not say:
 
 - Böckeler: an LLM partly catches semantic duplication and over-engineering, but expensively and
   probabilistically.
+
+## Agent step
+
+A reviewer per lens (correctness, security, tests, performance, the project's conventions), each in a fresh context.
+It gets the diff and the requirement, not the coding agent's reasoning, reads only, and returns Findings; a finding
+verifier checks each high finding before the coding agent acts on it. A reviewer blocks only once calibrated
+([agent-calibration](agent-calibration.md)); until then its findings are advice.
 
 ## Sources
 

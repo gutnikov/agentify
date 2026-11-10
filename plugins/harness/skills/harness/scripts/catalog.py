@@ -16,7 +16,7 @@ import sys
 
 CATALOG = pathlib.Path(__file__).resolve().parent.parent / "loop-types"
 INDEX = CATALOG / "index.yaml"
-FIELDS = ["qualities", "when", "initiator", "sync", "assesses", "stages", "speed"]
+FIELDS = ["qualities", "when", "initiator", "sync", "assesses", "stages", "speed", "agent"]
 VOCAB = {
     "stages": {"edit", "local", "commit", "ci", "preview", "staging", "production", "scheduled", "task", "sprint",
                "continuous"},
@@ -25,6 +25,7 @@ VOCAB = {
     "initiator": {"agent", "human", "rule", "schedule"},
     "sync": {"blocking", "async"},
     "assesses": {"intent", "plan", "result", "code", "action-risk"},
+    "agent": {"reviewer", "refuter", "investigator", "judge", "explorer", "worker"},
 }
 ITEM = re.compile(r"^\s*(\d+\.|-)\s+")
 
@@ -136,6 +137,8 @@ def check():
         for section in sections:
             if section not in text:
                 errors.append("%s: missing %s" % (rel, section))
+        if ("agent" in fm) != ("## Agent step\n" in text):
+            errors.append("%s: the agent field and the Agent step section go together" % rel)
         if not summary(text):
             errors.append("%s: empty Loop section" % rel)
     for path in CATALOG.rglob("*.md"):

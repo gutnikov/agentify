@@ -2,6 +2,7 @@
 id: profiling
 title: "Profiling"
 group: performance
+agent: [investigator]
 qualities: [resource utilization, energy efficiency]
 stages: [local]
 ---
@@ -18,6 +19,10 @@ The source does not say which run or workload to profile, which result shows tha
 ## Set up
 
 - py-spy or pprof with text output.
+
+## Agent step
+
+An investigator compares the two profiles and returns what changed and why, as a Diagnosis. It never blocks.
 
 ## Sources
 

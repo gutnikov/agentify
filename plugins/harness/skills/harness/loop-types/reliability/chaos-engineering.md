@@ -2,6 +2,7 @@
 id: chaos-engineering
 title: "Chaos engineering"
 group: reliability
+agent: [investigator]
 qualities: [availability, recoverability, continuity]
 stages: [staging]
 ---
@@ -19,6 +20,11 @@ To set up the loop:
 
 - write the experiments as code
 - run the experiments only in an isolated environment
+
+## Agent step
+
+From the experiment's alerts and SLOs, an investigator returns which recovery mechanism was missing, as a Diagnosis.
+It never blocks.
 
 ## Sources
 

@@ -2,6 +2,7 @@
 id: slo-degradation
 title: "SLO degradation"
 group: production
+agent: [investigator]
 qualities: [availability, reliability]
 stages: [production]
 ---
@@ -25,6 +26,11 @@ The source gives only the loop and the setup step above. It does not say:
 - how the agent learns of a degradation
 - what level of monitoring access the agent needs
 - who approves a fix, or how the loop checks that the SLO recovered
+
+## Agent step
+
+An investigator follows a degrading SLO to its cause through logs, traces and recent deploys, and returns a
+Diagnosis with a proposed fix. It never blocks.
 
 ## Sources
 

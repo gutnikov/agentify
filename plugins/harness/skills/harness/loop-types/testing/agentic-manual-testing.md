@@ -2,6 +2,7 @@
 id: agentic-manual-testing
 title: "Agentic manual testing"
 group: testing
+agent: [explorer]
 qualities: [correctness, demonstrability]
 stages: [local]
 ---
@@ -26,6 +27,11 @@ Give the agent:
 
 - Because Showboat records what the commands really output, it is harder for the agent to describe what it hoped would happen
   instead of what happened.
+
+## Agent step
+
+An explorer, separate from the agent that wrote the change, checks it by hand and returns defects as Findings with
+the steps to reproduce them. It does not block; a defect it finds becomes a failing test.
 
 ## Sources
 

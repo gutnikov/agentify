@@ -7,11 +7,12 @@ testability and observability. This approach is now called harness engineering.
 
 This catalog has one file per loop type: a pattern the harness engineer turns into a concrete loop in a project.
 
-- 74 automated loop types in 11 groups. 71 come from the research "Циклы обратной связи для автономного
-  coding-агента: каталог по атрибутам качества" (in Russian; it says 70 cycles but lists 71). Three were added
+- 75 automated loop types in 11 groups. 71 come from the research "Циклы обратной связи для автономного
+  coding-агента: каталог по атрибутам качества" (in Russian; it says 70 cycles but lists 71). Four were added
   here: [review of document texts](meta/document-review.md), built on the `text-quality` skill;
-  [the spec check](testing/spec-check.md), built on the `spec` plugin; and
-  [the acceptance loop](meta/acceptance-loop.md), a composite loop from requirements to green acceptance tests.
+  [the spec check](testing/spec-check.md), built on the `spec` plugin;
+  [the acceptance loop](meta/acceptance-loop.md), a composite loop from requirements to green acceptance tests;
+  and [the calibration of a loop's agent](meta/agent-calibration.md).
 - 16 [human-in-the-loop loop types](human/README.md), where a person gives the signal.
 
 ## File format
@@ -29,6 +30,22 @@ speed: [seconds]             # how long one round takes; omitted when the resear
 
 The body has the sections **Loop** (what the agent does and what signal it gets), **Set up** (what has to exist
 for the loop to work), **Notes** (evidence and warnings, when there are any) and **Sources**.
+
+A card where a separate agent helps has an `agent:` field and an **Agent step** section: what kind of agent, what
+it gets, what it returns, and whether it may block. The section is this harness's guidance, not the source's. The
+kinds are a vocabulary, not a whitelist: a project may need an agent no card names.
+
+| `agent` value | What it does | Blocks? |
+|---|---|---|
+| `reviewer` | reads a diff or an artifact through a lens or a checklist, returns findings; a guard is a reviewer whose lens is the tests, references or spec | only once calibrated |
+| `refuter` | tries to prove a claim of "done" wrong, by running tests and opening the app | only once calibrated |
+| `judge` | grades a result on a rubric | only once calibrated on a person's grades |
+| `explorer` | walks the running app like a user, returns what it saw and the defects | no: what it finds becomes a test |
+| `investigator` | reads logs, traces, profiles or a CI log, returns a diagnosis | no: it helps the working agent |
+| `worker` | does a narrow task on a schedule, returns a small PR | no: the loops on its PR decide |
+
+What every agent returns is fixed in [../agent-formats.md](../agent-formats.md); how an agent earns the right to
+block is [agent-calibration](meta/agent-calibration.md).
 
 | `stages` value | Meaning |
 |---|---|
@@ -129,7 +146,8 @@ profile and the failures it has ([../profile.md](../profile.md)).
   specified what they want. The [acceptance loop](meta/acceptance-loop.md) is this catalog's answer: the person
   specifies once, as an approved spec, and acceptance tests derived from it check every change.
 - Too many rules can drive the agent into a "spiral of over-engineered refactorings" (Böckeler).
-- Inferential sensors are expensive and non-deterministic; run them selectively.
+- Inferential sensors are expensive and non-deterministic; run them selectively, and let one block only after it
+  is [calibrated](meta/agent-calibration.md).
 - Production data is untrusted input. `browser_run_code_unsafe` in Playwright MCP is effectively remote code
   execution.
 - The ISO/IEC 25010:2023 sub-characteristics were checked against secondary sources only (the standard is paid).
@@ -241,6 +259,7 @@ profile and the failures it has ([../profile.md](../profile.md)).
 - [Garbage collection](meta/garbage-collection.md)
 - [Progress file and feature list](meta/progress-file-feature-list.md)
 - [Acceptance loop: from requirements to green acceptance tests](meta/acceptance-loop.md)
+- [Calibration of a loop's agent](meta/agent-calibration.md)
 - [Steering loop](meta/steering-loop.md)
 - [Review of document texts](meta/document-review.md)
 

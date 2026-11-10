@@ -2,6 +2,7 @@
 id: dependency-updates
 title: "Dependency updates"
 group: compatibility
+agent: [worker]
 qualities: [upgradeability, sustainability]
 stages: [scheduled]
 ---
@@ -16,6 +17,11 @@ activity of the dependencies, and an LLM writes recommendations.
 ## Set up
 
 - Start the agent automatically on the bot's red PRs.
+
+## Agent step
+
+A worker takes the update PR, runs the sensors, fixes what broke and writes the recommendation from the dependency
+data. It never merges; the loops on its PR decide.
 
 ## Sources
 

@@ -2,6 +2,7 @@
 id: health-checks-smoke
 title: "Health checks and smoke tests after deploy"
 group: reliability
+agent: [investigator]
 qualities: [availability, operability]
 stages: [preview, staging]
 speed: [seconds]
@@ -24,6 +25,11 @@ To run this loop, the project needs:
 - startup logs that the agent can read
 
 The source does not say what the smoke suite should cover.
+
+## Agent step
+
+When the check is red, an investigator reads the startup logs and returns a Diagnosis. It never blocks; the health
+check does.
 
 ## Sources
 

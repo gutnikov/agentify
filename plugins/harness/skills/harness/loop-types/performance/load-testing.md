@@ -2,6 +2,7 @@
 id: load-testing
 title: "Load testing"
 group: performance
+agent: [investigator]
 qualities: [scalability, elasticity, capacity]
 stages: [staging]
 speed: [minutes]
@@ -22,6 +23,11 @@ The loop needs:
 - Traces from that preview. If your project collects no traces, the agent can see p95 degrade but cannot look for the bottleneck, and you need to add tracing first.
 - Scenarios in the repository.
 - Thresholds that end the run with a non-zero exit code.
+
+## Agent step
+
+An investigator reads the load run's report and the traces and returns the bottleneck as a Diagnosis. It never
+blocks; the run's thresholds do.
 
 ## Sources
 

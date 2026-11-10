@@ -2,6 +2,7 @@
 id: ux-evaluator
 title: "UX evaluator with thresholds"
 group: interaction
+agent: [explorer, judge]
 qualities: [user engagement, functional completeness]
 stages: [sprint]
 ---
@@ -23,6 +24,12 @@ detailed breakdown ("FAIL — `PUT /frames/reorder` route defined after `/{frame
 - Use the UX evaluator only where the model alone cannot do the job reliably.
 - Anthropic warns: "out of the box, Claude is a poor QA agent".
 - Anthropic reports one solo run at 20 minutes and $9, and one full-harness run at 6 hours and $200. The source does not say what the full harness adds besides the evaluator, so the difference is not the cost of this loop alone.
+
+## Agent step
+
+Two agents: an explorer walks the app the way a user would and records what it saw; a judge grades the walk on the
+rubric (depth, functionality, design, code). The judge fails a sprint only after a person graded a sample of walks
+and it agreed with them ([agent-calibration](../meta/agent-calibration.md)); until then its grades are advice.
 
 ## Sources
 

@@ -37,11 +37,13 @@ over-engineered refactorings" (Böckeler).
 - **Composite loop**: a loop made of other loops of the project, listed in its `parts`, such as the acceptance loop
   (requirement → spec → red acceptance tests → work → green). Its own `run` is a gate that checks what only the
   whole can show; it reuses its parts' output and adds no second check for what a part already checks.
-- **Loop type**: a pattern from this skill's catalog, `loop-types/`, that a loop is built from. 90 types:
+- **Loop type**: a pattern from this skill's catalog, `loop-types/`, that a loop is built from. 91 types:
   automated ones in 11 groups and human-in-the-loop ones in `loop-types/human/`.
 - **Guide**: what steers the agent before it acts: CLAUDE.md, AGENTS.md, skills. **Sensor**: what tells it after
   it acted: tests, linters, logs, a browser, a reviewer agent. Every loop you build is a sensor.
-- **Agent step**: an agent whose run is part of a loop, such as a reviewer, a verifier or an LLM judge.
+- **Agent step**: an agent whose run is part of a loop, such as a reviewer, a refuter or an LLM judge. Its kind
+  (`reviewer`, `refuter`, `judge`, `explorer`, `investigator`, `worker`, or `other:<name>`) says what it does; its
+  status in `loops/agents.yaml` (`draft`, `evaluated`, `advisory`, `gate`, `retired`) says whether it may block.
 - **Profile**: `loops/profile.yaml`, the facts loops are chosen by: what the project ships, its stack, where a
   change goes (CI, preview, staging, production), what the agent can reach, the checks that already run, and the
   failures to catch first. How to fill it and use it: `$S/profile.md`.
@@ -157,22 +159,51 @@ person's judgement, and then pick its loop type from `loop-types/human/`.
 
 ## Agent steps
 
-- Create an agent only when a loop's `LOOP.md` lists it under `agents`, and only if `autonomy.create_loop_agents`
-  allows it. Put it where its runtime loads it, such as `.claude/agents/<name>.md`.
-- Evals live in `loops/<id>/evals/<agent>/`: cases, each with an input and the expected verdict, and `report.md`
-  with the latest results.
-- The agent's output differs from run to run: run each case at least 3 times and report how often the verdict
-  matches.
-- Calibrate each LLM judge on a person's grades, following loop type `human/llm-judge-calibration`. Asking the
-  user for the grades is an H5 call.
-- Evaluate again when the prompt or the model changes, when the loop's false positives or misses repeat, or when
-  a sample audit finds mismatches.
+A loop type's card says, in its Agent step section, what kind of agent may help. You design the agent for the
+loop's failure; there is no fixed list of agents to install.
+
+**Design.**
+
+- **Reuse first.** Look for an agent that already does the job: `.claude/agents/`, the project's plugins (for
+  example a reviewer and a finding verifier from a language plugin), `loops/agents.yaml`. A second loop that needs
+  the same kind of agent uses the registered one.
+- **The one who works does not grade.** A reviewer, refuter, guard or judge is a separate agent with a fresh
+  context. It gets what the loop checks (the diff, the requirement, the claim, the artifact), never the working
+  agent's reasoning or its own verdict.
+- **The least rights.** A reviewer, a guard and a judge only read. A refuter, an explorer and an investigator may
+  run commands and open the app, and change nothing in the product, its tests or its spec. Only a worker opens
+  PRs, and never merges them.
+- **One output format** from `$S/agent-formats.md`: Finding, Finding check, Verdict or Diagnosis, so other agents
+  and scripts can use it.
+- **A limit on rounds** between the working agent and a reviewer or a refuter, with what happens at the limit
+  (usually a call to a person under the loop's `hitl`).
+
+**Create and calibrate** (loop type `meta/agent-calibration`):
+
+1. Create an agent only for a loop whose `LOOP.md` lists it under `agents`, and only if
+   `autonomy.create_loop_agents` allows it: `python3 $S/scripts/loops.py agent-new <id> --kind <kind>`. It
+   registers the agent as `draft` and, if the definition is missing, writes it from `$S/templates/agent.md`.
+2. Write eval cases in `loops/agents/<id>/evals/` (`$S/agent-formats.md`, Evals): for a reviewer, a guard or a
+   refuter, broken copies that must fire and clean ones that must pass, usually taken from the loop's own cases;
+   for a judge, results a person graded pass or fail with a reason (H5).
+3. Run the agent on every case at least 3 times, one `results/<run>.jsonl` per run, then
+   `python3 $S/scripts/loops.py eval-score <id> --record`.
+4. Ask the user to approve the threshold (H5) and write who approved it in `threshold_source`. When the agreement
+   reaches it, the agent becomes `gate` and may block; until then, or if it never does, it is `advisory`: its
+   loop prints its verdict and exits 0. An agent that stays far below and cannot be fixed is `retired`.
+5. In use, log what happened to its verdicts: `python3 $S/scripts/loops.py outcome <id> --loop <loop> --outcome
+   confirmed|false-positive|missed|overridden`. Each false positive or miss becomes a new eval case.
+
+Evaluate again when its definition or its model changes (`loops.py check` refuses a gate that was not re-scored),
+when `loops.py stats` shows false positives or misses since the last evaluation, and when a sample audit finds
+mismatches.
 
 ## Maintaining loops
 
 Look at a loop again when:
 
-- it fires on correct code, or misses a failure it should catch: add that case, fix the loop, validate again;
+- it fires on correct code, or misses a failure it should catch: add that case, fix the loop, validate again; when
+  the loop's agent was wrong, also log the outcome and add the case to the agent's evals;
 - `python3 $S/scripts/loops.py stats` shows the same question asked more than once: automate the answer, or
   propose to settle it in the policy (H7);
 - the user corrects the agent twice for the same thing: turn the correction into a loop
@@ -200,8 +231,10 @@ retires a loop.
 | `$S/defaults/policy.yaml` | The default policy that setup starts from |
 | `$S/defaults/profile.yaml` | The empty profile that setup fills in |
 | `$S/templates/LOOP.md` | The template for a loop's spec |
+| `$S/templates/agent.md` | The template for an agent that is a step of a loop |
+| `$S/agent-formats.md` | What agents return (Finding, Finding check, Verdict, Diagnosis), their evals and outcomes |
 | `$S/loop-types/` | The catalog: `README.md`, `index.yaml`, one card per loop type |
-| `$S/scripts/loops.py` | `init`, `new`, `validate`, `check`, `index`, `hitl`, `stats` for the project's `loops/` |
+| `$S/scripts/loops.py` | `init`, `new`, `validate`, `check`, `index`, `hitl`, `stats`, `agent-new`, `eval-score`, `outcome` for the project's `loops/` |
 | `$S/scripts/catalog.py` | `index` and `check` for the catalog itself |
 
 In the project:
@@ -212,7 +245,10 @@ In the project:
 | `loops/profile.yaml` | The project's profile: what loops are chosen by |
 | `loops/index.yaml` | The registry of loops, built from every `LOOP.md` |
 | `loops/hitl-log.jsonl` | Every call to a person, with its policy id and answer |
-| `loops/<id>/` | `LOOP.md`, `run`, `cases/must-fire/`, `cases/must-pass/`, `evals/`, `CHANGELOG.md` |
+| `loops/<id>/` | `LOOP.md`, `run`, `cases/must-fire/`, `cases/must-pass/`, `CHANGELOG.md` |
+| `loops/agents.yaml` | The agents that are steps of loops: kind, definition, model, status, threshold, last evaluation |
+| `loops/agents/<id>/` | An agent's `evals/`, `results/` and `report.md` |
+| `loops/agent-outcomes.jsonl` | What happened to the agents' verdicts in real use |
 
 The scripts need only Python 3. The `document-review` loop type needs the `text-quality` plugin and the `claude` CLI;
 in a bb sandbox the nested `claude` call may ask for permission.

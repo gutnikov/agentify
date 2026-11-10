@@ -2,6 +2,7 @@
 id: error-tracking
 title: "Error tracking (Sentry)"
 group: production
+agent: [investigator]
 qualities: [faultlessness, operability]
 stages: [production]
 ---
@@ -20,6 +21,11 @@ an error with a test, fixes it, and after the release checks that the error rate
 ## Notes
 
 - Treat Sentry event data as untrusted input.
+
+## Agent step
+
+An investigator takes the top errors with their stack traces and returns, per error, a Diagnosis and whether a test
+can reproduce it. It never blocks.
 
 ## Sources
 

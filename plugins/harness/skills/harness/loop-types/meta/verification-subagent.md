@@ -2,6 +2,7 @@
 id: verification-subagent
 title: "Verification subagent"
 group: meta
+agent: [refuter]
 qualities: [correctness, auditability]
 speed: [minutes]
 ---
@@ -30,6 +31,12 @@ The source does not say what the subagent receives, what starts it or where its 
 
 For a web app, the [`app-probing`](https://github.com/gutnikov/my-claude-plugins/tree/main/plugins/app-probing/skills/app-probing) skill (plugin `app-probing@private-plugins`) lets the subagent open the app and check the claim there, not
 only in the diff.
+
+## Agent step
+
+A refuter. It gets the claim of done and the requirement, not the working agent's reasoning; it may run the tests
+and open the app (`app-probing`), and changes nothing. It returns a Verdict with evidence. Its verdict fails the
+loop only once it is calibrated on claims known to be true and false ([agent-calibration](agent-calibration.md)).
 
 ## Related
 

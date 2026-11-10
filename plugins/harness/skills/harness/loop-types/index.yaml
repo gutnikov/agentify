@@ -94,6 +94,7 @@ loop_types:
     summary: "The agent checks the code by hand: `python -c`, temporary files in `/tmp`, `curl`, a browser. When the agent finds a defect, it locks the fix in with a permanent test, written red/green ([red-green-tdd](red-green-tdd.md))."
     qualities: [correctness, demonstrability]
     stages: [local]
+    agent: [explorer]
   - id: approved-fixtures
     title: "Snapshot / golden / approved fixtures"
     group: testing
@@ -102,6 +103,7 @@ loop_types:
     qualities: [correctness, stability]
     stages: [local]
     speed: [seconds]
+    agent: [reviewer]
   - id: bug-failing-test-fix
     title: "Bug → failing test → fix"
     group: testing
@@ -109,6 +111,7 @@ loop_types:
     summary: "The agent reproduces the bug with a test, fixes the code and shows a green run."
     qualities: [reproducibility, debuggability]
     stages: [local]
+    agent: [explorer]
   - id: code-coverage
     title: "Code coverage"
     group: testing
@@ -131,6 +134,7 @@ loop_types:
     summary: "The agent starts the dev server and walks a scenario with Playwright or Puppeteer. That is how it finds out that a feature does not work end to end even though the unit tests and `curl` pass."
     qualities: [functional suitability, operability]
     stages: [local, ci]
+    agent: [explorer]
   - id: executable-docs
     title: "Executable documentation"
     group: testing
@@ -175,6 +179,7 @@ loop_types:
     qualities: [testability, correctness]
     stages: [local]
     speed: [seconds]
+    agent: [reviewer]
   - id: run-tests-first
     title: "Run the tests first"
     group: testing
@@ -197,6 +202,7 @@ loop_types:
     summary: "The agent takes a screenshot, compares it with the mockup, lists the differences and fixes them."
     qualities: [interaction capability (user engagement)]
     stages: [local, ci]
+    agent: [judge]
   - id: agent-audit-trail
     title: "Audit trail of agent actions"
     group: security
@@ -211,6 +217,7 @@ loop_types:
     summary: "An LLM takes one concern, such as data leaks, and generates two things: mutants specific to that concern; tests that catch those mutants."
     qualities: [compliance, privacy]
     stages: [ci, scheduled]
+    agent: [worker]
   - id: dast
     title: "DAST"
     group: security
@@ -257,6 +264,7 @@ loop_types:
     qualities: [security, privacy]
     stages: [scheduled]
     speed: [minutes]
+    agent: [reviewer]
   - id: api-breaking-changes
     title: "Breaking changes in the API"
     group: compatibility
@@ -287,6 +295,7 @@ loop_types:
     summary: "Renovate or Dependabot opens a PR; the agent runs the sensors and fixes what broke. A script collects the age and activity of the dependencies, and an LLM writes recommendations."
     qualities: [upgradeability, sustainability]
     stages: [scheduled]
+    agent: [worker]
   - id: i18n-pseudolocalization
     title: "i18n and pseudo-localization"
     group: compatibility
@@ -332,6 +341,7 @@ loop_types:
     qualities: [scalability, elasticity, capacity]
     stages: [staging]
     speed: [minutes]
+    agent: [investigator]
   - id: perf-budgets-telemetry
     title: "Performance budgets through telemetry"
     group: performance
@@ -339,6 +349,7 @@ loop_types:
     summary: "The agent gets a performance budget, such as \"the service starts in under 800 ms\" or \"no span on a critical path takes longer than 2 s\". It queries the traces and optimizes the code until the service meets the performance budget (OpenAI's example)."
     qualities: [performance, responsiveness]
     stages: [local]
+    agent: [investigator]
   - id: profiling
     title: "Profiling"
     group: performance
@@ -346,6 +357,7 @@ loop_types:
     summary: "The agent takes a CPU or memory profile as text (the top N functions), makes a fix and compares the new profile with the original."
     qualities: [resource utilization, energy efficiency]
     stages: [local]
+    agent: [investigator]
   - id: browser-console-devtools
     title: "Browser console and DevTools"
     group: observability
@@ -353,6 +365,7 @@ loop_types:
     summary: "The agent reads the page's console errors and network requests and fixes JS exceptions and 4xx/5xx responses."
     qualities: [debuggability]
     speed: [seconds]
+    agent: [investigator]
   - id: debugger-repl
     title: "Debugger and REPL"
     group: observability
@@ -367,6 +380,7 @@ loop_types:
     summary: "The agent runs a scenario and compares error counters, latency and resource use with what it expects."
     qualities: [observability, availability]
     speed: [seconds]
+    agent: [investigator]
   - id: structured-logs
     title: "Structured logs and log queries"
     group: observability
@@ -375,6 +389,7 @@ loop_types:
     qualities: [observability, debuggability]
     stages: [local]
     speed: [seconds]
+    agent: [investigator]
   - id: traces-opentelemetry
     title: "Traces (OpenTelemetry)"
     group: observability
@@ -382,6 +397,7 @@ loop_types:
     summary: "The agent queries traces (TraceQL) and finds a slow or failed span."
     qualities: [analysability, performance]
     speed: [seconds]
+    agent: [investigator]
   - id: backup-restore-rollback
     title: "Restore from backup and rollback"
     group: reliability
@@ -396,6 +412,7 @@ loop_types:
     summary: "Pods or zones are killed in staging. From the alerts and SLOs the agent finds the recovery mechanism that is missing."
     qualities: [availability, recoverability, continuity]
     stages: [staging]
+    agent: [investigator]
   - id: fault-injection
     title: "Fault injection (Toxiproxy)"
     group: reliability
@@ -411,6 +428,7 @@ loop_types:
     qualities: [availability, operability]
     stages: [preview, staging]
     speed: [seconds]
+    agent: [investigator]
   - id: canary-feature-flags
     title: "Canaries and feature flags"
     group: delivery
@@ -426,6 +444,7 @@ loop_types:
     qualities: [reproducibility, deployability]
     stages: [ci]
     speed: [minutes]
+    agent: [investigator]
   - id: isolated-environment
     title: "Isolated reproducible environment"
     group: delivery
@@ -456,6 +475,7 @@ loop_types:
     summary: "A hook runs a check and does not let the agent end its turn until the check passes."
     qualities: [any attribute a script can check]
     stages: [local]
+    agent: [refuter]
   - id: ai-judges-telemetry
     title: "AI judges on telemetry"
     group: production
@@ -463,6 +483,7 @@ loop_types:
     summary: "An AI judge is an LLM that checks a sample of responses and a sample of logs. It marks the anomalies it finds."
     qualities: [quality in use]
     stages: [continuous]
+    agent: [judge]
   - id: error-tracking
     title: "Error tracking (Sentry)"
     group: production
@@ -470,6 +491,7 @@ loop_types:
     summary: "Through Sentry MCP the agent gets the top errors, their stack traces and Seer's root-cause analysis. It reproduces an error with a test, fixes it, and after the release checks that the error rate went down."
     qualities: [faultlessness, operability]
     stages: [production]
+    agent: [investigator]
   - id: slo-degradation
     title: "SLO degradation"
     group: production
@@ -477,6 +499,7 @@ loop_types:
     summary: "The agent watches the SLOs for latency, errors and availability and proposes fixes (Böckeler's example)."
     qualities: [availability, reliability]
     stages: [production]
+    agent: [investigator]
   - id: user-feedback
     title: "User feedback"
     group: production
@@ -491,6 +514,7 @@ loop_types:
     summary: "`@axe-core/playwright` finds WCAG violations and gives the selector for each one. `toMatchAriaSnapshot` catches structural problems that axe misses."
     qualities: [inclusivity, user assistance]
     speed: [seconds]
+    agent: [explorer]
   - id: accessibility-tree-navigation
     title: "Agent navigation by the accessibility tree"
     group: interaction
@@ -505,6 +529,7 @@ loop_types:
     summary: "A separate agent walks through the app with Playwright MCP the way a user would, and grades it on criteria: depth, functionality, design, code. If any criterion is below its threshold, the sprint fails, and the generator gets a detailed breakdown (\"FAIL — `PUT /frames/reorder` route defined after `/{frame_id}`…\")."
     qualities: [user engagement, functional completeness]
     stages: [sprint]
+    agent: [explorer, judge]
   - id: acceptance-loop
     title: "Acceptance loop: from requirements to green acceptance tests"
     group: meta
@@ -513,6 +538,15 @@ loop_types:
     qualities: [functional suitability, correctness, traceability]
     stages: [task, local, ci]
     speed: [minutes, hours]
+    agent: [reviewer, refuter]
+  - id: agent-calibration
+    title: "Calibration of a loop's agent"
+    group: meta
+    path: meta/agent-calibration.md
+    summary: "An agent that is a step of a loop, such as a reviewer, a refuter or a judge, is run at least three times on eval cases with known answers, and its agreement with those answers is scored. It may block anything only after the agreement reaches a threshold a person approved; until then, and whenever it falls below, it only advises. Its verdicts in real use are logged with their outcome, and every false positive or miss becomes a new eval case."
+    qualities: [correctness of non-deterministic components, trustworthiness]
+    stages: [local, scheduled]
+    speed: [minutes]
   - id: agent-code-review
     title: "Code review by another agent"
     group: meta
@@ -520,6 +554,7 @@ loop_types:
     summary: "The coding agent asks one or more reviewer agents, each with a fresh context, for a review. It fixes their comments until the reviewer agents are satisfied. At OpenAI almost all review happens between agents."
     qualities: [maintainability, correctness]
     speed: [minutes]
+    agent: [reviewer]
   - id: document-review
     title: "Review of document texts"
     group: meta
@@ -528,6 +563,7 @@ loop_types:
     qualities: [understandability, correctness]
     stages: [local]
     speed: [minutes]
+    agent: [reviewer]
   - id: garbage-collection
     title: "Garbage collection"
     group: meta
@@ -535,6 +571,7 @@ loop_types:
     summary: "On a schedule, background agents look for code that breaks the \"golden principles\" written down in the repository, and open small PRs to fix it. At OpenAI, reviewing most of these PRs took under a minute, and they were merged automatically."
     qualities: [maintainability, evolvability]
     stages: [scheduled]
+    agent: [worker, reviewer]
   - id: llm-evals
     title: "Eval suites for LLM features"
     group: meta
@@ -542,6 +579,7 @@ loop_types:
     summary: "The agent changes a prompt and runs the evals; a drop in the metric counts as a failure."
     qualities: [correctness of non-deterministic components]
     speed: [minutes]
+    agent: [judge]
   - id: progress-file-feature-list
     title: "Progress file and feature list"
     group: meta
@@ -563,6 +601,7 @@ loop_types:
     summary: "When the working agent says a task is done, a separate verification subagent tries to prove that claim wrong. One round takes minutes."
     qualities: [correctness, auditability]
     speed: [minutes]
+    agent: [refuter]
   - id: async-questions-with-assumptions
     title: "Asynchronous questions with assumptions"
     group: human
@@ -611,6 +650,7 @@ loop_types:
     assesses: [result]
     stages: [preview, staging]
     speed: [hours]
+    agent: [explorer]
   - id: human-acceptance-criteria
     title: "Acceptance criteria and references from a person"
     group: human
@@ -621,6 +661,7 @@ loop_types:
     assesses: [result]
     stages: [task]
     speed: [seconds]
+    agent: [reviewer]
   - id: human-diff-review
     title: "Diff review by a person"
     group: human

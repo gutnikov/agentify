@@ -2,6 +2,7 @@
 id: exploratory-testing
 title: "Exploratory testing"
 group: human
+agent: [explorer]
 when: [after]
 initiator: human
 sync: async
@@ -27,6 +28,11 @@ To get a good signal from this loop:
 ## When and how long
 
 On a preview or staging; hours.
+
+## Agent step
+
+An explorer reproduces the person's bug report on a fresh state and returns the steps that reproduce it, or why it
+does not reproduce. It does not block; the failing test written from its steps does.
 
 ## Related
 

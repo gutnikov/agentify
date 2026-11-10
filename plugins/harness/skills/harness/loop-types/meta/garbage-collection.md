@@ -2,6 +2,7 @@
 id: garbage-collection
 title: "Garbage collection"
 group: meta
+agent: [worker, reviewer]
 qualities: [maintainability, evolvability]
 stages: [scheduled]
 ---
@@ -29,6 +30,12 @@ The source does not say what `QUALITY_SCORE.md` contains, who updates it or how 
 ## Notes
 
 - Before this, OpenAI spent every Friday (20% of the week) cleaning up "AI slop" by hand.
+
+## Agent step
+
+A worker on a schedule finds code that breaks one golden principle and opens one small PR per finding. A reviewer,
+not the worker, judges each PR before it merges; the worker never merges its own. The reviewer blocks only once
+calibrated ([agent-calibration](agent-calibration.md)).
 
 ## Sources
 

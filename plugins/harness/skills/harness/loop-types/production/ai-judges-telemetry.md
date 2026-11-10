@@ -2,6 +2,7 @@
 id: ai-judges-telemetry
 title: "AI judges on telemetry"
 group: production
+agent: [judge]
 qualities: [quality in use]
 stages: [continuous]
 ---
@@ -27,6 +28,12 @@ The source gives these two names and credits them to Böckeler. It does not say 
 ## Notes
 
 - The source advises this for inferential sensors in general: they cost a lot to run and do not give the same result every time, so run them on a sample only. The source does not say whether it counts the AI judge as an inferential sensor. It gives no sample rate and no cost figures.
+
+## Agent step
+
+The judge is the loop. It gets a sample and a rubric of what counts as an anomaly, and returns a Verdict per item.
+Its marks are trusted only after a person graded a sample and it agreed with them
+([agent-calibration](../meta/agent-calibration.md)), and a sample audit checks it again later.
 
 ## Sources
 

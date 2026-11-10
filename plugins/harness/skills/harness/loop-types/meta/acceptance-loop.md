@@ -2,6 +2,7 @@
 id: acceptance-loop
 title: "Acceptance loop: from requirements to green acceptance tests"
 group: meta
+agent: [reviewer, refuter]
 qualities: [functional suitability, correctness, traceability]
 stages: [task, local, ci]
 speed: [minutes, hours]
@@ -74,6 +75,13 @@ A test that is red after the work goes back to where the mistake is:
   its acceptance tests pass, and a failure goes back by the table above.
 - Without the protected oracle the loop proves nothing: an agent that can edit the tests can turn any gate green,
   as Kent Beck warns of the "genie" that disables or deletes tests.
+
+## Agent step
+
+Besides the writers, two agents: a guard that returns a Verdict on whether the implementing agent touched or
+weakened the spec or the acceptance tests, and a refuter that tries to prove each requirement's "done" wrong by
+running its tests and opening the app. Both get the requirement and the artifacts, never the implementing agent's
+reasoning, and both block only once calibrated ([agent-calibration](agent-calibration.md)).
 
 ## Sources
 

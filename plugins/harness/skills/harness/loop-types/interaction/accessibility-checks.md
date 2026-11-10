@@ -2,6 +2,7 @@
 id: accessibility-checks
 title: "Accessibility checks (axe, ARIA)"
 group: interaction
+agent: [explorer]
 qualities: [inclusivity, user assistance]
 speed: [seconds]
 ---
@@ -25,6 +26,11 @@ The source gives 2 steps. It does not say whether you need both or whether one i
 2. Set a threshold on the Lighthouse accessibility score ([lighthouse-ci](../performance/lighthouse-ci.md)).
 
 The source does not say which pages to scan, which violations should fail the run, or what threshold to set. It gives no setup step for `toMatchAriaSnapshot`.
+
+## Agent step
+
+axe needs no agent. An explorer covers what axe cannot see: keyboard paths, focus order, what a screen reader
+announces. It returns Findings and does not block; a problem it finds becomes a test.
 
 ## Sources
 

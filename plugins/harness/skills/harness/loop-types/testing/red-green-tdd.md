@@ -2,6 +2,7 @@
 id: red-green-tdd
 title: "Unit tests, red/green TDD"
 group: testing
+agent: [reviewer]
 qualities: [testability, correctness]
 stages: [local]
 speed: [seconds]
@@ -29,6 +30,13 @@ To set up the loop:
 
 - Kent Beck names as a warning sign "any indication that the genie was cheating, for example by disabling or
   deleting tests". He also describes the agent deleting assertions and faking the implementation.
+
+## Agent step
+
+A guard: a reviewer whose only lens is the test diff. It returns a Verdict on whether the change weakened a test
+(deleted, skipped, a loosened assertion, a changed expected value, the code under test mocked out). That answers who
+reviews the test diff. It blocks only once calibrated on weakened and honest test diffs
+([agent-calibration](../meta/agent-calibration.md)).
 
 ## Related
 

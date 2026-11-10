@@ -1,7 +1,7 @@
 {
   "name": "harness",
-  "description": "Set up and maintain a project's agent loops: design, build, validate and revise them like software, with a catalog of 90 loop types and a per-project policy for when an agent may call a person.",
-  "version": "0.3.0",
+  "description": "Set up and maintain a project's agent loops: design, build, validate and revise them like software, with a catalog of 91 loop types and a per-project policy for when an agent may call a person.",
+  "version": "0.4.0",
   "author": {
     "name": "Alex Gutnikov",
     "url": "https://github.com/gutnikov"

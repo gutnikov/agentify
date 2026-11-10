@@ -11,7 +11,15 @@
     python3 loops.py index                       rebuild loops/index.yaml from every LOOP.md
     python3 loops.py hitl HID --loop ID --question Q --answer A [--checked C]
                                                  log a call to a person under policy id HID
-    python3 loops.py stats                       loops by status; calls to a person by policy id, by loop, repeated
+    python3 loops.py stats                       loops by status; calls to a person by policy id, by loop, repeated;
+                                                 agents with their agreement and outcomes since their last evaluation
+    python3 loops.py agent-new ID --kind KIND [--path P] [--model M] [--threshold T]
+                                                 register an agent of a loop in loops/agents.yaml, create its eval
+                                                 folder and, if missing, its definition from the template
+    python3 loops.py eval-score ID [--record]    score the agent's eval runs against the expected results: agreement,
+                                                 flaky cases, threshold; --record writes report.md and the registry
+    python3 loops.py outcome ID --loop L --outcome O [--note N]
+                                                 log what happened to one of the agent's verdicts in real use
 
 Options for every command: --root DIR (the project; default: the git top level of the current folder).
 
@@ -22,6 +30,7 @@ No dependencies beyond Python 3.
 import argparse
 import collections
 import datetime
+import hashlib
 import json
 import os
 import pathlib
@@ -33,6 +42,12 @@ import time
 
 PLUGIN = pathlib.Path(__file__).resolve().parent.parent
 STATUSES = ["proposed", "built", "validated", "active", "retired"]
+AGENT_KINDS = {"reviewer", "refuter", "investigator", "judge", "explorer", "worker"}
+AGENT_STATUSES = ["draft", "evaluated", "advisory", "gate", "retired"]
+AGENT_FIELDS = ["id", "kind", "path", "model", "status", "blocks", "threshold", "threshold_source", "human_grades",
+                "agreement", "runs", "evaluated_at", "evaluated_model", "prompt_hash"]
+OUTCOMES = {"confirmed", "false-positive", "missed", "overridden"}
+MIN_RUNS = 3
 TRIGGERS = {"edit", "local", "commit", "ci", "preview", "staging", "production", "scheduled", "task", "sprint",
             "continuous"}
 
@@ -75,8 +90,86 @@ def policy_ids(loops_dir):
 
 
 def loop_dirs(loops_dir):
-    return sorted(p for p in loops_dir.iterdir() if p.is_dir() and not p.name.startswith(".")) \
+    """Every loop folder; loops/agents/ holds the agents' evals, not a loop."""
+    return sorted(p for p in loops_dir.iterdir() if p.is_dir() and not p.name.startswith(".") and p.name != "agents") \
         if loops_dir.exists() else []
+
+
+# ---------------------------------------------------------------- agents registry
+
+def parse_scalar(value):
+    value = value.strip()
+    if value.startswith('"'):
+        return json.loads(value)
+    value = value.split(" #")[0].strip()
+    if value.startswith("["):
+        return [v.strip() for v in value[1:value.rindex("]")].split(",") if v.strip()]
+    if value in ("true", "false"):
+        return value == "true"
+    if re.fullmatch(r"-?\d+(\.\d+)?", value):
+        return float(value) if "." in value else int(value)
+    return value
+
+
+def read_agents(loops_dir):
+    """loops/agents.yaml as a list of dicts, or None when the project has no registry."""
+    path = loops_dir / "agents.yaml"
+    if not path.exists():
+        return None
+    agents, cur = [], None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^  - (\w+): (.*)$", line)
+        if m:
+            cur = {m.group(1): parse_scalar(m.group(2))}
+            agents.append(cur)
+            continue
+        m = re.match(r"^    (\w+): (.*)$", line)
+        if m and cur is not None:
+            cur[m.group(1)] = parse_scalar(m.group(2))
+    return agents
+
+
+def write_agents(loops_dir, agents):
+    path = loops_dir / "agents.yaml"
+    old = path.read_text(encoding="utf-8") if path.exists() else (PLUGIN / "defaults" / "agents.yaml").read_text(
+        encoding="utf-8")
+    header = [l for l in old.splitlines() if l.startswith("#")]
+
+    def fmt(v):
+        if isinstance(v, bool):
+            return "true" if v else "false"
+        if isinstance(v, list):
+            return "[%s]" % ", ".join(v)
+        if isinstance(v, (int, float)):
+            return str(v)
+        v = str(v)
+        return json.dumps(v, ensure_ascii=False) if re.search(r"[:#\[\]{}\"']|^\s|\s$", v) or v in ("true", "false") \
+            else v
+    out = header + [""]
+    if not agents:
+        out.append("agents: []")
+    else:
+        out.append("agents:")
+        for a in agents:
+            keys = AGENT_FIELDS + sorted(k for k in a if k not in AGENT_FIELDS)
+            first = True
+            for k in keys:
+                if k in a and a[k] not in (None, ""):
+                    out.append("%s%s: %s" % ("  - " if first else "    ", k, fmt(a[k])))
+                    first = False
+    path.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+
+def prompt_hash(root, rel):
+    p = root / rel
+    return hashlib.sha256(p.read_bytes()).hexdigest()[:12] if p.is_file() else None
+
+
+def find_agent(agents, agent_id):
+    for a in agents or []:
+        if a.get("id") == agent_id:
+            return a
+    sys.exit("no agent %r in loops/agents.yaml" % agent_id)
 
 
 def build_index(loops_dir):
@@ -105,7 +198,8 @@ def cmd_init(a, root):
     made = []
     for name, make in (("policy.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "policy.yaml", p)),
                        ("profile.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "profile.yaml", p)),
-                       ("hitl-log.jsonl", lambda p: p.write_text("", encoding="utf-8"))):
+                       ("hitl-log.jsonl", lambda p: p.write_text("", encoding="utf-8")),
+                       ("agents.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "agents.yaml", p))):
         if not (loops / name).exists():
             make(loops / name)
             made.append(name)
@@ -236,12 +330,13 @@ def cmd_check(a, root):
     ids = set(policy_ids(loops))
     if not ids:
         errors.append("policy.yaml: no policy ids (- id: H1 …)")
-    status_of, parts_of = {}, {}
+    status_of, parts_of, agents_of = {}, {}, {}
     for d in loop_dirs(loops):
         fm = frontmatter((d / "LOOP.md").read_text(encoding="utf-8")) if (d / "LOOP.md").exists() else None
         if fm:
             status_of[d.name] = fm.get("status")
             parts_of[d.name] = fm.get("parts") or []
+            agents_of[d.name] = fm.get("agents") or []
     for d in loop_dirs(loops):
         rel = "loops/%s" % d.name
         if not (d / "LOOP.md").exists():
@@ -299,11 +394,219 @@ def cmd_check(a, root):
             if p not in seen:
                 seen.add(p)
                 stack += parts_of.get(p, [])
+    errors += check_agents(root, loops, status_of, agents_of)
     index = loops / "index.yaml"
     if not index.exists() or index.read_text(encoding="utf-8") != build_index(loops):
         errors.append("loops/index.yaml is out of date: run loops.py index")
-    print("\n".join(errors) if errors else "OK: %d loops" % len(loop_dirs(loops)))
+    agents = read_agents(loops) or []
+    print("\n".join(errors) if errors else "OK: %d loops, %d agents" % (len(loop_dirs(loops)), len(agents)))
     sys.exit(1 if errors else 0)
+
+
+def check_agents(root, loops, status_of, agents_of):
+    """The registry is consistent with the loops, and no agent blocks before it is calibrated."""
+    errors = []
+    agents = read_agents(loops)
+    used = {p for paths in agents_of.values() for p in paths}
+    if agents is None:
+        if used:
+            errors.append("loops use agents (%s) but loops/agents.yaml is missing: register them with "
+                          "loops.py agent-new" % ", ".join(sorted(used)))
+        return errors
+    by_path, ids = {}, set()
+    for a in agents:
+        aid = a.get("id", "?")
+        where = "loops/agents.yaml [%s]" % aid
+        if aid in ids:
+            errors.append("%s: id used twice" % where)
+        ids.add(aid)
+        by_path[a.get("path")] = a
+        kind, status = str(a.get("kind", "")), a.get("status")
+        if kind not in AGENT_KINDS and not kind.startswith("other:"):
+            errors.append("%s: kind %r is not one of %s, nor other:<name>" % (where, kind, ", ".join(sorted(AGENT_KINDS))))
+        if status not in AGENT_STATUSES:
+            errors.append("%s: status %r is not one of %s" % (where, status, ", ".join(AGENT_STATUSES)))
+        if status == "retired":
+            continue
+        current = prompt_hash(root, a.get("path", ""))
+        if current is None:
+            errors.append("%s: definition %s does not exist" % (where, a.get("path")))
+        if a.get("blocks") is True and status != "gate":
+            errors.append("%s: blocks, but its status is %s: an agent that is not gate advises, it does not block"
+                          % (where, status))
+        if status in ("evaluated", "advisory", "gate") and not a.get("prompt_hash"):
+            errors.append("%s: status %s but it was never evaluated: run its evals and eval-score --record"
+                          % (where, status))
+        elif status in ("evaluated", "advisory", "gate"):
+            if current and a.get("prompt_hash") != current:
+                errors.append("%s: the definition changed since its evaluation: run its evals and eval-score --record"
+                              % where)
+            if a.get("evaluated_model") != a.get("model"):
+                errors.append("%s: model %s, but it was evaluated with %s: evaluate it again"
+                              % (where, a.get("model"), a.get("evaluated_model")))
+        if status == "gate":
+            threshold, agreement = a.get("threshold"), a.get("agreement")
+            if not isinstance(threshold, (int, float)):
+                errors.append("%s: gate without a threshold" % where)
+            elif not isinstance(agreement, (int, float)) or agreement < threshold:
+                errors.append("%s: gate, but agreement %s is below its threshold %s" % (where, agreement, threshold))
+            if not a.get("threshold_source"):
+                errors.append("%s: gate, but threshold_source does not say who approved the threshold (H5)" % where)
+            if not isinstance(a.get("runs"), int) or a.get("runs") < MIN_RUNS:
+                errors.append("%s: gate with fewer than %d eval runs" % (where, MIN_RUNS))
+            if kind == "judge" and a.get("human_grades") is not True:
+                errors.append("%s: a judge is gate only when calibrated on a person's grades (human_grades: true)"
+                              % where)
+    for loop, paths in agents_of.items():
+        for path in paths:
+            a = by_path.get(path)
+            if a is None:
+                errors.append("loops/%s/LOOP.md: agent %s is not registered in loops/agents.yaml" % (loop, path))
+            elif a.get("status") == "draft" and status_of.get(loop) in ("validated", "active"):
+                errors.append("loops/%s: status %s, but its agent %s has no evaluation yet (draft)"
+                              % (loop, status_of.get(loop), a.get("id")))
+    return errors
+
+
+def cmd_agent_new(a, root):
+    loops = root / "loops"
+    if not (loops / "policy.yaml").exists():
+        sys.exit("no loops/policy.yaml: run `loops.py init` and set up the project first")
+    if not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", a.id):
+        sys.exit("agent id must be kebab-case: %s" % a.id)
+    if a.kind not in AGENT_KINDS and not a.kind.startswith("other:"):
+        sys.exit("kind must be one of %s, or other:<name>" % ", ".join(sorted(AGENT_KINDS)))
+    agents = read_agents(loops) or []
+    if any(x.get("id") == a.id for x in agents):
+        sys.exit("agent %s is already registered" % a.id)
+    path = a.path or ".claude/agents/%s.md" % a.id
+    made = []
+    if not (root / path).exists():
+        (root / path).parent.mkdir(parents=True, exist_ok=True)
+        text = (PLUGIN / "templates" / "agent.md").read_text(encoding="utf-8")
+        text = text.replace("<agent-name>", a.id).replace("<kind>", a.kind)
+        if a.model:
+            text = text.replace("<model id, or inherit>", a.model)
+        (root / path).write_text(text, encoding="utf-8")
+        made.append(path)
+    d = loops / "agents" / a.id
+    (d / "evals").mkdir(parents=True, exist_ok=True)
+    (d / "results").mkdir(exist_ok=True)
+    made.append("loops/agents/%s/evals/, results/" % a.id)
+    entry = {"id": a.id, "kind": a.kind, "path": path, "model": a.model or "inherit", "status": "draft",
+             "blocks": False}
+    if a.threshold is not None:
+        entry["threshold"] = a.threshold
+    agents.append(entry)
+    write_agents(loops, agents)
+    made.append("loops/agents.yaml entry (draft)")
+    print("created: %s" % "; ".join(made))
+    print("next: write the definition, add eval cases (agent-formats.md, Evals), run the agent %d times on every "
+          "case, then loops.py eval-score %s --record" % (MIN_RUNS, a.id))
+
+
+def case_matches(expected, got):
+    """One run's output on one case against what the case expects (agent-formats.md, Evals)."""
+    if got is None:
+        return False
+    if "verdict" in expected:
+        return got.get("verdict") == expected["verdict"]
+    want, found = expected.get("findings") or [], got.get("findings") or []
+    if not want:
+        return not any(f.get("severity") == "high" for f in found)
+
+    def hit(w, f):
+        if w.get("file") and f.get("file") != w.get("file"):
+            return False
+        if w.get("line") is not None and (f.get("line") is None or abs(int(f["line"]) - int(w["line"])) > 3):
+            return False
+        return not w.get("rule") or f.get("rule") == w.get("rule")
+    return all(any(hit(w, f) for f in found) for w in want)
+
+
+def cmd_eval_score(a, root):
+    loops = root / "loops"
+    agents = read_agents(loops)
+    agent = find_agent(agents, a.id)
+    d = loops / "agents" / a.id
+    cases = sorted(p for p in (d / "evals").iterdir() if p.is_dir()) if (d / "evals").exists() else []
+    if not cases:
+        sys.exit("loops/agents/%s/evals/ has no cases" % a.id)
+    problems, expected = [], {}
+    for c in cases:
+        if not (c / "expected.json").exists():
+            problems.append("%s: no expected.json" % c.name)
+        else:
+            expected[c.name] = json.loads((c / "expected.json").read_text(encoding="utf-8"))
+    run_files = sorted((d / "results").glob("*.jsonl")) if (d / "results").exists() else []
+    if not run_files:
+        sys.exit("loops/agents/%s/results/ has no runs: run the agent on every case, one .jsonl file per run" % a.id)
+    runs = []
+    for f in run_files:
+        lines = [json.loads(l) for l in f.read_text(encoding="utf-8").splitlines() if l.strip()]
+        runs.append({x.get("case"): x for x in lines})
+    definition = root / agent.get("path", "")
+    if definition.is_file():
+        stale = [f.name for f in run_files if f.stat().st_mtime < definition.stat().st_mtime]
+        if stale:
+            problems.append("run(s) %s are older than the agent's definition: run the agent again with the current "
+                            "definition" % ", ".join(stale))
+    if len(runs) < MIN_RUNS:
+        problems.append("%d run(s); at least %d are needed, the agent's output differs from run to run"
+                        % (len(runs), MIN_RUNS))
+    rows, total, matched, flaky = [], 0, 0, []
+    for name, exp in expected.items():
+        hits = [case_matches(exp, r.get(name)) for r in runs]
+        missing = sum(r.get(name) is None for r in runs)
+        if missing:
+            problems.append("%s: no result in %d run(s)" % (name, missing))
+        kind = "verdict %s" % exp["verdict"] if "verdict" in exp else ("must-pass" if not exp.get("findings")
+                                                                        else "must-fire")
+        rows.append((name, kind, sum(hits), len(hits)))
+        total += len(hits)
+        matched += sum(hits)
+        if 0 < sum(hits) < len(hits):
+            flaky.append(name)
+    agreement = matched / total if total else 0.0
+    threshold = agent.get("threshold")
+    table = ["| case | expects | matched | runs |", "|---|---|---|---|"]
+    table += ["| %s | %s | %d | %d |" % r for r in rows]
+    verdict = "no threshold set" if not isinstance(threshold, (int, float)) else (
+        "meets the threshold %s" % threshold if agreement >= threshold else "BELOW the threshold %s" % threshold)
+    summary = "agreement %.0f%% (%d of %d case runs), %d cases x %d runs; %s" % (
+        agreement * 100, matched, total, len(expected), len(runs), verdict)
+    print("\n".join(table))
+    print("\n" + summary)
+    if flaky:
+        print("flaky (differ between runs): %s" % ", ".join(flaky))
+    for p in problems:
+        print("problem: %s" % p)
+    if a.record:
+        today = datetime.date.today().isoformat()
+        (d / "report.md").write_text("# %s: evaluation %s\n\n%s\n\n%s\n%s%s" % (
+            a.id, today, "\n".join(table), summary,
+            ("\nFlaky: %s\n" % ", ".join(flaky)) if flaky else "",
+            "".join("\nProblem: %s" % p for p in problems)), encoding="utf-8")
+        agent.update({"agreement": round(agreement, 3), "runs": len(runs), "evaluated_at": today,
+                      "evaluated_model": agent.get("model"), "prompt_hash": prompt_hash(root, agent.get("path", ""))})
+        if agent.get("status") == "draft":
+            agent["status"] = "evaluated"
+        write_agents(loops, agents)
+        print("recorded in loops/agents.yaml and loops/agents/%s/report.md" % a.id)
+    below = isinstance(threshold, (int, float)) and agreement < threshold
+    sys.exit(1 if problems or below else 0)
+
+
+def cmd_outcome(a, root):
+    loops = root / "loops"
+    find_agent(read_agents(loops), a.id)
+    if a.outcome not in OUTCOMES:
+        sys.exit("outcome must be one of %s" % ", ".join(sorted(OUTCOMES)))
+    entry = {"at": datetime.datetime.now().isoformat(timespec="seconds"), "agent": a.id, "loop": a.loop,
+             "outcome": a.outcome, "note": a.note}
+    with open(loops / "agent-outcomes.jsonl", "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    print("logged %s for %s" % (a.outcome, a.id))
 
 
 def cmd_index(a, root):
@@ -336,6 +639,18 @@ def cmd_stats(a, root):
         c = collections.Counter(x.get(key) for x in calls)
         if c:
             print("  by %s: %s" % (key, ", ".join("%s %d" % kv for kv in c.most_common())))
+    agents = read_agents(loops) or []
+    outcomes = [json.loads(l) for l in (loops / "agent-outcomes.jsonl").read_text(encoding="utf-8").splitlines()
+                if l.strip()] if (loops / "agent-outcomes.jsonl").exists() else []
+    for ag in agents:
+        since = str(ag.get("evaluated_at") or "")
+        mine = [o for o in outcomes if o.get("agent") == ag.get("id") and o.get("at", "") > since]
+        c = collections.Counter(o.get("outcome") for o in mine)
+        print("agent %s (%s, %s): agreement %s, threshold %s; since its evaluation: %s" % (
+            ag.get("id"), ag.get("kind"), ag.get("status"), ag.get("agreement", "-"), ag.get("threshold", "-"),
+            ", ".join("%s %d" % kv for kv in sorted(c.items())) or "no outcomes"))
+        if c["false-positive"] + c["missed"] >= 2:
+            print("  -> add its false positives and misses as eval cases and run eval-score again")
     norm = collections.Counter(re.sub(r"\W+", " ", (x.get("question") or "").lower()).strip() for x in calls)
     repeated = [(q, n) for q, n in norm.items() if q and n > 1]
     if repeated:
@@ -370,6 +685,23 @@ def main():
     p.add_argument("--checked", default="")
     p.set_defaults(fn=cmd_hitl)
     sub.add_parser("stats").set_defaults(fn=cmd_stats)
+    p = sub.add_parser("agent-new")
+    p.add_argument("id")
+    p.add_argument("--kind", required=True)
+    p.add_argument("--path")
+    p.add_argument("--model")
+    p.add_argument("--threshold", type=float)
+    p.set_defaults(fn=cmd_agent_new)
+    p = sub.add_parser("eval-score")
+    p.add_argument("id")
+    p.add_argument("--record", action="store_true")
+    p.set_defaults(fn=cmd_eval_score)
+    p = sub.add_parser("outcome")
+    p.add_argument("id")
+    p.add_argument("--loop", required=True)
+    p.add_argument("--outcome", required=True)
+    p.add_argument("--note", default="")
+    p.set_defaults(fn=cmd_outcome)
     a = ap.parse_args()
     a.fn(a, project_root(a.root))
 

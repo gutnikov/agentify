@@ -2,6 +2,7 @@
 id: bug-failing-test-fix
 title: "Bug → failing test → fix"
 group: testing
+agent: [explorer]
 qualities: [reproducibility, debuggability]
 stages: [local]
 ---
@@ -29,6 +30,11 @@ The source describes only the case where the new test fails, the fix makes it pa
 - the new test passes before the fix, so it does not reproduce the bug
 - the agent changes the test instead of the code
 - an automated test cannot catch the bug, for example because the bug is flaky, depends on the environment or shows only in the UI
+
+## Agent step
+
+An explorer reproduces the bug in the running app before the test is written and returns the steps the test will
+follow. It does not block.
 
 ## Sources
 

@@ -2,6 +2,7 @@
 id: perf-budgets-telemetry
 title: "Performance budgets through telemetry"
 group: performance
+agent: [investigator]
 qualities: [performance, responsiveness]
 stages: [local]
 ---
@@ -25,6 +26,11 @@ takes longer than 2 s". It queries the traces and optimizes the code until the s
   iterations or time, and no point where the agent stops and reports to a human.
 - The source does not say how many runs must meet the performance budget before it counts as met, when timings
   change from run to run.
+
+## Agent step
+
+An investigator finds the span or the step that breaks the budget and returns it as a Diagnosis. It never blocks;
+the budget does.
 
 ## Sources
 
