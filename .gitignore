@@ -1,7 +1,7 @@
-# spec: runs of the skill and of the language labs, and the writer's sandbox
-.spec-runs/
-plugins/spec/skills/spec/*/lab/runs/
-plugins/spec/skills/spec/*/lab/sandbox/
+# text-quality: runs of the part and of the language labs, and the writer's sandbox
+.text-quality-runs/
+parts/text-quality/*/lab/runs/
+parts/text-quality/*/lab/sandbox/
 
 __pycache__/
 .DS_Store

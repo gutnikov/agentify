@@ -1,52 +1,16 @@
 {
-  "name": "private-plugins",
-  "description": "Private Claude Code plugins by gutnikov.",
+  "name": "agentify",
+  "description": "agentify, a Claude Code plugin by gutnikov.",
   "owner": {
     "name": "Alex Gutnikov",
     "url": "https://github.com/gutnikov"
   },
   "plugins": [
     {
-      "name": "text-quality",
-      "source": "./plugins/text-quality",
-      "description": "Write any text a person will decide on (Russian or English) through a brief, a writer, a fact check, a review and one revision.",
+      "name": "agentify",
+      "source": "./",
+      "description": "Make an agent's work on a project checkable from the task to its confirmation where it is used: init maps the project's loops, task runs a product or a harness task through its super-loop.",
       "version": "0.1.0"
-    },
-    {
-      "name": "harness",
-      "source": "./plugins/harness",
-      "description": "Set up and maintain a project's agent loops and the super-loops they make up (delivery, remediation, maintenance, discovery): design, build, validate and revise them like software, with a catalog of 96 loop types and a per-project policy for when an agent may call a person.",
-      "version": "0.5.0"
-    },
-    {
-      "name": "playwright",
-      "source": "./plugins/playwright",
-      "description": "Write Playwright fixtures that seed the state a test starts from, and Page Objects that are the only way tests touch the UI.",
-      "version": "0.1.0"
-    },
-    {
-      "name": "app-probing",
-      "source": "./plugins/app-probing",
-      "description": "Find out what the running web app actually does with a throwaway Playwright probe: the landing URL, credentials, test ids, console errors, failed requests and a screenshot.",
-      "version": "0.1.0"
-    },
-    {
-      "name": "bb",
-      "source": "./plugins/bb",
-      "description": "Set up and maintain a repository's bb (getbb.app) project, where every ticket gets a manager session that runs hidden workers: init, a local or remote bb server and moves between them, and periodic tasks that start a manager with an assignment.",
-      "version": "0.1.1"
-    },
-    {
-      "name": "ui-prototypes",
-      "source": "./plugins/ui-prototypes",
-      "description": "Sketch screens from a project's own design system and serve them at a local URL: one command for a prototypes dev server, and named prototypes that are saved as one file each.",
-      "version": "0.1.0"
-    },
-    {
-      "name": "spec",
-      "source": "./plugins/spec",
-      "description": "Turn requirements (a text or a ticket by link) into a spec that tests can be derived from without guessing: a catalog of spec types with an event model as the spine, per-project layers chosen by risk, checks, requirement-to-spec traceability, the delta for the test writer, and the production signal of every requirement for the release's confirmation.",
-      "version": "0.3.1"
     }
   ]
 }

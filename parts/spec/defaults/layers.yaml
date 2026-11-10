@@ -1,0 +1,11 @@
+# The spec layers this project keeps: one spine, other layers only for a named risk.
+# Statuses: proposed | set-up | validated | active | retired.
+
+layers: []
+#  - id: model
+#    type: event-model                    # a spec type from the catalog (spec-types/index.yaml)
+#    path: specs/model/
+#    status: active
+#    why: "spine: every behaviour as an example a test can be derived from"
+#    check: "python3 <agentify>/parts/event-model/scripts/em.py check specs/model/"
+#    loop: spec-check                     # the harness loop that runs the checks, if any

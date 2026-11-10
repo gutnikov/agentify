@@ -1,45 +1,75 @@
-# private-plugins
+# agentify
 
-Private Claude Code plugins.
+A Claude Code plugin that makes an agent's work on a project checkable, from the task to the change confirmed where
+it is used. It has two commands:
 
-| Plugin | Skill | What it does |
+| Command | What it does |
+|---|---|
+| `/agentify:init` | Studies the project, recognizes the loops it already runs (CI jobs, hooks, linters, deploy checks, specs, agent loops), places each in the project's super-loops, and confirms that map and the policy with you. Writes `loops/`; builds nothing |
+| `/agentify:task <text or ticket URL>` | Runs one task through its super-loop. Triage picks the level (product or harness) and the super-loop; each phase runs the loops the map has; the task ends at an exit, such as a change confirmed in production |
+
+## The model
+
+A **super-loop** is the path a piece of work takes, from its entry to a change confirmed where it is used:
+
+```
+entry → oracle → work → gate → release → confirmation
+```
+
+There are four, told apart by their oracle, the thing the work is checked against, fixed before the work and out of
+the reach of the agent that does it:
+
+| Super-loop | Starts with | Oracle | Ends with |
+|---|---|---|---|
+| delivery | an idea or a requirement | an approved spec and acceptance tests that fail | the change confirmed where it is used |
+| remediation | a problem | a reproduction that fails, and the signal the problem was seen by | that signal gone |
+| maintenance | a trigger: a new version, an end of life, a measure over budget | the behaviour as it is, and the measure | the measure improved, and nothing changed for users |
+| discovery | a question | the question, and the evidence that would answer it | a decision, which may be "do not build it" |
+
+They run at two levels. At the **product** level the agent does the project's work. At the **harness** level it works
+on the loops themselves, and the product's trace is its signal. The boundary between the levels is a permission
+boundary: a product task never changes a loop that checks it.
+
+```
+harness level   discovery · delivery · remediation · maintenance    over the loops, agents, guides and policy
+      ▲ the trace: releases not confirmed, escapes, corrections, agents' misses
+      ▼ new and fixed loops
+product level   discovery · delivery · remediation · maintenance    over the product
+```
+
+The details: [`parts/harness/super-loops/`](parts/harness/super-loops/README.md).
+
+## Install
+
+```
+/plugin marketplace add gutnikov/agentify
+/plugin install agentify@agentify
+```
+
+The repository is private, so the machine needs git access to it (`gh auth login`, or an SSH key).
+
+## Layout
+
+| Path | What |
+|---|---|
+| `skills/init/`, `skills/task/` | The two commands |
+| `parts/` | What they read: the harness, spec, event-model, text-quality, app-probing, fixture-modify, pom-modify and ui-prototypes parts ([`parts/README.md`](parts/README.md)) |
+
+## What it keeps in a project
+
+| Path | What | |
 |---|---|---|
-| `text-quality` | [`text-quality`](plugins/text-quality/skills/text-quality/SKILL.md) | Writes a text a person will decide on, in Russian (`ru/`) or English (`en/`) |
-| `harness` | [`harness`](plugins/harness/skills/harness/SKILL.md) | Sets up and maintains a project's agent loops and the super-loops they make up (delivery, remediation, maintenance, discovery): designs, builds, validates and revises them, with a catalog of 96 loop types and a per-project policy for when an agent may call a person |
-| `playwright` | [`fixture-modify`](plugins/playwright/skills/fixture-modify/SKILL.md), [`pom-modify`](plugins/playwright/skills/pom-modify/SKILL.md) | Writes the Playwright code tests stand on: fixtures that seed test state, and Page Objects |
-| `app-probing` | [`app-probing`](plugins/app-probing/skills/app-probing/SKILL.md) | Probes the running web app with a throwaway Playwright script and reports what it really does |
-| `ui-prototypes` | [`ui-prototypes`](plugins/ui-prototypes/skills/ui-prototypes/SKILL.md) | Finds a project's design system, sets up one command that serves prototypes built from its components at a local URL, and makes, opens, lists and deletes named prototypes |
-| `spec` | [`spec`](plugins/spec/skills/spec/SKILL.md), [`event-model`](plugins/spec/skills/event-model/SKILL.md) | Turns requirements (a text or a ticket by link) into a spec that tests can be derived from without guessing: picks spec layers by risk from a catalog with an event model as the spine, checks them, traces requirements, hands the test writer the delta and a release's confirmation the production signal of every requirement |
-| `bb` | [`bb`](plugins/bb/skills/bb/SKILL.md) | Sets up and maintains a repository's [bb](https://getbb.app) project, where every ticket in bb Tasks gets a manager session that runs hidden workers: inits a minimal project, runs the bb server locally or remotely and moves it between them, creates, lists and deletes periodic tasks that start a manager with an assignment |
+| `loops/` | The policy, the profile with the map, the registry, the loops, their agents, the calls to a person and the trace | committed |
+| `specs/` | The requirements and the spec, once specs are set up | committed |
+| `prototypes/` | Prototypes, in the package that has the design system | committed |
+| `.text-quality-runs/` | The runs of the text-quality part | add to `.gitignore` |
 
-Install:
+The scripts need Python 3; the spec's also need PyYAML. The text-quality part needs the `claude` CLI and network
+access.
 
-```
-/plugin marketplace add gutnikov/private-plugins
-/plugin install text-quality@private-plugins
-/plugin install harness@private-plugins
-/plugin install playwright@private-plugins
-/plugin install app-probing@private-plugins
-/plugin install ui-prototypes@private-plugins
-/plugin install bb@private-plugins
-/plugin install spec@private-plugins
-```
+## Where it came from
 
-`text-quality` writes its runs to `.text-quality-runs/` at the root of the current project: add it to the project's `.gitignore`.
-
-`harness` keeps a project's loops in `loops/` at its root, to be committed. It builds them as parts of four super-loops
-(delivery, remediation, maintenance, discovery), each ending in a change confirmed where it is used. Its
-`document-review` loop uses `text-quality`.
-
-`app-probing` builds a missing fixture or Page Object with the skills of `playwright`: install both.
-
-`ui-prototypes` adds to a project a `prototypes/` folder (a runner, a README with the design-system catalog, one file
-per prototype) and a `proto` script. It works with React and Vite.
-
-`spec` keeps a project's requirements, layers and spec in `specs/` at its root, to be committed. Its spine is an
-event model (skill `event-model`), checked by `em.py` and handed to the test writer as JSON. Its checks run as the
-`spec-check` loop of `harness`, and its production signals (`specs.py signals`) are what the `release-confirmation`
-loop of `harness` looks for in production. Its scripts need Python 3 and PyYAML.
-
-`bb` keeps its setup in bb itself (projects, the Manager preset, automations) and marks a repository it maintains
-with `.bb/bb.yaml`, to be committed. It needs the `bb` CLI on this machine, pointed at the bb server.
+agentify joins the plugins of [`gutnikov/my-claude-plugins`](https://github.com/gutnikov/my-claude-plugins) at
+`0e3c71d`: harness 0.5.0 became `parts/harness`; spec 0.3.1 became `parts/spec` and `parts/event-model`; text-quality,
+app-probing, playwright (`fixture-modify`, `pom-modify`) and ui-prototypes became parts of the same names. bb is left
+out. A project that harness and spec set up (`loops/`, `specs/`) needs no migration: init recognizes it.
