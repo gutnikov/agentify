@@ -2,7 +2,7 @@
 
 Setup ends with the spine and a short list of layers that fit the project. To choose them you need six facts. The
 repository and this session show some; you ask about the rest in one form. Facts and answers go into
-`specs/profile.yaml`, so nobody is asked twice.
+`agentify/specs/profile.yaml`, so nobody is asked twice.
 
 | Fact | Field | Usually |
 |---|---|---|
@@ -20,7 +20,7 @@ repository and this session show some; you ask about the rest in one form. Facts
 | Sources | MCP servers and CLIs of this session that read trackers (Jira, GitLab, GitHub, Linear): call one once with a real ticket. Ticket keys in branch names and commit messages show which tracker the team uses. `docs/`, ADRs, PRD links in the README |
 | Tests | Playwright or Cypress in the dependencies, a fixtures folder, a testing API client; agentify's `event-model` and `fixture-modify` parts, and agents in `.claude/agents/` that write tests |
 | Risks | Payments, credits, quotas, roles in the code and the tickets; cron jobs, queues, retries, webhooks; more than one service or team; a public API spec; compliance words in tickets (GDPR, consent, audit) |
-| Existing specs | `specs/`, `model/`, `*.feature`, `*.bpmn`, `*.dmn`, `*.cml`, OpenAPI files, `docs/requirements` |
+| Existing specs | `agentify/specs/`, `model/`, `*.feature`, `*.bpmn`, `*.dmn`, `*.cml`, OpenAPI files, `docs/requirements` |
 
 A tracker counts only if the session can read it: fetch one ticket. An SDK in the code is not access.
 

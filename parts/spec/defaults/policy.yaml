@@ -1,10 +1,10 @@
 # The project's spec policy. It changes only with the user's approval (reason R5).
 
 autonomy:
-  edit_specs: true           # write and change files under specs/
+  edit_specs: true           # write and change files under agentify/specs/
   approve: false             # mark a requirement file approved: a person does it (R4)
   read_trackers: true        # read tickets by link; never write to a tracker
-  commit: true               # commit changes under specs/
+  commit: true               # commit changes under agentify/specs/
   push: false
 
 # Always a question to a person, never a guess, whatever the sources hint at.

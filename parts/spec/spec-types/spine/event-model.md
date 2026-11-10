@@ -45,8 +45,8 @@ as JSON (contract `event-model/1`).
 
 ## Set up
 
-1. Keep the model in `specs/model/`, one file per area, written with the `event-model` part.
-2. Layer entry: `type: event-model`, `check: python3 <agentify>/parts/event-model/scripts/em.py check --strict specs/model/`:
+1. Keep the model in `agentify/specs/model/`, one file per area, written with the `event-model` part.
+2. Layer entry: `type: event-model`, `check: python3 <agentify>/parts/event-model/scripts/em.py check --strict agentify/specs/model/`:
    `--strict` fails on a test obligation no example pins down, such as an error with no example.
 3. Every slice and example that comes from a requirement lists it in `reqs:`.
 

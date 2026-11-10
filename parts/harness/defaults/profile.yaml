@@ -41,7 +41,7 @@ ends_at: null
 
 # Where the project's own systems record the exits of its super-loops: files of JSON lines, each with at, action
 # (deploy, confirm, rollback), version, result and evidence, e.g. "~/.saas-test/prod/deploys.jsonl". loops.py stats
-# reads them; what no system records goes into loops/trace.jsonl through loops.py trace.
+# reads them; what no system records goes into agentify/trace.jsonl through loops.py trace.
 trace: []
 
 # The checks the project already runs, each as "<name>: <places> — <where it runs, what it does>", e.g.

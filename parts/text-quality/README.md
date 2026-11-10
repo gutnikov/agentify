@@ -23,7 +23,7 @@
 
 ```bash
 S=<папка этой части>/scripts/talk.py         # parts/text-quality плагина agentify
-R=$(python3 $S new --lang ru --name <slug>)    # или --lang en; папка прогона — в .text-quality-runs/ в корне проекта
+R=$(python3 $S new --lang ru --name <slug>)    # или --lang en; папка прогона — в agentify/.runs/ в корне проекта
 ```
 
 ## 0. Задание — `$R/brief.md`

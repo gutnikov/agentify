@@ -1,7 +1,7 @@
 # Default project policy for agentify: what it may do without asking and when it may call a person, in
 # /agentify:init and in every /agentify:task, at the product level and at the harness level alike.
 #
-# This is a starting point, not the rule. /agentify:init copies it to the project's loops/policy.yaml, adjusts it to
+# This is a starting point, not the rule. /agentify:init copies it to the project's agentify/policy.yaml, adjusts it to
 # what it found in the project, and decides it with the user. After that only the project's copy counts. It changes
 # only with the user's approval (H7).
 
@@ -18,7 +18,7 @@ autonomy:
   budget_usd: null               # spend limit for evals and inferential loops; null means no limit
 
 # When agentify may call a person. Every call names one of these ids and is logged in
-# loops/hitl-log.jsonl. A call that fits none of them is not allowed.
+# agentify/hitl-log.jsonl. A call that fits none of them is not allowed.
 hitl:
   allowed:
     - id: H1
@@ -63,4 +63,4 @@ hitl:
     - 2–4 options, the recommended one first, plus a free answer.
     - Show, don't describe: a schema of the loop, a table, a screenshot, real command output.
     - Ask in the agent session only, with its question tool when it has one.
-    - Log the call and the answer in loops/hitl-log.jsonl.
+    - Log the call and the answer in agentify/hitl-log.jsonl.

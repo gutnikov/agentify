@@ -49,7 +49,7 @@ Not correspondence: chat replies, comments in threads, messages, confirmations, 
 - `claude` (the Claude Code CLI) in PATH, with network access.
 - A language package: `ru/` (built on Ilyakhov's books) or `en/` (US Federal Plain Language Guidelines, GOV.UK
   style guide, Strunk). The error codes are shared: M-IDEAL means the same in both.
-- Runs are kept in `.text-quality-runs/` at the repository root: add it to the project's `.gitignore`.
+- Runs are kept in `agentify/.runs/`, which `agentify/.gitignore` keeps out of git.
 - Do not change the packages' prompts by hand: a change goes through the package's test bench (`ru/lab/`,
   `en/lab/`) and its measurement.
 

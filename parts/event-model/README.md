@@ -16,8 +16,8 @@ The format: `$S/format.md`. A full example: `$S/examples/vendy.em.yaml`. Needs P
 ## 1. Find or start the model
 
 Look for `*.yaml` files with `slices:` in the
-repository, usually `specs/model/`. Extend that model; one system, one model. If there is none, create
-`specs/model/`, one file per area (`billing.em.yaml`, `onboarding.em.yaml`), starting from
+repository, usually `agentify/specs/model/`. Extend that model; one system, one model. If there is none, create
+`agentify/specs/model/`, one file per area (`billing.em.yaml`, `onboarding.em.yaml`), starting from
 `$S/templates/model.em.yaml`. The model is committed.
 
 ## 2. Write it along the timeline
@@ -89,7 +89,7 @@ changes. Record each answer in the model: a rule row, a spec, a removed question
 
 This part writes no tests. The test writer gets two things:
 
-- **the contract**: `python3 $S/scripts/em.py export specs/model/ --out <file>`, the model as JSON
+- **the contract**: `python3 $S/scripts/em.py export agentify/specs/model/ --out <file>`, the model as JSON
   (`event-model/1`, `$S/format.md`, "Handoff to the test writer"): states, screens, outside systems and their
   outcomes, examples, test obligations and open questions;
 - **the change**: `specs.py delta` of the `spec` part, the examples added, changed and removed since a git ref.

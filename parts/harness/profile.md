@@ -2,7 +2,7 @@
 
 `/agentify:init` ends with a map of the project's super-loops, and the first harness task with a short list of loops
 for its pains. To draw them you need six facts about the project. The repository shows most of them; you ask about the rest in one form. Facts and answers go
-into `loops/profile.yaml`, so nobody is asked twice.
+into `agentify/profile.yaml`, so nobody is asked twice.
 
 | Fact | Field in the profile | Usually |
 |---|---|---|
@@ -124,7 +124,7 @@ at.
 
 ## 3. The profile file
 
-`loops.py init` creates `loops/profile.yaml` from `$S/defaults/profile.yaml`; the comments there describe each
+`loops.py init` creates `agentify/profile.yaml` from `$S/defaults/profile.yaml`; the comments there describe each
 field. Fill it in after the form, and commit it with the setup. Write the facts of the map as you find them: every
 existing check with its places, every pain with the place that should catch it.
 

@@ -52,7 +52,7 @@ What a refuter, a guard or a judge returns about one claim or artifact, and what
 | `evidence` | what was run or looked at |
 
 A loop that runs an agent maps the verdict to its exit code: `pass` → 0, `fail` → 1. A loop whose agent is not
-`gate` in `loops/agents.yaml` prints the verdict and exits 0: an agent that is not calibrated advises, it does
+`gate` in `agentify/agents.yaml` prints the verdict and exits 0: an agent that is not calibrated advises, it does
 not block.
 
 ## Diagnosis
@@ -66,7 +66,7 @@ What an investigator returns. It never blocks.
 
 ## Evals
 
-`loops/agents/<agent-id>/evals/<case>/` holds what the agent gets (its `input/`, in the shape its loop gives it)
+`agentify/agents/<agent-id>/evals/<case>/` holds what the agent gets (its `input/`, in the shape its loop gives it)
 and `expected.json`:
 
 ```json
@@ -81,7 +81,7 @@ or, for an agent that reports findings:
 
 `{"findings": []}` is a must-pass case: the agent must report nothing of severity `high`.
 
-Each run of the whole eval set is one file, `loops/agents/<agent-id>/results/<run>.jsonl`, one line per case:
+Each run of the whole eval set is one file, `agentify/agents/<agent-id>/results/<run>.jsonl`, one line per case:
 
 ```json
 {"case": "parallel-charge", "verdict": "fail", "findings": [{"id": "F1", "file": "api/billing.go", "line": 140, "severity": "high", "rule": "credits-reserved", "message": "…", "evidence": "…"}]}
@@ -92,7 +92,7 @@ same file, within 3 lines, with the expected `rule` if one is given, and a must-
 
 ## Outcome
 
-What happened to one verdict in real use, appended to `loops/agent-outcomes.jsonl` by `loops.py outcome`:
+What happened to one verdict in real use, appended to `agentify/agent-outcomes.jsonl` by `loops.py outcome`:
 
 ```json
 {"at": "2026-11-10T12:04:11", "agent": "code-reviewer", "loop": "review", "outcome": "false-positive",

@@ -76,7 +76,7 @@ A project's own records are files of JSON lines, one per event, named in its pro
 ```
 
 `action` is `deploy`, `confirm` or `rollback`; a confirmation's `result` is one of the super-loop's exits. What no
-system records goes into the project's `loops/trace.jsonl` through `loops.py trace`, and `loops.py stats` reads both.
+system records goes into the project's `agentify/trace.jsonl` through `loops.py trace`, and `loops.py stats` reads both.
 
 ## Just enough
 

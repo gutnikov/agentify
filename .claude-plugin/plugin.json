@@ -1,7 +1,7 @@
 {
   "name": "agentify",
   "description": "Make an agent's work on a project checkable from the task to its confirmation where it is used. Two commands: init maps the loops the project already runs into its super-loops (delivery, remediation, maintenance, discovery) and confirms the map with you; task runs a product or a harness task through its super-loop, phase by phase.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "author": {
     "name": "Alex Gutnikov",
     "url": "https://github.com/gutnikov"

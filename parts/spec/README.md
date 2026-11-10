@@ -3,11 +3,11 @@
 The part of agentify that writes the oracle of a delivery task: `/agentify:task` follows it in the oracle phase.
 `S` is this part's folder.
 
-In that phase you are the project's **spec engineer**. You own `specs/`: the requirements as they came, the spec of
+In that phase you are the project's **spec engineer**. You own `agentify/specs/`: the requirements as they came, the spec of
 the system written from them, and the checks that keep the spec whole. You write neither product code nor tests: the
 tests are the test writer's and the code is the worker's, each in a context of its own.
 
-A separate agent or person writes the tests from your spec (`specs/profile.yaml`, `tests.writer`). They are your
+A separate agent or person writes the tests from your spec (`agentify/specs/profile.yaml`, `tests.writer`). They are your
 first reader. Everything you write is judged by one question: **can the test writer derive every test from it
 without guessing?**
 
@@ -43,10 +43,10 @@ without guessing?**
 
 ## Terms
 
-- **Requirement file**: `specs/requirements/<KEY>.yaml`, the requirements from one source (a ticket, or a text),
+- **Requirement file**: `agentify/specs/requirements/<KEY>.yaml`, the requirements from one source (a ticket, or a text),
   each atomic, with a stable id `<KEY>#<n>`, its kind (functional, nfr, constraint) and the questions it raised.
 - **Spec type**: a format from this part's catalog, `spec-types/`. **Layer**: a spec type this project keeps,
-  registered in `specs/layers.yaml` with its path, check, status and the risk it covers. **Spine**: the
+  registered in `agentify/specs/layers.yaml` with its path, check, status and the risk it covers. **Spine**: the
   `event-model` layer.
 - **Example**: an e2e-ready spec in the spine: a named state, inputs, forced outcomes of outside systems, and what
   the person sees or the error.
@@ -64,12 +64,12 @@ without guessing?**
 
 ## The project's policy
 
-`specs/policy.yaml` decides what you may do alone (`autonomy`), what you never invent (`never_invent`), who answers
+`agentify/specs/policy.yaml` decides what you may do alone (`autonomy`), what you never invent (`never_invent`), who answers
 questions and why you may ask (`ask`, reasons R1–R5). Read it before any action; only the project's copy counts. It
 changes only with the user's approval (R5).
 
 Every call to a person is also logged with the harness part's `loops.py hitl`, under the id of
-`loops/policy.yaml` its reason maps to: R1 and R2 → H1, R3 → H4, R4 → H5, R5 → H7.
+`agentify/policy.yaml` its reason maps to: R1 and R2 → H1, R3 → H4, R4 → H5, R5 → H7.
 
 ## Talking to the user
 
@@ -83,24 +83,24 @@ Every call to a person is also logged with the harness part's `loops.py hitl`, u
 
 ## Setup: once per project
 
-Run this when the project has no `specs/policy.yaml`. It sets up the oracle of delivery, so it is a harness task
-(`/agentify:task set up specs`); a delivery task that finds no `specs/` offers it first.
+Run this when the project has no `agentify/specs/policy.yaml`. It sets up the oracle of delivery, so it is a harness task
+(`/agentify:task set up specs`); a delivery task that finds no `agentify/specs/` offers it first.
 
 1. **Find out** what `$S/profile.md` §1 lists, without asking.
-2. **Create** `specs/`: `python3 $S/scripts/specs.py init`.
-3. **Ask what is left** in one form (`$S/profile.md` §2) and fill `specs/profile.yaml`.
-4. **Adjust** `specs/policy.yaml`: who answers (`ask.who`), whether you may approve. Show it to the user and change
+2. **Create** `agentify/specs/`: `python3 $S/scripts/specs.py init`.
+3. **Ask what is left** in one form (`$S/profile.md` §2) and fill `agentify/specs/profile.yaml`.
+4. **Adjust** `agentify/specs/policy.yaml`: who answers (`ask.who`), whether you may approve. Show it to the user and change
    only what they decide (R5).
 5. **Propose the layers** (`$S/profile.md` §3): the spine, the glossary, and 0–3 layers for named risks, with a
    "not now" list. The user picks (R5).
 6. **Set up each picked layer** from its card (`$S/spec-types/<group>/<id>.md`, "Set up"): its path, its `check`
-   command in `specs/layers.yaml`, status `set-up`. The spine is written with the `event-model` part
-   (`$S/../event-model`); its check is `python3 $S/../event-model/scripts/em.py check --strict specs/model/`.
+   command in `agentify/specs/layers.yaml`, status `set-up`. The spine is written with the `event-model` part
+   (`$S/../event-model`); its check is `python3 $S/../event-model/scripts/em.py check --strict agentify/specs/model/`.
 7. **Validate each check**: make 2–3 broken copies of the spec in a scratch folder (a field from nowhere, an error
    without an example, a reference to a missing requirement), run the check on each and on the real spec. It must
    fire on every copy and pass the real one. Then status `validated`.
 8. **Wire it in**: build its `spec-check` loop (loop type `testing/spec-check`, "Building a loop" of the harness part)
-   so the checks run on every change under `specs/`. Status `active` once wired on
+   so the checks run on every change under `agentify/specs/`. Status `active` once wired on
    the main branch. Commit, as far as the policy allows.
 
 ## Taking a requirement
@@ -123,7 +123,7 @@ Run this when the project has no `specs/policy.yaml`. It sets up the oracle of d
    `approved_by`, `approved_at`, status `approved`. Never approve on your own unless `autonomy.approve` allows it.
 7. **Hand off to the test writer**: the change, `python3 $S/scripts/specs.py delta --base <ref>` (the branch's base,
    or the last commit before your change), and the contract, `python3 $S/../event-model/scripts/em.py export
-   specs/model/ --out <file>`. Put the delta in the merge request or the report, with the questions still open:
+   agentify/specs/model/ --out <file>`. Put the delta in the merge request or the report, with the questions still open:
    those tests are `fixme`.
 8. **Hand off to the release's confirmation**: `python3 $S/scripts/specs.py signals --base <ref> --out <file>`, the
    production signals of every requirement the change touches, written where the project's confirmation reads them.
@@ -164,11 +164,11 @@ In the project:
 
 | Path | What |
 |---|---|
-| `specs/policy.yaml`, `specs/profile.yaml` | The policy and the profile |
-| `specs/layers.yaml` | The layers: type, path, check, status, why |
-| `specs/requirements/<KEY>.yaml` | Requirements from one source, their questions and the approval |
-| `specs/model/` | The spine: the event model |
-| `specs/glossary.yaml` and other layers' files | As each layer's card says |
+| `agentify/specs/policy.yaml`, `agentify/specs/profile.yaml` | The policy and the profile |
+| `agentify/specs/layers.yaml` | The layers: type, path, check, status, why |
+| `agentify/specs/requirements/<KEY>.yaml` | Requirements from one source, their questions and the approval |
+| `agentify/specs/model/` | The spine: the event model |
+| `agentify/specs/glossary.yaml` and other layers' files | As each layer's card says |
 
 `specs.py` and `em.py` need Python 3 and PyYAML.
 

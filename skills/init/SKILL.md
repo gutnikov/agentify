@@ -1,6 +1,6 @@
 ---
 name: init
-description: Study this project, recognize the loops it already runs (CI jobs, hooks, linters, deploy checks, specs, agent loops), place each in the project's super-loops (delivery, remediation, maintenance, discovery), and confirm that map and the policy with the user. Writes loops/; builds no loop and changes no product code.
+description: Study this project, recognize the loops it already runs (CI jobs, hooks, linters, deploy checks, specs, agent loops), place each in the project's super-loops (delivery, remediation, maintenance, discovery), and confirm that map and the policy with the user. Writes agentify/; builds no loop and changes no product code.
 disable-model-invocation: true
 argument-hint: "[the part of a monorepo to map]"
 ---
@@ -8,7 +8,7 @@ argument-hint: "[the part of a monorepo to map]"
 # agentify init
 
 Init finds out how work goes through this project now and which loops already check it, and confirms both with the
-user. It ends with the map of the project's super-loops in `loops/profile.yaml` and a policy in `loops/policy.yaml`:
+user. It ends with the map of the project's super-loops in `agentify/profile.yaml` and a policy in `agentify/policy.yaml`:
 what every `/agentify:task` reads. It builds no loop and changes no product code; a gap on the map is filled by a task.
 
 Focus, if the user gave one: $ARGUMENTS
@@ -35,10 +35,10 @@ loops where they already are and places each one:
 | Dependency bots, scheduled audits, end-of-life checks | a trigger | `maintenance/entry` |
 | The error tracker's alerts, bug labels in the tracker | a problem | `remediation/entry` |
 | The issue tracker | an idea or a requirement | `delivery/entry` |
-| `specs/` with its checks, acceptance criteria someone approves | the oracle of delivery | `delivery/oracle` |
+| `agentify/specs/` with its checks, acceptance criteria someone approves | the oracle of delivery | `delivery/oracle` |
 | Prototypes, spikes, decision records | the work of discovery and its answers | `discovery/work`, `discovery/confirmation` |
 | Reviewers, refuters and judges in `.claude/agents/` | an agent step | the place of the loop it serves |
-| `loops/<id>/LOOP.md` from an earlier agentify or `harness` setup | a loop built for this project | its `places` |
+| `agentify/loops/<id>/LOOP.md` from an earlier agentify or `harness` setup | a loop built for this project | its `places` |
 
 A place without a super-loop, such as `release`, means that phase of every product super-loop the project has.
 
@@ -50,21 +50,24 @@ For each loop, find what decides whether it blocks: a required status check in t
 
 ## 1. Find out, without asking
 
-If `loops/policy.yaml` exists, this is a second run: go to "Running init again".
+If `agentify/policy.yaml` exists, this is a second run: go to "Running init again". If it does not, but
+`loops/policy.yaml` does, the project has the layout of the harness plugin or of agentify 0.1, with `loops/` and
+`specs/` at its root: map nothing, say so in one line, and offer the move as the first task,
+`/agentify:task move loops/ and specs/ into agentify/`. Init runs again after it.
 
 Find out everything `$H/profile.md` §1 lists: the stack, the kind, the stages, the tools (each checked with one real
 call), where the work of each super-loop comes from, where a change ends, and what has gone wrong. Then find every
-loop of the table above. Read what a CI job or a hook runs, not only its name. For each loop in `loops/`, compare
+loop of the table above. Read what a CI job or a hook runs, not only its name. For each loop in `agentify/loops/`, compare
 its `status` with its `wiring`: a loop wired in on the main branch but still `validated`, or `active` with wiring
 that no longer runs, has a status that lags; note it for the report. In a monorepo, map the part the focus names; if
 there is no focus and the repository leaves it open, ask which part (H1).
 
 ## 2. Write the map
 
-1. `loops.py init` creates `loops/` with the default policy and an empty profile, and keeps what already exists.
-2. Fill `loops/profile.yaml` (`$H/profile.md` §3):
+1. `loops.py init` creates `agentify/` with the default policy and an empty profile, and keeps what already exists.
+2. Fill `agentify/profile.yaml` (`$H/profile.md` §3):
    - `existing_checks`: every loop you found, as `"<name>: <places> — <where it runs, what it does>"`. A loop in
-     `loops/<id>/` is not repeated here: its `LOOP.md` places it.
+     `agentify/loops/<id>/` is not repeated here: its `LOOP.md` places it.
    - `super_loops`: each super-loop the project has work for, with where its work comes from; `not_here`: the others,
      each with the reason.
    - `ends_at`, and `trace`: the files where the project records its deploys and their results.
@@ -116,16 +119,16 @@ left something open.
 The policy governs every task, at the product level and the harness level alike (`$H/README.md`, "The project's
 policy").
 
-1. Adjust `loops/policy.yaml` to what you found. A protected branch that needs a review means `merge: false`,
+1. Adjust `agentify/policy.yaml` to what you found. A protected branch that needs a review means `merge: false`,
    whatever the default says; a deploy only a person may start stays H2.
 2. Show it as two tables, the autonomy and the reasons to call a person, and ask only about the points where the
    default could go either way, one question at a time (H7).
 
-A `specs/policy.yaml` that already exists stays as it is: the spec part reads it in the oracle phase of delivery.
+A `agentify/specs/policy.yaml` that already exists stays as it is: the spec part reads it in the oracle phase of delivery.
 
 ## 5. Check and commit
 
-Run `loops.py check`. Commit `loops/` if `autonomy.commit` allows it, with the message "agentify init: the map of
+Run `loops.py check`. Commit `agentify/` if `autonomy.commit` allows it, with the message "agentify init: the map of
 the project's loops", and push only as far as `autonomy.push` allows.
 
 ## 6. Report
@@ -144,8 +147,8 @@ Init starts none of them.
 
 ## Running init again
 
-When `loops/policy.yaml` exists, init keeps the policy and the loops. It finds out again and compares what it sees
-with `loops/profile.yaml`: a new CI job, a stand added, a tool lost, a loop retired, a pain fixed. It asks only about
+When `agentify/policy.yaml` exists, init keeps the policy and the loops. It finds out again and compares what it sees
+with `agentify/profile.yaml`: a new CI job, a stand added, a tool lost, a loop retired, a pain fixed. It asks only about
 the differences, in the same form, then checks, commits and reports as above. It does not ask about the policy again;
 a change to the policy is H7.
 

@@ -16,8 +16,10 @@ is used, or a decision. This is how agentify does all its work; `/agentify:init`
 shell variables: write the full path in every command. `loops.py` means
 `python3 ${CLAUDE_PLUGIN_ROOT}/parts/harness/scripts/loops.py`, run from the project's root.
 
-**Before anything.** If the project has no `loops/policy.yaml`, it has no map yet: say so in one line, run init
-first (`${CLAUDE_PLUGIN_ROOT}/skills/init/SKILL.md`), then come back to this task. Then read `loops/policy.yaml`
+**Before anything.** A project with `loops/policy.yaml` but no `agentify/policy.yaml` has the old layout: the
+only task it can run is the move into `agentify/` (`$H/README.md`, "Moving a project into agentify/"), and init
+runs after it. If the project has no `agentify/policy.yaml`, it has no map yet: say so in one line, run init
+first (`${CLAUDE_PLUGIN_ROOT}/skills/init/SKILL.md`), then come back to this task. Then read `agentify/policy.yaml`
 (only the project's copy counts), the map (`loops.py map`), `$H/README.md` (Terms; Talking to the user) and
 `$H/super-loops/README.md`.
 
@@ -26,7 +28,7 @@ first (`${CLAUDE_PLUGIN_ROOT}/skills/init/SKILL.md`), then come back to this tas
 - A text: as given. A ticket by link: through the tracker access this session has (an MCP server, `gh`, `glab`):
   the description, the acceptance criteria, the comments and the linked tickets. Never write to a tracker.
 - No task given: ask what it is (H1).
-- Look for the same task already open: a branch, a pull request, a requirement file in `specs/requirements/`, a
+- Look for the same task already open: a branch, a pull request, a requirement file in `agentify/specs/requirements/`, a
   prototype. If there is one, continue from the phase it reached. A task's state lives in those systems, not in a
   file of agentify's.
 - A chore, such as opening, listing or deleting a prototype agentify made, is done directly with the part that made
@@ -49,6 +51,7 @@ first (`${CLAUDE_PLUGIN_ROOT}/skills/init/SKILL.md`), then come back to this tas
 | "add a lint for our error wrapping", "set up specs for delivery" | harness · delivery |
 | "the release confirmation keeps failing good releases", "why did this bug get through?" | harness · remediation |
 | "we moved to a new model: check the reviewer agent again" | harness · maintenance |
+| "move loops/ and specs/ into agentify/" | harness · maintenance |
 
 The super-loop of a product task comes from the triage table of `$H/super-loops/README.md`; that of a harness task
 from the table of `$H/super-loops/harness-level.md`. A task that needs both levels is two tasks: name both, and run
@@ -74,7 +77,7 @@ for the report. A product task builds no loop on the way: a missing loop is a ha
 
 | Phase at `✗` | Stand-in |
 |---|---|
-| oracle | Delivery without `specs/`: ask (H4) whether to set up specs first, as a harness task (recommended when the change has rules, money, permissions or more than one screen), or to take acceptance criteria the user approves (H5), written by the rules of `$P/spec/README.md`, "Written for the tests". Remediation: a reproduction written for this task. Maintenance: the tests as they are, and the measure taken now |
+| oracle | Delivery without `agentify/specs/`: ask (H4) whether to set up specs first, as a harness task (recommended when the change has rules, money, permissions or more than one screen), or to take acceptance criteria the user approves (H5), written by the rules of `$P/spec/README.md`, "Written for the tests". Remediation: a reproduction written for this task. Maintenance: the tests as they are, and the measure taken now |
 | work | The build, test and lint commands of the profile's `stack`, run before the work counts as done |
 | gate | A verification subagent with a fresh context checks the work against the oracle (`$H/loop-types/meta/verification-subagent.md`), then the pull request's own CI. A person reviews where the policy requires it |
 | release | As far as `autonomy` allows: merge, then deploy. Anything that touches production is H2 unless the policy allows it |
@@ -91,8 +94,8 @@ for the report. A product task builds no loop on the way: a missing loop is a ha
    In a web app the tests take their states from fixtures and touch the UI through Page Objects
    (`$P/fixture-modify/README.md`, `$P/pom-modify/README.md`).
 2. *Work.* A worker, a subagent unless the change is a few lines, gets the requirement file, the contract, the red
-   tests and the loops of the map's `work` to run. It may not change `specs/`, the acceptance tests, `loops/` or the
-   CI config of a gate. In a web app it checks its work in the running app with `$P/app-probing/README.md`.
+   tests and the loops of the map's `work` to run. It writes nothing under `agentify/` and does not change the acceptance
+   tests or the CI config of a gate. In a web app it checks its work in the running app with `$P/app-probing/README.md`.
 3. *Gate.* The acceptance gate in CI: every approved requirement's tests failed before the work and pass after it,
    and the spec and the tests are the approved ones.
 4. *Release*, then *confirmation* with the signals of the change (`specs.py signals --base <ref>`), by the project's
@@ -124,12 +127,12 @@ Follow `$H/README.md`, as the harness engineer it describes:
 - remediation and maintenance: "Maintaining loops: the harness level". Trace an escape to the phase that should have
   caught it (`$H/loop-types/meta/steering-loop.md`) and log it: `loops.py trace escape <place> --item <id> --note "…"`.
 
-Run `loops.py check` before every commit that touches `loops/`.
+Run `loops.py check` before every commit that touches `agentify/`.
 
 ## 4. In every task
 
-- **The level is a permission boundary.** A product task never changes `loops/`, the CI config of a gate, or an
-  approved oracle. When a loop blocks work that looks correct, leave the loop as it is: stop that part, say so, and
+- **The level is a permission boundary.** A product task never changes `agentify/loops/`, `agentify/policy.yaml`,
+  the CI config of a gate, or an approved oracle, and its worker writes nothing under `agentify/`. When a loop blocks work that looks correct, leave the loop as it is: stop that part, say so, and
   propose a harness task. A harness task writes no feature; it touches product code only for instrumentation, as
   `autonomy.write_instrumentation` allows.
 - **The one who works does not grade.** The oracle is fixed before the work, and the worker cannot change it.

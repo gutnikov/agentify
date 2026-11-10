@@ -5,7 +5,7 @@ loops, the agents in them, the guides and the policy. The product's super-loops 
 their trace is its signal.
 
 ```
-harness level   discovery · delivery · remediation · maintenance    the harness engineer, under loops/policy.yaml
+harness level   discovery · delivery · remediation · maintenance    the harness engineer, under agentify/policy.yaml
       ▲ the trace: exits not confirmed, failures by the phase that caught them, corrections, escalations,
       │            false positives and misses of agents, reverts
       ▼ new and fixed loops, agents, guides, policy
@@ -51,10 +51,10 @@ phase that caught them, repeated corrections of one kind, and calls to a person 
 ## "Confirmed" is statistical
 
 That a class of failures stopped recurring shows only over many runs, so this level keeps its signal over time.
-`loops/hitl-log.jsonl` keeps the agent's calls to a person, and `loops/agent-outcomes.jsonl` keeps what happened to
+`agentify/hitl-log.jsonl` keeps the agent's calls to a person, and `agentify/agent-outcomes.jsonl` keeps what happened to
 the agents' verdicts. The exits of the product's super-loops come from where the project already records them: the
 profile's `trace` names those files, such as the deploy history. What no system records, such as a person's own
-correction or an escape traced to its phase, goes into `loops/trace.jsonl` through `loops.py trace`. `loops.py stats`
+correction or an escape traced to its phase, goes into `agentify/trace.jsonl` through `loops.py trace`. `loops.py stats`
 reads all of it.
 
 ## The boundary is a permission boundary

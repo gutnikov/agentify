@@ -4,8 +4,8 @@
 layers: []
 #  - id: model
 #    type: event-model                    # a spec type from the catalog (spec-types/index.yaml)
-#    path: specs/model/
+#    path: agentify/specs/model/
 #    status: active
 #    why: "spine: every behaviour as an example a test can be derived from"
-#    check: "python3 <agentify>/parts/event-model/scripts/em.py check specs/model/"
+#    check: "python3 <agentify>/parts/event-model/scripts/em.py check agentify/specs/model/"
 #    loop: spec-check                     # the harness loop that runs the checks, if any

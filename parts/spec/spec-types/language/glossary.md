@@ -18,7 +18,7 @@ One name for each thing the product talks about, its meaning, and the synonyms t
 
 ## When it fits
 
-Always, from the first requirement, as `specs/glossary.yaml`. Tests, fixtures and Page Objects take their names
+Always, from the first requirement, as `agentify/specs/glossary.yaml`. Tests, fixtures and Page Objects take their names
 from the spec, so a second name for one thing becomes a second fixture for one state.
 
 ## How it is checked
@@ -33,8 +33,8 @@ Stable names for fixtures, Page Object methods and test titles, and the same nam
 
 ## Set up
 
-`specs/glossary.yaml` with `terms:`, each with `term`, `meaning` and `not` (synonyms to avoid), in the product's own
-words from its UI and its tickets. Layer entry: `type: glossary`, `path: specs/glossary.yaml`.
+`agentify/specs/glossary.yaml` with `terms:`, each with `term`, `meaning` and `not` (synonyms to avoid), in the product's own
+words from its UI and its tickets. Layer entry: `type: glossary`, `path: agentify/specs/glossary.yaml`.
 
 ## Evidence
 

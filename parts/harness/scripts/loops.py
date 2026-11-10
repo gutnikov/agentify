@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Loops of a project: the files under loops/ and the checks on them.
+"""Loops of a project: the files under agentify/ and the checks on them.
 
-    python3 loops.py init                        create loops/ with the default policy, an empty profile, an empty log
+    python3 loops.py init                        create agentify/ with the default policy, an empty profile, an empty log
                                                  and the registry
-    python3 loops.py new ID --type TYPE          create loops/ID/ from the template; TYPE is a loop-type id or custom
+    python3 loops.py new ID --type TYPE          create agentify/loops/ID/ from the template; TYPE is a loop-type id or custom
     python3 loops.py validate ID [--runs N]      run the loop on its cases: must-fire fires, must-pass passes,
                                                  the same result every run, within budget_seconds
-    python3 loops.py check                       loops/ is consistent: files, fields, policy ids, agents, parts of
+    python3 loops.py check                       agentify/ is consistent: files, fields, policy ids, agents, parts of
                                                  composite loops, registry
-    python3 loops.py index                       rebuild loops/index.yaml from every LOOP.md
+    python3 loops.py index                       rebuild agentify/loops/index.yaml from every LOOP.md
     python3 loops.py hitl HID --loop ID --question Q --answer A [--checked C]
                                                  log a call to a person under policy id HID
     python3 loops.py stats                       loops by status; calls to a person by policy id, by loop, repeated;
                                                  agents with their agreement and outcomes since their last evaluation
     python3 loops.py agent-new ID --kind KIND [--path P] [--model M] [--threshold T]
-                                                 register an agent of a loop in loops/agents.yaml, create its eval
+                                                 register an agent of a loop in agentify/agents.yaml, create its eval
                                                  folder and, if missing, its definition from the template
     python3 loops.py eval-score ID [--record]    score the agent's eval runs against the expected results: agreement,
                                                  flaky cases, threshold; --record writes report.md and the registry
@@ -27,6 +27,10 @@
     python3 loops.py trace KIND PLACE --note N [--item I]
                                                  log what no system records: an escape, a correction or a revert,
                                                  at the place that should have caught it
+
+    python3 loops.py migrate [--refs]            move a project of the harness plugin or of agentify 0.1 (loops/ and
+                                                 specs/ at the root) into agentify/, and list the references to fix;
+                                                 --refs only lists them
 
 Options for every command: --root DIR (the project; default: the git top level of the current folder).
 
@@ -48,6 +52,7 @@ import sys
 import time
 
 PLUGIN = pathlib.Path(__file__).resolve().parent.parent
+HOME = "agentify"  # the project's folder: the policy, the profile, the logs and the agents; the loops in its agentify/loops/
 STATUSES = ["proposed", "built", "validated", "active", "retired"]
 AGENT_KINDS = {"reviewer", "refuter", "investigator", "judge", "explorer", "worker"}
 AGENT_STATUSES = ["draft", "evaluated", "advisory", "gate", "retired"]
@@ -126,7 +131,7 @@ def places_in(text, loops):
 
 
 def read_profile(loops_dir):
-    """loops/profile.yaml in the subset it is written in: top-level scalars and flow lists, maps one level deep, and
+    """agentify/profile.yaml in the subset it is written in: top-level scalars and flow lists, maps one level deep, and
     block lists of strings. Comments and blank lines are skipped."""
     path = loops_dir / "profile.yaml"
     data, key = {}, None
@@ -200,10 +205,14 @@ def policy_ids(loops_dir):
     return re.findall(r"^\s*- id: (H\d+)\s*$", path.read_text(encoding="utf-8"), re.M) if path.exists() else []
 
 
-def loop_dirs(loops_dir):
-    """Every loop folder; loops/agents/ holds the agents' evals, not a loop."""
-    return sorted(p for p in loops_dir.iterdir() if p.is_dir() and not p.name.startswith(".") and p.name != "agents") \
-        if loops_dir.exists() else []
+def home_of(root):
+    return root / HOME
+
+
+def loop_dirs(home):
+    """Every loop folder, under agentify/loops/."""
+    d = home / "loops"
+    return sorted(p for p in d.iterdir() if p.is_dir() and not p.name.startswith(".")) if d.exists() else []
 
 
 # ---------------------------------------------------------------- agents registry
@@ -224,7 +233,7 @@ def parse_scalar(value):
 
 
 def read_agents(loops_dir):
-    """loops/agents.yaml as a list of dicts, or None when the project has no registry."""
+    """agentify/agents.yaml as a list of dicts, or None when the project has no registry."""
     path = loops_dir / "agents.yaml"
     if not path.exists():
         return None
@@ -281,11 +290,11 @@ def find_agent(agents, agent_id):
     for a in agents or []:
         if a.get("id") == agent_id:
             return a
-    sys.exit("no agent %r in loops/agents.yaml" % agent_id)
+    sys.exit("no agent %r in agentify/agents.yaml" % agent_id)
 
 
 def build_index(loops_dir):
-    out = ["# Generated by loops.py from every loops/<id>/LOOP.md. Do not edit by hand: run `loops.py index`.",
+    out = ["# Generated by loops.py from every agentify/loops/<id>/LOOP.md. Do not edit by hand: run `loops.py index`.",
            "", "loops:"]
     for d in loop_dirs(loops_dir):
         fm = frontmatter((d / "LOOP.md").read_text(encoding="utf-8")) if (d / "LOOP.md").exists() else None
@@ -305,23 +314,24 @@ def build_index(loops_dir):
 # ---------------------------------------------------------------- commands
 
 def cmd_init(a, root):
-    loops = root / "loops"
-    loops.mkdir(exist_ok=True)
+    loops = home_of(root)
+    (loops / "loops").mkdir(parents=True, exist_ok=True)
     made = []
     for name, make in (("policy.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "policy.yaml", p)),
                        ("profile.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "profile.yaml", p)),
                        ("hitl-log.jsonl", lambda p: p.write_text("", encoding="utf-8")),
-                       ("agents.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "agents.yaml", p))):
+                       ("agents.yaml", lambda p: shutil.copy(PLUGIN / "defaults" / "agents.yaml", p)),
+                       (".gitignore", lambda p: p.write_text("# runs of the text-quality part\n.runs/\n", encoding="utf-8"))):
         if not (loops / name).exists():
             make(loops / name)
             made.append(name)
-    (loops / "index.yaml").write_text(build_index(loops), encoding="utf-8")
-    made.append("index.yaml")
-    print("loops/: %s" % ", ".join(made))
+    (loops / "loops" / "index.yaml").write_text(build_index(loops), encoding="utf-8")
+    made.append("loops/index.yaml")
+    print("agentify/: %s" % ", ".join(made))
     if "policy.yaml" in made:
-        print("loops/policy.yaml is the plugin default: adjust it to the project and decide it with the user.")
+        print("agentify/policy.yaml is the plugin default: adjust it to the project and decide it with the user.")
     if "profile.yaml" in made:
-        print("loops/profile.yaml is empty: fill it from what you found and the setup form (profile.md).")
+        print("agentify/profile.yaml is empty: fill it from what you found and the setup form (profile.md).")
 
 
 def catalog_entry(type_id):
@@ -339,14 +349,14 @@ def catalog_entry(type_id):
 
 
 def cmd_new(a, root):
-    loops = root / "loops"
+    loops = home_of(root)
     if not (loops / "policy.yaml").exists():
-        sys.exit("no loops/policy.yaml: run `loops.py init` and set up the project first")
+        sys.exit("no agentify/policy.yaml: run `loops.py init` and set up the project first")
     if not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", a.id):
         sys.exit("loop id must be kebab-case: %s" % a.id)
-    d = loops / a.id
+    d = loops / "loops" / a.id
     if d.exists():
-        sys.exit("loops/%s already exists" % a.id)
+        sys.exit("agentify/loops/%s already exists" % a.id)
     entry = None if a.type == "custom" else catalog_entry(a.type)
     if a.type != "custom" and entry is None:
         sys.exit("unknown loop type %r: see loop-types/index.yaml, or use --type custom" % a.type)
@@ -366,8 +376,8 @@ def cmd_new(a, root):
     run.chmod(0o755)
     (d / "CHANGELOG.md").write_text("# %s — changes\n\n- %s: proposed.\n" % (a.id, datetime.date.today()),
                                     encoding="utf-8")
-    (loops / "index.yaml").write_text(build_index(loops), encoding="utf-8")
-    print("created loops/%s/: LOOP.md, run, cases/must-fire/, cases/must-pass/, CHANGELOG.md" % a.id)
+    (loops / "loops" / "index.yaml").write_text(build_index(loops), encoding="utf-8")
+    print("created agentify/loops/%s/: LOOP.md, run, cases/must-fire/, cases/must-pass/, CHANGELOG.md" % a.id)
     if entry:
         print("loop type: %s — %s" % (entry["path"], entry.get("summary", "")))
         if entry.get("places"):
@@ -386,12 +396,12 @@ def run_once(cmd, case, root, timeout):
 
 
 def cmd_validate(a, root):
-    d = root / "loops" / a.id
+    d = home_of(root) / "loops" / a.id
     fm = frontmatter((d / "LOOP.md").read_text(encoding="utf-8")) if (d / "LOOP.md").exists() else None
     if not fm:
-        sys.exit("loops/%s/LOOP.md is missing or has no frontmatter" % a.id)
+        sys.exit("agentify/loops/%s/LOOP.md is missing or has no frontmatter" % a.id)
     if fm.get("validation") == "manual":
-        print("loops/%s: validation is manual — see its Validation section." % a.id)
+        print("agentify/loops/%s: validation is manual — see its Validation section." % a.id)
         return
     run = fm.get("run") or "./run"
     cmd = [str((d / run).resolve())] if run.startswith("./") else run.split()
@@ -437,10 +447,10 @@ def cmd_validate(a, root):
 
 
 def cmd_check(a, root):
-    loops = root / "loops"
+    loops = home_of(root)
     errors = []
     if not (loops / "policy.yaml").exists():
-        sys.exit("no loops/policy.yaml: the project is not set up (loops.py init)")
+        sys.exit("no agentify/policy.yaml: the project is not set up (loops.py init)")
     ids = set(policy_ids(loops))
     if not ids:
         errors.append("policy.yaml: no policy ids (- id: H1 …)")
@@ -453,7 +463,7 @@ def cmd_check(a, root):
             parts_of[d.name] = fm.get("parts") or []
             agents_of[d.name] = fm.get("agents") or []
     for d in loop_dirs(loops):
-        rel = "loops/%s" % d.name
+        rel = "agentify/loops/%s" % d.name
         if not (d / "LOOP.md").exists():
             errors.append("%s: no LOOP.md" % rel)
             continue
@@ -473,7 +483,7 @@ def cmd_check(a, root):
             errors.append("%s/LOOP.md: title is still the template placeholder" % rel)
         for h in fm.get("hitl") or []:
             if h not in ids:
-                errors.append("%s/LOOP.md: hitl %r is not in loops/policy.yaml" % (rel, h))
+                errors.append("%s/LOOP.md: hitl %r is not in agentify/policy.yaml" % (rel, h))
         for agent in fm.get("agents") or []:
             if not (root / agent).exists():
                 errors.append("%s/LOOP.md: agent %s does not exist" % (rel, agent))
@@ -503,7 +513,7 @@ def cmd_check(a, root):
             if part == d.name:
                 errors.append("%s/LOOP.md: lists itself in parts" % rel)
             elif part not in status_of:
-                errors.append("%s/LOOP.md: part %r is not a loop under loops/" % (rel, part))
+                errors.append("%s/LOOP.md: part %r is not a loop under agentify/loops/" % (rel, part))
             elif fm.get("status") in ("validated", "active") and \
                     rank.get(status_of[part], -1) < rank[fm.get("status")]:
                 errors.append("%s: status %s but its part %s is %s" % (rel, fm.get("status"), part,
@@ -518,9 +528,9 @@ def cmd_check(a, root):
                 seen.add(p)
                 stack += parts_of.get(p, [])
     errors += check_agents(root, loops, status_of, agents_of)
-    index = loops / "index.yaml"
+    index = loops / "loops" / "index.yaml"
     if not index.exists() or index.read_text(encoding="utf-8") != build_index(loops):
-        errors.append("loops/index.yaml is out of date: run loops.py index")
+        errors.append("agentify/loops/index.yaml is out of date: run loops.py index")
     agents = read_agents(loops) or []
     print("\n".join(errors) if errors else "OK: %d loops, %d agents" % (len(loop_dirs(loops)), len(agents)))
     sys.exit(1 if errors else 0)
@@ -533,13 +543,13 @@ def check_agents(root, loops, status_of, agents_of):
     used = {p for paths in agents_of.values() for p in paths}
     if agents is None:
         if used:
-            errors.append("loops use agents (%s) but loops/agents.yaml is missing: register them with "
+            errors.append("loops use agents (%s) but agentify/agents.yaml is missing: register them with "
                           "loops.py agent-new" % ", ".join(sorted(used)))
         return errors
     by_path, ids = {}, set()
     for a in agents:
         aid = a.get("id", "?")
-        where = "loops/agents.yaml [%s]" % aid
+        where = "agentify/agents.yaml [%s]" % aid
         if aid in ids:
             errors.append("%s: id used twice" % where)
         ids.add(aid)
@@ -584,17 +594,17 @@ def check_agents(root, loops, status_of, agents_of):
         for path in paths:
             a = by_path.get(path)
             if a is None:
-                errors.append("loops/%s/LOOP.md: agent %s is not registered in loops/agents.yaml" % (loop, path))
+                errors.append("agentify/loops/%s/LOOP.md: agent %s is not registered in agentify/agents.yaml" % (loop, path))
             elif a.get("status") == "draft" and status_of.get(loop) in ("validated", "active"):
-                errors.append("loops/%s: status %s, but its agent %s has no evaluation yet (draft)"
+                errors.append("agentify/loops/%s: status %s, but its agent %s has no evaluation yet (draft)"
                               % (loop, status_of.get(loop), a.get("id")))
     return errors
 
 
 def cmd_agent_new(a, root):
-    loops = root / "loops"
+    loops = home_of(root)
     if not (loops / "policy.yaml").exists():
-        sys.exit("no loops/policy.yaml: run `loops.py init` and set up the project first")
+        sys.exit("no agentify/policy.yaml: run `loops.py init` and set up the project first")
     if not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", a.id):
         sys.exit("agent id must be kebab-case: %s" % a.id)
     if a.kind not in AGENT_KINDS and not a.kind.startswith("other:"):
@@ -615,14 +625,14 @@ def cmd_agent_new(a, root):
     d = loops / "agents" / a.id
     (d / "evals").mkdir(parents=True, exist_ok=True)
     (d / "results").mkdir(exist_ok=True)
-    made.append("loops/agents/%s/evals/, results/" % a.id)
+    made.append("agentify/agents/%s/evals/, results/" % a.id)
     entry = {"id": a.id, "kind": a.kind, "path": path, "model": a.model or "inherit", "status": "draft",
              "blocks": False}
     if a.threshold is not None:
         entry["threshold"] = a.threshold
     agents.append(entry)
     write_agents(loops, agents)
-    made.append("loops/agents.yaml entry (draft)")
+    made.append("agentify/agents.yaml entry (draft)")
     print("created: %s" % "; ".join(made))
     print("next: write the definition, add eval cases (agent-formats.md, Evals), run the agent %d times on every "
           "case, then loops.py eval-score %s --record" % (MIN_RUNS, a.id))
@@ -648,13 +658,13 @@ def case_matches(expected, got):
 
 
 def cmd_eval_score(a, root):
-    loops = root / "loops"
+    loops = home_of(root)
     agents = read_agents(loops)
     agent = find_agent(agents, a.id)
     d = loops / "agents" / a.id
     cases = sorted(p for p in (d / "evals").iterdir() if p.is_dir()) if (d / "evals").exists() else []
     if not cases:
-        sys.exit("loops/agents/%s/evals/ has no cases" % a.id)
+        sys.exit("agentify/agents/%s/evals/ has no cases" % a.id)
     problems, expected = [], {}
     for c in cases:
         if not (c / "expected.json").exists():
@@ -663,7 +673,7 @@ def cmd_eval_score(a, root):
             expected[c.name] = json.loads((c / "expected.json").read_text(encoding="utf-8"))
     run_files = sorted((d / "results").glob("*.jsonl")) if (d / "results").exists() else []
     if not run_files:
-        sys.exit("loops/agents/%s/results/ has no runs: run the agent on every case, one .jsonl file per run" % a.id)
+        sys.exit("agentify/agents/%s/results/ has no runs: run the agent on every case, one .jsonl file per run" % a.id)
     runs = []
     for f in run_files:
         lines = [json.loads(l) for l in f.read_text(encoding="utf-8").splitlines() if l.strip()]
@@ -715,13 +725,13 @@ def cmd_eval_score(a, root):
         if agent.get("status") == "draft":
             agent["status"] = "evaluated"
         write_agents(loops, agents)
-        print("recorded in loops/agents.yaml and loops/agents/%s/report.md" % a.id)
+        print("recorded in agentify/agents.yaml and agentify/agents/%s/report.md" % a.id)
     below = isinstance(threshold, (int, float)) and agreement < threshold
     sys.exit(1 if problems or below else 0)
 
 
 def cmd_outcome(a, root):
-    loops = root / "loops"
+    loops = home_of(root)
     find_agent(read_agents(loops), a.id)
     if a.outcome not in OUTCOMES:
         sys.exit("outcome must be one of %s" % ", ".join(sorted(OUTCOMES)))
@@ -733,14 +743,14 @@ def cmd_outcome(a, root):
 
 
 def cmd_index(a, root):
-    (root / "loops" / "index.yaml").write_text(build_index(root / "loops"), encoding="utf-8")
-    print("wrote loops/index.yaml (%d loops)" % len(loop_dirs(root / "loops")))
+    (home_of(root) / "loops" / "index.yaml").write_text(build_index(home_of(root)), encoding="utf-8")
+    print("wrote agentify/loops/index.yaml (%d loops)" % len(loop_dirs(home_of(root))))
 
 
 def cmd_hitl(a, root):
-    loops = root / "loops"
+    loops = home_of(root)
     if a.policy_id not in policy_ids(loops):
-        sys.exit("%s is not in loops/policy.yaml: calling a person is not allowed for it" % a.policy_id)
+        sys.exit("%s is not in agentify/policy.yaml: calling a person is not allowed for it" % a.policy_id)
     entry = {"at": datetime.datetime.now().isoformat(timespec="seconds"), "policy": a.policy_id, "loop": a.loop,
              "checked": a.checked, "question": a.question, "answer": a.answer}
     with open(loops / "hitl-log.jsonl", "a", encoding="utf-8") as f:
@@ -749,7 +759,7 @@ def cmd_hitl(a, root):
 
 
 def cmd_stats(a, root):
-    loops = root / "loops"
+    loops = home_of(root)
     statuses = collections.Counter()
     for d in loop_dirs(loops):
         fm = frontmatter((d / "LOOP.md").read_text(encoding="utf-8")) if (d / "LOOP.md").exists() else None
@@ -784,9 +794,9 @@ def cmd_stats(a, root):
 
 
 def cmd_map(a, root):
-    loops_dir = root / "loops"
+    loops_dir = home_of(root)
     if not (loops_dir / "profile.yaml").exists():
-        sys.exit("no loops/profile.yaml: run `loops.py init` and fill the profile first")
+        sys.exit("no agentify/profile.yaml: run `loops.py init` and fill the profile first")
     prof, cards = read_profile(loops_dir), super_loops()
     built, checks = loops_at(loops_dir), named_at(prof.get("existing_checks"), cards)
     pains = named_at(prof.get("pains"), cards)
@@ -830,7 +840,7 @@ def cmd_map(a, root):
 
 
 def cmd_candidates(a, root):
-    loops_dir, cards = root / "loops", super_loops()
+    loops_dir, cards = home_of(root), super_loops()
     problem = place_problem(a.place, cards)
     if problem:
         sys.exit("place %r %s" % (a.place, problem))
@@ -855,7 +865,7 @@ def cmd_candidates(a, root):
 
 
 def cmd_trace(a, root):
-    loops = root / "loops"
+    loops = home_of(root)
     if a.kind not in TRACE_KINDS:
         sys.exit("kind must be one of %s" % ", ".join(sorted(TRACE_KINDS)))
     problem = place_problem(a.place, super_loops())
@@ -866,6 +876,82 @@ def cmd_trace(a, root):
     with open(loops / "trace.jsonl", "a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     print("logged %s at %s" % (a.kind, a.place))
+
+
+OLD_FILES = ["policy.yaml", "profile.yaml", "hitl-log.jsonl", "trace.jsonl", "agent-outcomes.jsonl", "agents.yaml"]
+
+
+def git_move(root, src, dst):
+    """git mv when git tracks src, a plain move when it does not."""
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    rel = lambda p: str(p.relative_to(root))
+    tracked = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", rel(src)],
+                             capture_output=True).returncode == 0
+    if tracked:
+        subprocess.run(["git", "-C", str(root), "mv", rel(src), rel(dst)], check=True)
+    else:
+        shutil.move(str(src), str(dst))
+
+
+OLD_PATH = re.compile(r"(?<![\w.-])(?<!agentify/)(?:loops|specs)/|[\"'](?:loops|specs)[\"']")
+
+
+def old_path_refs(root):
+    """Every line of the tracked files that names loops/ or specs/ outside agentify/: a path such as loops/x/run or
+    $REPO/specs/, or a path built from its parts, such as repo / "specs"."""
+    files = subprocess.run(["git", "-C", str(root), "ls-files", "-z"], capture_output=True, text=True).stdout
+    refs = []
+    for rel in filter(None, files.split("\0")):
+        try:
+            lines = (root / rel).read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeDecodeError):
+            continue
+        refs += ["%s:%d: %s" % (rel, n, line.strip()) for n, line in enumerate(lines, 1) if OLD_PATH.search(line)]
+    return refs
+
+
+def print_refs(root):
+    refs = old_path_refs(root)
+    print("references to the old paths, to fix (%d):" % len(refs))
+    for r in refs:
+        print("  " + r[:200])
+
+
+def cmd_migrate(a, root):
+    if a.refs:
+        return print_refs(root)
+    old, home = root / "loops", home_of(root)
+    if (home / "policy.yaml").exists():
+        sys.exit("agentify/policy.yaml exists: the project is in agentify/ already")
+    if not (old / "policy.yaml").exists():
+        sys.exit("no loops/policy.yaml: nothing to move; a new project starts with loops.py init")
+    moved = []
+    for name in OLD_FILES:
+        if (old / name).exists():
+            git_move(root, old / name, home / name)
+            moved.append(name)
+    if (old / "agents").is_dir():
+        git_move(root, old / "agents", home / "agents")
+        moved.append("agents/")
+    for d in sorted(p for p in old.iterdir() if p.is_dir() and not p.name.startswith(".")):
+        git_move(root, d, home / "loops" / d.name)
+        moved.append("loops/%s/" % d.name)
+    if (old / "index.yaml").exists():
+        git_move(root, old / "index.yaml", home / "loops" / "index.yaml")
+    if (root / "specs").is_dir():
+        git_move(root, root / "specs", home / "specs")
+        moved.append("specs/")
+    if old.exists() and not any(old.iterdir()):
+        old.rmdir()
+    if not (home / ".gitignore").exists():
+        (home / ".gitignore").write_text("# runs of the text-quality part\n.runs/\n", encoding="utf-8")
+    (home / "loops" / "index.yaml").write_text(build_index(home), encoding="utf-8")
+    print("moved into agentify/: %s" % ", ".join(moved))
+    if old.exists():
+        print("left in loops/: %s" % ", ".join(sorted(p.name for p in old.iterdir())))
+    if (root / ".text-quality-runs").exists():
+        print(".text-quality-runs/ stays where it is: new runs go to agentify/.runs/")
+    print_refs(root)
 
 
 def trace_records(root, prof):
@@ -967,6 +1053,9 @@ def main():
     p.add_argument("--note", default="")
     p.set_defaults(fn=cmd_outcome)
     sub.add_parser("map").set_defaults(fn=cmd_map)
+    p = sub.add_parser("migrate")
+    p.add_argument("--refs", action="store_true", help="only list the references to the old paths")
+    p.set_defaults(fn=cmd_migrate)
     p = sub.add_parser("candidates")
     p.add_argument("place")
     p.set_defaults(fn=cmd_candidates)

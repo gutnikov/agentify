@@ -1,5 +1,5 @@
 ---
-id: <loop-id>                   # the folder name under loops/
+id: <loop-id>                   # the folder name under agentify/loops/
 title: "<what the loop guards, in a few words>"
 type: <loop-type-id>            # from the plugin's loop-types/index.yaml, or custom
 status: proposed                # proposed | built | validated | active | retired
@@ -9,8 +9,8 @@ run: ./run                      # one command; exit 0 = passes, non-zero = fires
 budget_seconds: 10              # one run must finish within this time
 validation: cases               # cases (cases/must-fire, cases/must-pass) or manual (say why below)
 agents: []                      # agents whose execution is a step of this loop, e.g. .claude/agents/reviewer.md
-parts: []                       # composite loop only: ids of the loops under loops/ it is made of
-hitl: []                        # ids from loops/policy.yaml this loop may call a person under
+parts: []                       # composite loop only: ids of the loops under agentify/loops/ it is made of
+hitl: []                        # ids from agentify/policy.yaml this loop may call a person under
 wiring: []                      # where the loop is hooked in, e.g. .claude/settings.json hooks.PostToolUse
 ---
 

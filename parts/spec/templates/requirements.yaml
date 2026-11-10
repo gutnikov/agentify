@@ -20,6 +20,6 @@ requirements:
 
 questions: []
 #  - id: <KEY>?1
-#    reason: R1                # from specs/policy.yaml ask.reasons
+#    reason: R1                # from agentify/specs/policy.yaml ask.reasons
 #    text: ""
 #    answer: ""

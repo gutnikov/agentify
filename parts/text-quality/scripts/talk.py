@@ -31,8 +31,8 @@ SKILL = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 
 def runs_dir():
-    """Папка прогонов: TEXT_QUALITY_RUNS_DIR (или прежняя SPEC_RUNS_DIR), иначе .text-quality-runs/ в корне
-    git-репозитория текущей папки, иначе в ней самой."""
+    """Папка прогонов: TEXT_QUALITY_RUNS_DIR (или прежняя SPEC_RUNS_DIR), иначе agentify/.runs/ в корне
+    git-репозитория текущей папки, иначе в текущей папке."""
     runs = os.environ.get('TEXT_QUALITY_RUNS_DIR') or os.environ.get('SPEC_RUNS_DIR')
     if runs:
         return os.path.abspath(runs)
@@ -41,7 +41,7 @@ def runs_dir():
                              check=True).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
         top = ''
-    return os.path.join(top or os.getcwd(), '.text-quality-runs')
+    return os.path.join(top or os.getcwd(), 'agentify', '.runs')
 
 
 RUNS = runs_dir()

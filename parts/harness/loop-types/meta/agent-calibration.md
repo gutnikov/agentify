@@ -33,9 +33,9 @@ created (draft) ──► eval cases with known answers ──► ≥3 runs ─�
 
 ## Set up
 
-- **A registry.** `loops/agents.yaml` lists each agent with its kind, definition, model, status (`draft`,
+- **A registry.** `agentify/agents.yaml` lists each agent with its kind, definition, model, status (`draft`,
   `evaluated`, `advisory`, `gate`, `retired`), threshold and last evaluation; `loops.py agent-new` adds one.
-- **Eval cases** in `loops/agents/<id>/evals/`, each with the agent's input and `expected.json`, in the formats of
+- **Eval cases** in `agentify/agents/<id>/evals/`, each with the agent's input and `expected.json`, in the formats of
   the harness's `agent-formats.md`. For a reviewer, a guard or a refuter: broken copies that must fire and clean
   ones that must pass, usually made from the loop's own must-fire and must-pass cases. For a judge: results a
   person graded pass or fail, with a reason, under H5.

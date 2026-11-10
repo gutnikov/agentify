@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""spec: a project's specs/ folder — requirements, the chosen spec layers, traceability and the delta for tests.
+"""spec: a project's agentify/specs/ folder — requirements, the chosen spec layers, traceability and the delta for tests.
 
-  specs.py init      [--root .]                       create specs/ from the defaults
-  specs.py new-req   <key> [--source URL] [--root .]  create specs/requirements/<key>.yaml
+  specs.py init      [--root .]                       create agentify/specs/ from the defaults
+  specs.py new-req   <key> [--source URL] [--root .]  create agentify/specs/requirements/<key>.yaml
   specs.py check     [--root .]                       policy, profile, layers, requirements, requirement <-> spec trace
   specs.py trace     [--root .] [--req KEY]           which spec elements cover each requirement, and the reverse
   specs.py delta     [--root .] [--base REF]          spec elements added, changed and removed since REF: the test
@@ -47,16 +47,24 @@ def read_yaml(path):
         return yaml.safe_load(fh) or {}
 
 
+SPECS = pathlib.Path("agentify") / "specs"  # the project's spec, relative to its root
+
+
 def specs_dir(root):
-    d = pathlib.Path(root) / "specs"
+    d = pathlib.Path(root) / SPECS
     if not d.is_dir():
-        die(f"no specs/ in {root}: run `specs.py init` first")
+        die(f"no agentify/specs/ in {root}: run `specs.py init` first")
     return d
+
+
+def root_of(sd):
+    """The project's root, which the paths in layers.yaml are relative to."""
+    return sd.parent.parent
 
 
 # ----------------------------------------------------------------------------------------------- init, new-req
 def cmd_init(args):
-    d = pathlib.Path(args.root) / "specs"
+    d = pathlib.Path(args.root) / SPECS
     if (d / "policy.yaml").exists():
         die(f"{d} is already set up")
     (d / "requirements").mkdir(parents=True, exist_ok=True)
@@ -98,7 +106,7 @@ def model_files(sd, layers):
     paths = []
     for layer in layers:
         if layer.get("type") in MODEL_TYPES and layer.get("status") != "retired":
-            base = pathlib.Path(sd.parent) / layer.get("path", "specs/model/")
+            base = pathlib.Path(root_of(sd)) / layer.get("path", "agentify/specs/model/")
             if base.is_dir():
                 paths += sorted(p for p in base.rglob("*.y*ml"))
             elif base.is_file():
@@ -164,7 +172,7 @@ def cmd_check(args):
 
     for name in ("policy.yaml", "profile.yaml", "layers.yaml"):
         if not (sd / name).exists():
-            E(f"specs/{name}: missing")
+            E(f"agentify/specs/{name}: missing")
     policy = read_yaml(sd / "policy.yaml") if (sd / "policy.yaml").exists() else {}
     profile = read_yaml(sd / "profile.yaml") if (sd / "profile.yaml").exists() else {}
     layers = (read_yaml(sd / "layers.yaml") if (sd / "layers.yaml").exists() else {}).get("layers") or []
@@ -190,7 +198,7 @@ def cmd_check(args):
         if layer.get("status") in ("validated", "active") and not layer.get("check"):
             E(f"layers.yaml [{lid}]: {layer.get('status')} but no 'check' command")
         path = layer.get("path")
-        if path and not (sd.parent / path).exists() and layer.get("status") != "proposed":
+        if path and not (root_of(sd) / path).exists() and layer.get("status") != "proposed":
             E(f"layers.yaml [{lid}]: path {path} does not exist")
         if layer.get("type") == "event-model" and layer.get("status") != "retired":
             spines += 1
@@ -201,7 +209,7 @@ def cmd_check(args):
 
     reqs, files = load_requirements(sd)
     for p, doc in files.items():
-        rel = p.relative_to(sd.parent)
+        rel = p.relative_to(root_of(sd))
         if doc.get("key") != p.stem:
             E(f"{rel}: key '{doc.get('key')}' does not match the file name")
         if not doc.get("source"):
@@ -245,7 +253,7 @@ def cmd_check(args):
     # trace
     referenced, untraced = {}, []
     for p in model_files(sd, layers):
-        rel = p.relative_to(sd.parent)
+        rel = p.relative_to(root_of(sd))
         doc = read_yaml(p)
         for eid, kind, _content, refs in model_elements(doc):
             for ref in refs:
@@ -268,7 +276,7 @@ def cmd_check(args):
     for layer in layers:
         if layer.get("type") != "glossary" or layer.get("status") == "retired":
             continue
-        gpath = sd.parent / layer.get("path", "specs/glossary.yaml")
+        gpath = root_of(sd) / layer.get("path", "agentify/specs/glossary.yaml")
         if not gpath.is_file():
             continue
         avoid = {}
@@ -280,9 +288,9 @@ def cmd_check(args):
                 words = {w.lower() for w in re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+", name)}
                 for bad, term in avoid.items():
                     if bad in words or bad == name.lower():
-                        W(f"{mp.relative_to(sd.parent)}: {where} '{name}' uses '{bad}'; the glossary says '{term}'")
+                        W(f"{mp.relative_to(root_of(sd))}: {where} '{name}' uses '{bad}'; the glossary says '{term}'")
 
-    print(f"specs/: {len(layers)} layer(s), {len(files)} requirement file(s), {len(reqs)} requirement(s)\n")
+    print(f"agentify/specs/: {len(layers)} layer(s), {len(files)} requirement file(s), {len(reqs)} requirement(s)\n")
     print(f"ERRORS ({len(errors)})")
     for e in errors:
         print("  ", e)
@@ -338,7 +346,7 @@ def git(root, *a):
 
 def delta_since(sd, base):
     """What changed in the spec since a git ref: (added, changed, removed, new, old, reqs, req_added, req_changed)."""
-    root = sd.parent
+    root = root_of(sd)
     top = git(root, "rev-parse", "--show-toplevel")
     if top.returncode:
         die("delta needs a git repository")
@@ -357,7 +365,7 @@ def delta_since(sd, base):
 
     now_files = model_files(sd, layers)
     base_list = git(root, "ls-tree", "-r", "--name-only", base).stdout.split()
-    model_dirs = [(sd.parent / lay.get("path", "")).resolve() for lay in layers if lay.get("type") in MODEL_TYPES]
+    model_dirs = [(root_of(sd) / lay.get("path", "")).resolve() for lay in layers if lay.get("type") in MODEL_TYPES]
     gone = [top / f for f in base_list if f.endswith((".yaml", ".yml"))
             and any(str((top / f).resolve()).startswith(str(d)) for d in model_dirs)
             and not (top / f).exists()]

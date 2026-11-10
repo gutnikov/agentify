@@ -57,12 +57,28 @@ The repository is private, so the machine needs git access to it (`gh auth login
 
 ## What it keeps in a project
 
-| Path | What | |
-|---|---|---|
-| `loops/` | The policy, the profile with the map, the registry, the loops, their agents, the calls to a person and the trace | committed |
-| `specs/` | The requirements and the spec, once specs are set up | committed |
-| `prototypes/` | Prototypes, in the package that has the design system | committed |
-| `.text-quality-runs/` | The runs of the text-quality part | add to `.gitignore` |
+Everything agentify keeps is in one folder, `agentify/`, so that one path is what the agent doing product work may
+not write, and what a CODEOWNERS entry or a branch rule protects:
+
+```
+agentify/policy.yaml                 init: what agentify may do alone, and when it calls a person
+agentify/profile.yaml                init: the project's facts and the map of its super-loops
+agentify/hitl-log.jsonl              init: every call to a person, with its answer
+agentify/agents.yaml                 init: the registry of the agents that are steps of loops
+agentify/.gitignore                  init: keeps .runs/ out of git
+agentify/loops/index.yaml            init: the registry of loops
+agentify/loops/<id>/                 task: a loop's LOOP.md, run, CHANGELOG.md, cases/must-fire/, cases/must-pass/
+agentify/agents/<id>/                task: an agent's evals/, results/, report.md
+agentify/trace.jsonl                 task: escapes, corrections and reverts no system of the project records
+agentify/agent-outcomes.jsonl        task: what happened to the agents' verdicts
+agentify/specs/                      task: policy, profile, layers, glossary, requirements/, model/, once specs are set up
+agentify/.runs/                      task: runs of the text-quality part, not committed
+```
+
+Outside it are only what tools read from fixed places: a loop's wiring (a job in `.github/workflows/`, a hook in
+`.claude/settings.json`), an agent's definition in `.claude/agents/<id>.md`, and prototypes in
+`<host>/prototypes/`, the package that has the design system. A task also writes the product's own files, such as
+code, acceptance tests, fixtures and Page Objects, where the project keeps them.
 
 The scripts need Python 3; the spec's also need PyYAML. The text-quality part needs the `claude` CLI and network
 access.
@@ -72,4 +88,5 @@ access.
 agentify joins the plugins of [`gutnikov/my-claude-plugins`](https://github.com/gutnikov/my-claude-plugins) at
 `0e3c71d`: harness 0.5.0 became `parts/harness`; spec 0.3.1 became `parts/spec` and `parts/event-model`; text-quality,
 app-probing, playwright (`fixture-modify`, `pom-modify`) and ui-prototypes became parts of the same names. bb is left
-out. A project that harness and spec set up (`loops/`, `specs/`) needs no migration: init recognizes it.
+out. A project that harness, spec or agentify 0.1 set up keeps `loops/` and `specs/` at its root: its first task is
+`/agentify:task move loops/ and specs/ into agentify/`, which runs `loops.py migrate`.
