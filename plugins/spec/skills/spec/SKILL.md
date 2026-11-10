@@ -94,7 +94,7 @@ skill loads: "Base directory for this skill").
    "not now" list. The user picks (R5).
 6. **Set up each picked layer** from its card (`$S/spec-types/<group>/<id>.md`, "Set up"): its path, its `check`
    command in `specs/layers.yaml`, status `set-up`. The spine is written with the `event-model` skill of this
-   plugin; its check is `python3 $S/../event-model/scripts/em.py check specs/model/`.
+   plugin; its check is `python3 $S/../event-model/scripts/em.py check --strict specs/model/`.
 7. **Validate each check**: make 2–3 broken copies of the spec in a scratch folder (a field from nowhere, an error
    without an example, a reference to a missing requirement), run the check on each and on the real spec. It must
    fire on every copy and pass the real one. Then status `validated`.

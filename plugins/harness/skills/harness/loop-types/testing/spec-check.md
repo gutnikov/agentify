@@ -13,7 +13,7 @@ places: [delivery/oracle]
 ## Loop
 
 The agent changes the spec under `specs/` and runs `specs.py check` and the check of each spec layer, such as
-`em.py check` for the event model. A field that comes from nowhere, an error with no example, a decision-table row
+`em.py check --strict` for the event model. A field that comes from nowhere, an error with no example, a decision-table row
 no example checks, or a requirement no spec element covers comes back as a message that names the element and what
 is missing. The test writer gets the spec only after the check is clean, with `specs.py delta` as the list of what
 to add, change and delete in the tests.

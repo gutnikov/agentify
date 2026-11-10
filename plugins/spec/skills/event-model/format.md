@@ -86,7 +86,8 @@ obligations** an exhaustive e2e set has to cover, and which e2e-ready example pi
 | each field of a read model shown on a screen | an example whose `see` checks it |
 
 An obligation without an example is a gap in the spec, not in the tests: a test writer cannot know the expected
-result. `em.py check --all` lists every one.
+result. `em.py check --all` lists every one; `em.py check --strict` fails while any is not pinned down, which makes
+it the check of a spec that tests are derived from.
 
 The short domain form is still accepted, for models that are not ready for tests yet; the checker counts it as
 not e2e-ready:

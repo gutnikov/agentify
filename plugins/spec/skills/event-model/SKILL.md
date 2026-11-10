@@ -115,6 +115,6 @@ An open question in the model is a test the writer marks `fixme`, not a test the
 
 ## Done when
 
-- `em.py check` reports zero errors;
+- `em.py check --strict` reports zero errors and no test obligation left without an example;
 - every warning is fixed or recorded as a question, and the questions went to the person in one batch;
 - every test obligation is pinned down by an e2e-ready example, or has a question that says why not.

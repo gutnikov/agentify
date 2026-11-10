@@ -519,6 +519,9 @@ def cmd_check(m, ix, args):
     print(f"\nOPEN QUESTIONS ({len(questions)})")
     for sid, q in questions:
         print(f"   [{sid}] {q}")
+    if args.strict and unmet:
+        print(f"\nSTRICT: {len(unmet)} test obligation(s) not pinned down by an e2e-ready example")
+        return 1
     return 1 if errors else 0
 
 
@@ -593,6 +596,8 @@ def main():
     p = sub.add_parser("check")
     p.add_argument("model", nargs="+")
     p.add_argument("--all", action="store_true", help="list every unmet test obligation")
+    p.add_argument("--strict", action="store_true",
+                   help="fail when a test obligation is not pinned down: the check of a spec that tests are derived from")
     p = sub.add_parser("export")
     p.add_argument("model", nargs="+")
     p.add_argument("--out", help="write the JSON here instead of stdout")
