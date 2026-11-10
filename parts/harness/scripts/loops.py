@@ -239,7 +239,7 @@ def loop_dirs(home):
 def parse_scalar(value):
     value = value.strip()
     if value.startswith('"'):
-        return json.loads(value)
+        return json.JSONDecoder().raw_decode(value)[0]  # a comment may follow the string
     value = value.split(" #")[0].strip()
     if value.startswith("["):
         items = [v.strip() for v in value[1:value.rindex("]")].split(",") if v.strip()]

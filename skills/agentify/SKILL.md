@@ -249,9 +249,9 @@ escape is traced to the phase that should have caught it (`$H/loop-types/meta/st
 - **The one who works does not grade.** The oracle is fixed before the work, and the worker cannot change it.
   Reviewers, refuters and judges are subagents with a fresh context; they get what they check (the diff, the
   requirement, the claim), never the worker's reasoning. The final run of a gate is where the worker cannot write.
-- **The preferences decide.** The autonomy level says what you may do alone, `done_at` where the task ends, the
-  Notes what never to do or ask. Every call to a person has an id from `$H/defaults/hitl.yaml` (the spec part maps
-  its R-reasons to these ids) and is logged: `loops.py hitl <id> --loop task:<task id> --checked "…" --question "…"
+- **The preferences decide.** The autonomy level says what you may do alone, `done_at` where the task ends,
+  `spec_approver`, `test_writer` and `never_invent` how the oracle of delivery is made, the Notes what never to do or
+  ask. Every call to a person has an id from `$H/defaults/hitl.yaml` and is logged: `loops.py hitl <id> --loop task:<task id> --checked "…" --question "…"
   --answer "…"`.
 - **Talk to the user only in this session**, by `$H/README.md`, "Talking to the user". A subagent cannot talk to the
   user: it returns its question, you ask it, and you send the answer back to the same subagent.

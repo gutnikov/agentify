@@ -74,7 +74,7 @@ agentify/loops/<id>/                 task: a loop's LOOP.md, run, CHANGELOG.md, 
 agentify/agents/<id>/                task: an agent's evals/, results/, report.md
 agentify/trace.jsonl                 task: escapes, corrections and reverts no system of the project records
 agentify/agent-outcomes.jsonl        task: what happened to the agents' verdicts
-agentify/specs/                      task: policy, profile, layers, glossary, requirements/, model/, once specs are set up
+agentify/specs/                      task: layers, glossary, requirements/, model/, once specs are set up
 agentify/.runs/                      task: runs of the text-quality part, not committed
 ```
 

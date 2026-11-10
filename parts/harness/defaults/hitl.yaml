@@ -43,8 +43,9 @@ hitl:
   # How every call is made.
   rules:
     - >-
-      One question per message. The one exception is the form of the first /agentify: up to 4 questions in
-      one call. Say what was already checked to answer it without the user.
+      One question per message. Two exceptions: the form of the first /agentify, up to 4 questions in one call;
+      and the open questions of one requirement file, asked in one batch (the spec part). Say what was already
+      checked to answer it without the user.
     - 2–4 options, the recommended one first, plus a free answer.
     - Show, don't describe: a schema of the loop, a table, a screenshot, real command output.
     - Ask in the agent session only, with its question tool when it has one.

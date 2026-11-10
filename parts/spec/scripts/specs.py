@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """spec: a project's agentify/specs/ folder — requirements, the chosen spec layers, traceability and the delta for tests.
 
-  specs.py init      [--root .]                       create agentify/specs/ from the defaults
+  specs.py init      [--root .]                       create agentify/specs/: layers.yaml, requirements/, model/
   specs.py new-req   <key> [--source URL] [--root .]  create agentify/specs/requirements/<key>.yaml
-  specs.py check     [--root .]                       policy, profile, layers, requirements, requirement <-> spec trace
+  specs.py check     [--root .]                       the preferences, layers, requirements, requirement <-> spec trace
   specs.py trace     [--root .] [--req KEY]           which spec elements cover each requirement, and the reverse
   specs.py delta     [--root .] [--base REF]          spec elements added, changed and removed since REF: the test
                                                       writer's work list (default REF: HEAD)
@@ -57,6 +57,15 @@ def specs_dir(root):
     return d
 
 
+def preferences(root):
+    """The frontmatter of agentify/agentify.md: what the user decided, the spec's part of it among the rest."""
+    path = pathlib.Path(root) / "agentify" / "agentify.md"
+    text = path.read_text() if path.exists() else ""
+    if not text.startswith("---\n") or "\n---\n" not in text[4:]:
+        return {}
+    return yaml.safe_load(text[4:text.index("\n---\n", 4)]) or {}
+
+
 def root_of(sd):
     """The project's root, which the paths in layers.yaml are relative to."""
     return sd.parent.parent
@@ -65,13 +74,13 @@ def root_of(sd):
 # ----------------------------------------------------------------------------------------------- init, new-req
 def cmd_init(args):
     d = pathlib.Path(args.root) / SPECS
-    if (d / "policy.yaml").exists():
+    if (d / "layers.yaml").exists():
         die(f"{d} is already set up")
     (d / "requirements").mkdir(parents=True, exist_ok=True)
     (d / "model").mkdir(exist_ok=True)
-    for name in ("policy.yaml", "profile.yaml", "layers.yaml"):
-        shutil.copy(SKILL / "defaults" / name, d / name)
-    print(f"created {d}: policy.yaml, profile.yaml, layers.yaml, requirements/, model/")
+    shutil.copy(SKILL / "defaults" / "layers.yaml", d / "layers.yaml")
+    print(f"created {d}: layers.yaml, requirements/, model/; who approves and who writes the tests are in "
+          f"agentify/agentify.md, the spec's facts in the spec block of agentify/map.yaml")
     return 0
 
 
@@ -170,17 +179,20 @@ def cmd_check(args):
     errors, warnings, notes = [], [], []
     E, W = errors.append, warnings.append
 
-    for name in ("policy.yaml", "profile.yaml", "layers.yaml"):
-        if not (sd / name).exists():
-            E(f"agentify/specs/{name}: missing")
-    policy = read_yaml(sd / "policy.yaml") if (sd / "policy.yaml").exists() else {}
-    profile = read_yaml(sd / "profile.yaml") if (sd / "profile.yaml").exists() else {}
+    if not (sd / "layers.yaml").exists():
+        E("agentify/specs/layers.yaml: missing")
     layers = (read_yaml(sd / "layers.yaml") if (sd / "layers.yaml").exists() else {}).get("layers") or []
+    for name in ("policy.yaml", "profile.yaml"):
+        if (sd / name).exists():
+            W(f"agentify/specs/{name} is left from the layout before 0.3 and nothing reads it: move who approves, who "
+              "writes the tests and never_invent into agentify/agentify.md, the rest into the spec block of "
+              "agentify/map.yaml, then delete it")
 
-    if not (policy.get("ask") or {}).get("who") and not (profile.get("people") or {}).get("approver"):
-        W("policy/profile: nobody is named to answer questions about requirements (ask.who, people.approver)")
-    if not (profile.get("tests") or {}).get("writer"):
-        W("profile: tests.writer is empty: name the agent or plugin that turns the spec into tests")
+    prefs = preferences(root_of(sd))
+    if not prefs.get("spec_approver"):
+        W("agentify.md: spec_approver is empty: name who answers questions about requirements and approves the spec")
+    if not prefs.get("test_writer"):
+        W("agentify.md: test_writer is empty: \"agent\", or the person who turns the spec into tests")
 
     known_types = {c["id"] for c in catalog_cards()}
     ids, spines = set(), 0

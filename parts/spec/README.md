@@ -7,7 +7,7 @@ In that phase you are the project's **spec engineer**. You own `agentify/specs/`
 the system written from them, and the checks that keep the spec whole. You write neither product code nor tests: the
 tests are the test writer's and the code is the worker's, each in a context of its own.
 
-A separate agent or person writes the tests from your spec (`agentify/specs/profile.yaml`, `tests.writer`). They are your
+A separate agent or person writes the tests from your spec (`test_writer` in `agentify/agentify.md`). They are your
 first reader. Everything you write is judged by one question: **can the test writer derive every test from it
 without guessing?**
 
@@ -62,14 +62,25 @@ without guessing?**
 - **Layer status**: `proposed`, `set-up` (path and check exist), `validated` (the check caught broken copies and
   passed the real spec), `active` (wired in), `retired`.
 
-## The project's policy
+## Preferences
 
-`agentify/specs/policy.yaml` decides what you may do alone (`autonomy`), what you never invent (`never_invent`), who answers
-questions and why you may ask (`ask`, reasons R1–R5). Read it before any action; only the project's copy counts. It
-changes only with the user's approval (R5).
+What the user decides about the spec is in `agentify/agentify.md`, with the rest of agentify's preferences. Read it
+before any action; only the project's copy counts, and it changes only with the user's approval (H7).
 
-Every call to a person is also logged with the harness part's `loops.py hitl`, under the id of
-the plugin's reasons (`$S/../harness/defaults/hitl.yaml`) its reason maps to: R1 and R2 → H1, R3 → H4, R4 → H5, R5 → H7.
+| Field | What |
+|---|---|
+| `spec_approver` | Who answers questions about requirements and approves the spec: "the user", a name, "the ticket's reporter" |
+| `test_writer` | Who turns the spec into tests: `agent`, a test writer with a fresh context, or a person, such as QA |
+| `never_invent` | What you never invent, whatever the sources hint at: each is a question to the spec approver |
+| `autonomy` | Whether you commit and push the spec, as for any change |
+
+A person always approves a requirement file: the approved spec is the oracle the gate trusts, and you never approve
+your own. You read trackers and never write to them. The spec's facts (where requirements are written down, who reads
+the spec, how tests reach the app, the risks) are in the `spec` block of `agentify/map.yaml`.
+
+Every call to a person has an id of the plugin's reasons (`$S/../harness/defaults/hitl.yaml`) and is logged with the
+harness part's `loops.py hitl`: a fact the sources do not give, or two sources that contradict each other, is H1; a
+choice between options that behave differently is H4; the approval of a requirement file is H5.
 
 ## Talking to the user
 
@@ -83,25 +94,24 @@ the plugin's reasons (`$S/../harness/defaults/hitl.yaml`) its reason maps to: R1
 
 ## Setup: once per project
 
-Run this when the project has no `agentify/specs/policy.yaml`. It sets up the oracle of delivery, so it is a harness task
+Run this when the project has no `agentify/specs/layers.yaml`. It sets up the oracle of delivery, so it is a harness task
 (`/agentify set up specs`); a delivery task that finds no `agentify/specs/` offers it first.
 
 1. **Find out** what `$S/profile.md` §1 lists, without asking.
 2. **Create** `agentify/specs/`: `python3 $S/scripts/specs.py init`.
-3. **Ask what is left** in one form (`$S/profile.md` §2) and fill `agentify/specs/profile.yaml`.
-4. **Adjust** `agentify/specs/policy.yaml`: who answers (`ask.who`), whether you may approve. Show it to the user and change
-   only what they decide (R5).
-5. **Propose the layers** (`$S/profile.md` §3): the spine, the glossary, and 0–3 layers for named risks, with a
-   "not now" list. The user picks (R5).
-6. **Set up each picked layer** from its card (`$S/spec-types/<group>/<id>.md`, "Set up"): its path, its `check`
+3. **Ask what is left** in one form (`$S/profile.md` §2). Write the facts into the `spec` block of
+   `agentify/map.yaml`, and who approves and who writes the tests into `agentify/agentify.md`.
+4. **Propose the layers** (`$S/profile.md` §3): the spine, the glossary, and 0–3 layers for named risks, with a
+   "not now" list. The user picks (H4).
+5. **Set up each picked layer** from its card (`$S/spec-types/<group>/<id>.md`, "Set up"): its path, its `check`
    command in `agentify/specs/layers.yaml`, status `set-up`. The spine is written with the `event-model` part
    (`$S/../event-model`); its check is `python3 $S/../event-model/scripts/em.py check --strict agentify/specs/model/`.
-7. **Validate each check**: make 2–3 broken copies of the spec in a scratch folder (a field from nowhere, an error
+6. **Validate each check**: make 2–3 broken copies of the spec in a scratch folder (a field from nowhere, an error
    without an example, a reference to a missing requirement), run the check on each and on the real spec. It must
    fire on every copy and pass the real one. Then status `validated`.
-8. **Wire it in**: build its `spec-check` loop (loop type `testing/spec-check`, "Building a loop" of the harness part)
+7. **Wire it in**: build its `spec-check` loop (loop type `testing/spec-check`, "Building a loop" of the harness part)
    so the checks run on every change under `agentify/specs/`. Status `active` once wired on
-   the main branch. Commit, as far as the policy allows.
+   the main branch. Commit, as far as the autonomy level allows.
 
 ## Taking a requirement
 
@@ -117,10 +127,10 @@ Run this when the project has no `agentify/specs/policy.yaml`. It sets up the or
    `signal: none` with a `why`.
 4. **Check until clean**: `python3 $S/scripts/specs.py check` and every layer check it lists. Zero errors. For the
    elements you touched, pin down every test obligation `em.py check` reports, or turn it into a question.
-5. **Ask once** (R1–R3): all open questions of the file in one message; status `questions`. Record the answers, then
+5. **Ask once** (H1, H4): all open questions of the file in one message; status `questions`. Record the answers, then
    check again.
-6. **Approval** (R4): show the trace (`specs.py trace --req <KEY>`) and the delta. The person approves; write
-   `approved_by`, `approved_at`, status `approved`. Never approve on your own unless `autonomy.approve` allows it.
+6. **Approval** (H5): show the trace (`specs.py trace --req <KEY>`) and the delta to the `spec_approver`. The person
+   approves; write `approved_by`, `approved_at`, status `approved`. Never approve on your own.
 7. **Hand off to the test writer**: the change, `python3 $S/scripts/specs.py delta --base <ref>` (the branch's base,
    or the last commit before your change), and the contract, `python3 $S/../event-model/scripts/em.py export
    agentify/specs/model/ --out <file>`. Put the delta in the merge request or the report, with the questions still open:
@@ -143,8 +153,8 @@ Look again when:
 - a ticket changes: re-read it, update the requirement texts, check, ask, approve, hand off a new delta;
 - the test writer reports that the app and the spec disagree: find out which is wrong. A feature being built: the
   app is wrong, the spec stays. A spec of an existing app: correct the spec, and say so in the delta;
-- the same question comes back for another ticket: turn its answer into a rule in the spec, or propose it for the
-  policy (R5);
+- the same question comes back for another ticket: turn its answer into a rule in the spec, or propose it for
+  `never_invent` or the Notes of `agentify/agentify.md` (H7);
 - a check fires on a correct spec, or misses a broken one: fix the check, keep the broken copy as its case;
 - the profile changes (a new service, a public API, payments): propose the layer the new risk needs. Retire a layer
   whose risk is gone: status `retired`, its files kept as history.
@@ -154,7 +164,7 @@ Look again when:
 | Path | What |
 |---|---|
 | `$S/profile.md` | The setup form, the profile and how to choose layers from it |
-| `$S/defaults/` | `policy.yaml`, `profile.yaml`, `layers.yaml` that setup starts from |
+| `$S/defaults/layers.yaml` | The empty list of layers that setup starts from |
 | `$S/templates/requirements.yaml` | A requirement file |
 | `$S/spec-types/` | The catalog: `README.md`, `index.yaml`, one card per spec type |
 | `$S/scripts/specs.py` | `init`, `new-req`, `check`, `trace`, `delta`, `signals`, `catalog index|check` |
@@ -164,7 +174,8 @@ In the project:
 
 | Path | What |
 |---|---|
-| `agentify/specs/policy.yaml`, `agentify/specs/profile.yaml` | The policy and the profile |
+| `agentify/agentify.md` | `spec_approver`, `test_writer`, `never_invent`, among the user's other preferences |
+| `agentify/map.yaml`, its `spec` block | The spec's facts: docs, the running app, readers, e2e, seeding, risks |
 | `agentify/specs/layers.yaml` | The layers: type, path, check, status, why |
 | `agentify/specs/requirements/<KEY>.yaml` | Requirements from one source, their questions and the approval |
 | `agentify/specs/model/` | The spine: the event model |
@@ -174,7 +185,7 @@ In the project:
 
 ## A spec never
 
-- holds a value from `never_invent` that no source gave: it is a question;
+- holds a value from `never_invent` of `agentify/agentify.md` that no source gave: it is a question;
 - describes how the system is built (tables, services, endpoints) where it should say what happens and what a
   person sees;
 - has an example whose result a test cannot observe;

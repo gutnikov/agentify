@@ -20,6 +20,6 @@ requirements:
 
 questions: []
 #  - id: <KEY>?1
-#    reason: R1                # from agentify/specs/policy.yaml ask.reasons
+#    reason: H1                # an id from the plugin's harness/defaults/hitl.yaml: H1, H4 or H5
 #    text: ""
 #    answer: ""

@@ -10,7 +10,7 @@
       "name": "agentify",
       "source": "./",
       "description": "Make an agent's work on a project checkable from the task to its confirmation where it is used: /agentify maps the project's loops on its first run, and runs every product or harness task through its super-loop.",
-      "version": "0.3.0"
+      "version": "0.4.0"
     }
   ]
 }

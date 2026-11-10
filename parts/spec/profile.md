@@ -1,16 +1,19 @@
 # The project profile
 
-Setup ends with the spine and a short list of layers that fit the project. To choose them you need six facts. The
-repository and this session show some; you ask about the rest in one form. Facts and answers go into
-`agentify/specs/profile.yaml`, so nobody is asked twice.
+Setup ends with the spine and a short list of layers that fit the project. To choose them you need these facts.
+The repository and this session show some; you ask about the rest in one form. The facts go into the `spec` block of
+`agentify/map.yaml`, and what the user decides into `agentify/agentify.md`, so nobody is asked twice.
 
-| Fact | Field | Usually |
-|---|---|---|
-| What the product is: web, API, mobile, data… | `product` | found |
-| Where requirements come from: trackers this session can read, docs, a running app | `sources` | partly found, asked |
-| Who answers questions about requirements and approves the spec | `people` | asked |
-| Who turns the spec into tests, with what, and how tests seed state | `tests` | partly found, asked |
-| Where a wrong spec costs most: money, permissions, concurrency, timers, integrations… | `risks` | partly found, asked |
+| Fact | Field | File | Usually |
+|---|---|---|---|
+| What the product is: web, API, mobile, data… | `kind`, the body | `agentify.md` | there since the first `/agentify` |
+| The trackers this session can read | `tools.tracker` | `agentify.md` | found |
+| Where requirements are written down, and a running app to check the spec against | `spec.docs`, `spec.running_app` | `map.yaml` | partly found, asked |
+| Who answers questions about requirements and approves the spec | `spec_approver` | `agentify.md` | asked |
+| Who else reads the spec | `spec.readers` | `map.yaml` | asked |
+| Who turns the spec into tests | `test_writer` | `agentify.md` | partly found, asked |
+| How tests reach the app and seed its state | `spec.e2e`, `spec.seeding` | `map.yaml` | found |
+| Where a wrong spec costs most: money, permissions, concurrency, timers, integrations… | `spec.risks` | `map.yaml` | partly found, asked |
 
 ## 1. Find out first
 
@@ -27,8 +30,9 @@ A tracker counts only if the session can read it: fetch one ticket. An SDK in th
 ## 2. Ask what is left, in one form
 
 One call of the session's question tool, up to 4 questions, each multi-select, each starting with what you found
-("Found: Jira via MCP, keys VND-…"), with what you found as the first option, marked "(found)". These are setup
-questions (R5), not questions about a requirement.
+("Found: Jira via MCP, keys VND-…"), with what you found as the first option, marked "(found)". Ask only what
+`agentify/agentify.md` and `agentify/map.yaml` do not settle yet. Log Sources and Risks under H1, Approver and Tests
+under H7: they change `agentify.md`.
 
 ### Q1. Sources — header `Sources`
 
@@ -72,4 +76,4 @@ Then one layer per named risk, and nothing for a risk nobody named:
 | readers who do not read YAML must sign off examples | `examples` (generated Gherkin) | a readable export of the examples in the review |
 
 Propose the spine, the glossary and 0–3 layers, never more than 5. For each: the risk it covers, what it costs, what
-the tests get. Add a "not now" list with reasons. The user picks (R5); set up exactly those.
+the tests get. Add a "not now" list with reasons. The user picks (H4); set up exactly those.

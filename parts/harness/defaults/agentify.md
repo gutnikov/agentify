@@ -10,10 +10,22 @@ autonomy: branch
 # Where a change counts as done, and the super-loops end: local, ci, staging or production.
 done_at: ci
 # What the agent can use from its own session, each checked with one real call or named by the user.
-# Keys: ci, logs, errors, metrics, traces, browser, deploy. Value: what and how, e.g. "GitLab CI via glab".
+# Keys: ci, logs, errors, metrics, traces, browser, deploy, tracker. Value: what and how, e.g. "GitLab CI via glab".
 tools: {}
 # The spend limit in USD for evals and inferential loops; null means no limit.
 budget_usd: null
+# The spec, once it is set up (the spec part): who answers questions about requirements and approves the spec,
+# such as "the user", a name, or "the ticket's reporter"; a person always approves (H5).
+spec_approver: "the user"
+# Who turns the spec into tests: "agent", a test writer with a fresh context, or a person, such as "QA".
+test_writer: agent
+# What agentify never invents, whatever the sources hint at: each is a question to the spec approver.
+never_invent:
+  - prices, credits, quotas and limits
+  - who may do what (roles and permissions)
+  - legal, compliance and consent texts
+  - the wording of errors and of anything about money
+  - deadlines, timeouts and retry counts
 ---
 
 # <The project>
